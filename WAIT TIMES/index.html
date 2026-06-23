@@ -1,0 +1,1573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><!-- RideHero v3.0 -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+<meta http-equiv="Pragma" content="no-cache"/>
+<meta http-equiv="Expires" content="0"/>
+<title>RideHero — Park Planner</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{-webkit-text-size-adjust:100%;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f2f2f7;color:#1c1c1e;min-height:100dvh;}
+.screen{display:none;}.screen.active{display:block;}
+.setup{padding:24px 20px 40px;}
+.logo{display:flex;align-items:center;gap:10px;margin-bottom:20px;}
+.logo-icon{width:44px;height:44px;background:#185FA5;border-radius:12px;display:flex;align-items:center;justify-content:center;}
+.logo-icon svg{width:24px;height:24px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.logo h1{font-size:22px;font-weight:700;color:#1c1c1e;}
+.logo p{font-size:13px;color:#8e8e93;margin-top:1px;}
+.section-label{font-size:12px;font-weight:600;color:#8e8e93;text-transform:uppercase;letter-spacing:0.06em;margin:20px 0 8px;}
+.inset-group{background:#fff;border-radius:12px;overflow:hidden;}
+.inset-row{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:0.5px solid #e5e5ea;}
+.inset-row:last-child{border-bottom:none;}
+.inset-row label{font-size:15px;color:#1c1c1e;flex-shrink:0;}
+.inset-row input[type=number]{width:60px;border:none;outline:none;font-size:15px;color:#185FA5;background:transparent;text-align:right;font-weight:600;}
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.mode-card{background:#fff;border-radius:14px;padding:18px 14px;border:2px solid transparent;cursor:pointer;transition:border-color 0.15s,background 0.15s;text-align:left;-webkit-tap-highlight-color:transparent;}
+.mode-card.active{border-color:#185FA5;background:#f0f6ff;}
+.mode-card .mode-icon{font-size:26px;display:block;margin-bottom:10px;}
+.mode-card .mode-name{font-size:14px;font-weight:700;color:#1c1c1e;}
+.mode-card .mode-sub{font-size:11px;color:#8e8e93;margin-top:4px;line-height:1.4;}
+.mode-card.active .mode-name{color:#185FA5;}
+.park-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.park-card{background:#fff;border-radius:14px;padding:16px 14px;border:2px solid transparent;cursor:pointer;transition:border-color 0.15s,background 0.15s;text-align:left;-webkit-tap-highlight-color:transparent;}
+.park-card.active{border-color:#185FA5;background:#f0f6ff;}
+.park-card .park-emoji{font-size:28px;display:block;margin-bottom:8px;}
+.park-card .park-name{font-size:14px;font-weight:600;color:#1c1c1e;line-height:1.3;}
+.park-card .park-sub{font-size:12px;color:#8e8e93;margin-top:2px;}
+.cta{margin-top:28px;}
+.big-btn{width:100%;padding:16px;background:#185FA5;color:#fff;border:none;border-radius:14px;font-size:17px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;-webkit-tap-highlight-color:transparent;}
+.big-btn:active{opacity:0.85;}
+.big-btn.secondary{background:#e5e5ea;color:#1c1c1e;}
+.rides-screen{padding-bottom:100px;}
+.top-bar{background:#fff;border-bottom:0.5px solid #e5e5ea;padding:12px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10;}
+.back-btn{background:none;border:none;color:#185FA5;font-size:15px;font-weight:500;cursor:pointer;padding:4px 0;}
+.top-bar-title{font-size:17px;font-weight:600;flex:1;}
+.refresh-btn{background:none;border:none;color:#185FA5;font-size:22px;cursor:pointer;padding:4px;line-height:1;}
+.source-chip{font-size:11px;font-weight:600;padding:3px 8px;border-radius:99px;}
+.sc-tp{background:#dcfce7;color:#166534;}
+.sc-qt{background:#fef9c3;color:#854d0e;}
+.rides-list{padding:12px 16px;display:flex;flex-direction:column;gap:8px;}
+.ride-card{background:#fff;border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;border:2px solid transparent;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.ride-card.on{border-color:#185FA5;background:#f0f6ff;}
+.ride-check{width:24px;height:24px;border-radius:50%;border:2px solid #c7c7cc;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.ride-card.on .ride-check{background:#185FA5;border-color:#185FA5;}
+.ride-check-mark{display:none;color:#fff;font-size:13px;font-weight:700;line-height:1;}
+.ride-card.on .ride-check-mark{display:block;}
+.ride-info{flex:1;min-width:0;}
+.ride-name{font-size:15px;font-weight:500;color:#1c1c1e;line-height:1.3;}
+.ride-area{font-size:12px;color:#8e8e93;margin-top:2px;}
+.wait-badge{flex-shrink:0;padding:5px 11px;border-radius:99px;font-size:13px;font-weight:700;}
+.wl{background:#dcfce7;color:#166534;}
+.wm{background:#fef9c3;color:#854d0e;}
+.wh{background:#fee2e2;color:#991b1b;}
+.bottom-bar{position:fixed;bottom:0;left:0;right:0;padding:12px 20px;padding-bottom:max(12px,env(safe-area-inset-bottom));background:#f2f2f7;border-top:0.5px solid #e5e5ea;}
+.sel-info{font-size:13px;color:#8e8e93;text-align:center;margin-bottom:8px;}
+.bottom-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.sm-btn{padding:13px;border-radius:12px;font-size:15px;font-weight:600;border:none;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.sm-btn.outline{background:#fff;color:#185FA5;border:1.5px solid #185FA5;}
+.sm-btn.filled{background:#185FA5;color:#fff;}
+.priority-screen{padding-bottom:110px;}
+.priority-list{padding:12px 16px;display:flex;flex-direction:column;gap:8px;}
+.priority-card{background:#fff;border-radius:12px;padding:13px 16px;display:flex;align-items:center;gap:12px;border:2px solid transparent;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:border-color 0.12s,background 0.12s;}
+.priority-card.must{border-color:#ff9500;background:#fff8f0;}
+.priority-card.want{border-color:#185FA5;background:#f0f6ff;}
+.priority-dot{width:24px;height:24px;border-radius:50%;border:2px solid #c7c7cc;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;}
+.priority-card.must .priority-dot{background:#ff9500;border-color:#ff9500;color:#fff;}
+.priority-card.want .priority-dot{background:#185FA5;border-color:#185FA5;color:#fff;}
+.priority-name{font-size:15px;font-weight:500;color:#1c1c1e;}
+.priority-area{font-size:12px;color:#8e8e93;margin-top:2px;}
+.legend-row{display:flex;gap:14px;padding:10px 16px 4px;flex-wrap:wrap;}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:#6b6b72;}
+.legend-dot{width:12px;height:12px;border-radius:50%;}
+.route-screen{padding-bottom:40px;}
+.route-hero{color:#fff;padding:24px 20px 20px;}
+.route-hero h2{font-size:20px;font-weight:700;margin-bottom:4px;}
+.route-hero p{font-size:14px;opacity:0.85;line-height:1.5;}
+.route-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:#e5e5ea;border-radius:14px;overflow:hidden;margin:16px 20px;}
+.route-stat{background:#fff;padding:14px 10px;text-align:center;}
+.route-stat-v{font-size:22px;font-weight:700;color:#1c1c1e;}
+.route-stat-l{font-size:11px;color:#8e8e93;margin-top:3px;}
+.map-section{margin:0 16px 16px;}
+.map-section h3{font-size:13px;font-weight:600;color:#8e8e93;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;}
+.map-wrap{background:#fff;border-radius:14px;overflow:hidden;}
+.map-wrap svg{display:block;width:100%;height:auto;}
+.steps-section{padding:0 16px;}
+.steps-section h3{font-size:13px;font-weight:600;color:#8e8e93;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;}
+.step-card{background:#fff;border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:14px;margin-bottom:8px;}
+.step-num{width:32px;height:32px;border-radius:50%;background:#185FA5;color:#fff;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.step-name{font-size:15px;font-weight:500;color:#1c1c1e;}
+.step-wait{font-size:13px;color:#8e8e93;margin-top:2px;}
+.walk-note{text-align:center;font-size:12px;color:#8e8e93;padding:4px 0 2px;}
+.day-segment{margin:0 16px 12px;}
+.seg-label{font-size:11px;font-weight:700;color:#8e8e93;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;padding-left:4px;}
+.seg-card{background:#fff;border-radius:12px;overflow:hidden;margin-bottom:6px;}
+.seg-row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:0.5px solid #f3f4f6;}
+.seg-row:last-child{border-bottom:none;}
+.seg-time{font-size:12px;font-weight:600;color:#8e8e93;width:44px;flex-shrink:0;}
+.seg-icon{font-size:16px;flex-shrink:0;width:22px;text-align:center;}
+.seg-detail{flex:1;min-width:0;}
+.seg-name{font-size:14px;font-weight:500;color:#1c1c1e;}
+.seg-sub{font-size:12px;color:#8e8e93;margin-top:1px;}
+.must-tag{font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;background:#fff3e0;color:#e65100;}
+.loading{text-align:center;padding:60px 20px;}
+.loading-spinner{width:36px;height:36px;border:3px solid #e5e5ea;border-top-color:#185FA5;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 16px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading p{font-size:15px;color:#8e8e93;}
+.error-box{margin:16px;background:#fff;border-radius:12px;padding:20px;text-align:center;}
+.error-box p{font-size:14px;color:#ff3b30;line-height:1.5;}
+.error-box button{margin-top:14px;padding:10px 24px;background:#185FA5;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;}
+</style>
+</head>
+<body>
+
+<!-- SCREEN 1: Setup -->
+<div class="screen active" id="screen-setup">
+  <div class="setup">
+    <div class="logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      </div>
+      <div>
+        <h1>Park Planner</h1>
+        <p>Disney World · Live wait times</p>
+      </div>
+    </div>
+
+    <div class="section-label">Planning mode</div>
+    <div class="mode-grid">
+      <button class="mode-card active" data-mode="quick" onclick="selectMode(this)">
+        <span class="mode-icon">⚡</span>
+        <div class="mode-name">Quick picks</div>
+        <div class="mode-sub">Next 3 rides, re-optimize as you go</div>
+      </button>
+      <button class="mode-card" data-mode="fullday" onclick="selectMode(this)">
+        <span class="mode-icon">📅</span>
+        <div class="mode-name">Full day plan</div>
+        <div class="mode-sub">Complete schedule for your whole visit</div>
+      </button>
+    </div>
+
+    <div id="hours-section" style="display:none">
+      <div class="section-label">Park hours</div>
+      <div class="inset-group">
+        <div class="inset-row">
+          <label>Opens at</label>
+          <input type="number" id="open-hour" value="9" min="7" max="12"/>
+          <span style="font-size:15px;color:#8e8e93;margin-left:4px;">am</span>
+        </div>
+        <div class="inset-row">
+          <label>Closes at</label>
+          <input type="number" id="close-hour" value="10" min="6" max="12"/>
+          <span style="font-size:15px;color:#8e8e93;margin-left:4px;">pm</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-label">Choose a park</div>
+    <div class="park-grid">
+      <button class="park-card active" data-park="mk" onclick="selectPark(this)">
+        <span class="park-emoji">🏰</span>
+        <div class="park-name">Magic Kingdom</div>
+        <div class="park-sub">Classic Disney</div>
+      </button>
+      <button class="park-card" data-park="ep" onclick="selectPark(this)">
+        <span class="park-emoji">🌍</span>
+        <div class="park-name">EPCOT</div>
+        <div class="park-sub">World & tech</div>
+      </button>
+      <button class="park-card" data-park="hs" onclick="selectPark(this)">
+        <span class="park-emoji">🎬</span>
+        <div class="park-name">Hollywood Studios</div>
+        <div class="park-sub">Star Wars & more</div>
+      </button>
+      <button class="park-card" data-park="ak" onclick="selectPark(this)">
+        <span class="park-emoji">🦁</span>
+        <div class="park-name">Animal Kingdom</div>
+        <div class="park-sub">Nature & Pandora</div>
+      </button>
+    </div>
+
+    <div class="cta">
+      <button class="big-btn" onclick="goToRides()">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        See wait times
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 1b: Priority picker -->
+<div class="screen" id="screen-priority">
+  <div class="priority-screen">
+    <div class="top-bar">
+      <button class="back-btn" onclick="showScreen('rides')">‹ Back</button>
+      <div class="top-bar-title">Pick your must-dos</div>
+    </div>
+    <div class="legend-row">
+      <div class="legend-item"><div class="legend-dot" style="background:#ff9500"></div>Tap once = Must ride</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#185FA5"></div>Twice = Want to</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#e5e5ea"></div>Three times = Skip</div>
+    </div>
+    <div class="priority-list" id="priority-list"></div>
+    <div class="bottom-bar" id="priority-footer" style="display:none">
+      <div class="sel-info" id="priority-info"></div>
+      <button class="big-btn" onclick="buildFullDayRoute()">Build my day plan →</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 2: Rides -->
+<div class="screen" id="screen-rides">
+  <div class="rides-screen">
+    <div class="top-bar">
+      <button class="back-btn" onclick="showScreen('setup')">‹ Back</button>
+      <div class="top-bar-title" id="rides-title">Magic Kingdom</div>
+      <button class="refresh-btn" onclick="reloadRides()" aria-label="Refresh">↻</button>
+    </div>
+    <div id="rides-body">
+      <div class="loading"><div class="loading-spinner"></div><p>Loading wait times...</p></div>
+    </div>
+    <div class="bottom-bar" id="rides-footer" style="display:none">
+      <div class="sel-info" id="sel-info"></div>
+      <div class="bottom-actions">
+        <button class="sm-btn outline" onclick="toggleAll()">Select all</button>
+        <button class="sm-btn filled" id="rides-cta-btn" onclick="handleRidesCTA()">Next →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 3: Route -->
+<div class="screen" id="screen-route">
+  <div class="route-screen">
+    <div class="top-bar">
+      <button class="back-btn" id="route-back-btn" onclick="showScreen('rides')">‹ Rides</button>
+      <div class="top-bar-title">Your route</div>
+    </div>
+    <div id="route-body"></div>
+  </div>
+</div>
+
+<script>
+const PARK_META = {
+  mk:{name:'Magic Kingdom',color:'#185FA5',emoji:'🏰',zones:[
+    {n:'Main Street',x:200,y:270,c:'#bfdbfe'},{n:'Adventureland',x:85,y:200,c:'#bbf7d0'},
+    {n:'Frontierland',x:80,y:145,c:'#fde68a'},{n:'Liberty Square',x:140,y:115,c:'#fecaca'},
+    {n:'Fantasyland',x:240,y:95,c:'#ddd6fe'},{n:'Tomorrowland',x:315,y:175,c:'#a7f3d0'}
+  ]},
+  ep:{name:'EPCOT',color:'#0F6E56',emoji:'🌍',zones:[
+    {n:'World Discovery',x:160,y:95,c:'#a7f3d0'},{n:'World Nature',x:95,y:195,c:'#bbf7d0'},
+    {n:'World Showcase',x:265,y:225,c:'#fde68a'},{n:'World Celebration',x:240,y:105,c:'#ddd6fe'}
+  ]},
+  hs:{name:'Hollywood Studios',color:'#7c2d12',emoji:'🎬',zones:[
+    {n:'Hollywood Blvd',x:200,y:265,c:'#fecaca'},{n:"Galaxy's Edge",x:80,y:135,c:'#c7d2fe'},
+    {n:'Toy Story Land',x:295,y:185,c:'#fde68a'},{n:'Animation Courtyard',x:170,y:170,c:'#ddd6fe'},
+    {n:'Grand Ave',x:250,y:135,c:'#bbf7d0'}
+  ]},
+  ak:{name:'Animal Kingdom',color:'#3B6D11',emoji:'🦁',zones:[
+    {n:'Discovery Island',x:200,y:180,c:'#bbf7d0'},{n:'Pandora',x:285,y:255,c:'#ddd6fe'},
+    {n:'Africa',x:100,y:135,c:'#fde68a'},{n:'Asia',x:290,y:130,c:'#a7f3d0'},
+    {n:'DinoLand',x:150,y:260,c:'#fecaca'}
+  ]}
+};
+
+const RIDE_COORDS={
+  'seven dwarfs':{lat:28.4204,lng:-81.5793},'big thunder':{lat:28.4195,lng:-81.5835},
+  'splash mountain':{lat:28.4191,lng:-81.5831},'haunted mansion':{lat:28.4199,lng:-81.5822},
+  'pirates':{lat:28.4185,lng:-81.5836},'jungle cruise':{lat:28.4183,lng:-81.5833},
+  'space mountain':{lat:28.4198,lng:-81.5757},'tron':{lat:28.4207,lng:-81.5752},
+  'buzz lightyear':{lat:28.4196,lng:-81.5762},'people mover':{lat:28.4201,lng:-81.5758},
+  'peter pan':{lat:28.4208,lng:-81.5798},'its a small world':{lat:28.4212,lng:-81.5804},
+  'barnstormer':{lat:28.4215,lng:-81.5800},'dumbo':{lat:28.4214,lng:-81.5793},
+  'under the sea':{lat:28.4213,lng:-81.5808},'mad tea':{lat:28.4210,lng:-81.5796},
+  'winnie the pooh':{lat:28.4209,lng:-81.5805},'monsters':{lat:28.4200,lng:-81.5763},
+  'guardians':{lat:28.3747,lng:-81.5500},'test track':{lat:28.3733,lng:-81.5496},
+  'frozen':{lat:28.3736,lng:-81.5484},'remy':{lat:28.3738,lng:-81.5476},
+  'soarin':{lat:28.3726,lng:-81.5503},'living with the land':{lat:28.3724,lng:-81.5500},
+  'mission space':{lat:28.3745,lng:-81.5494},'spaceship earth':{lat:28.3758,lng:-81.5497},
+  'figment':{lat:28.3748,lng:-81.5489},
+  'rise of the resistance':{lat:28.3558,lng:-81.5631},'millennium falcon':{lat:28.3553,lng:-81.5623},
+  'tower of terror':{lat:28.3573,lng:-81.5606},'rock n roller':{lat:28.3575,lng:-81.5613},
+  'slinky dog':{lat:28.3548,lng:-81.5594},'toy story mania':{lat:28.3543,lng:-81.5591},
+  'alien swirling':{lat:28.3546,lng:-81.5597},'runaway railway':{lat:28.3564,lng:-81.5612},
+  'muppet vision':{lat:28.3568,lng:-81.5602},
+  'avatar':{lat:28.3553,lng:-81.5903},'navi river':{lat:28.3556,lng:-81.5897},
+  'expedition everest':{lat:28.3598,lng:-81.5890},'kali river':{lat:28.3594,lng:-81.5895},
+  'kilimanjaro':{lat:28.3617,lng:-81.5927},'maharajah':{lat:28.3601,lng:-81.5884},
+  'dinosaur':{lat:28.3577,lng:-81.5924},'triceratop spin':{lat:28.3572,lng:-81.5920}
+};
+
+// ThemeParks.wiki direct API (supports CORS from browsers - no proxy needed)
+const TP_BASE = 'https://api.themeparks.wiki/v1/entity/';
+const TP_IDS = {
+  mk: '75ea578a-adc8-4116-a54d-dccb60765ef9',
+  ep: '47f90d2c-e191-4239-a466-5892ef59a88b',
+  hs: '288747d1-8b4f-4a64-867e-ea7c9b27bad8',
+  ak: '1c84a229-8862-4648-9c71-378ddd2c7693'
+};
+// Proxy fallback for Queue-Times (still needs CORS proxy)
+const PROXY_URL = 'https://waittimes.johnson96eric.workers.dev';
+const HERO_COLORS = {mk:'#1a2744',ep:'#0F6E56',hs:'#4a1a08',ak:'#1a2e0a'};
+const PARK_BOXES = {
+  mk:{minLat:28.418,maxLat:28.423,minLng:-81.586,maxLng:-81.574},
+  ep:{minLat:28.372,maxLat:28.378,minLng:-81.552,maxLng:-81.546},
+  hs:{minLat:28.354,maxLat:28.359,minLng:-81.565,maxLng:-81.558},
+  ak:{minLat:28.354,maxLat:28.363,minLng:-81.595,maxLng:-81.587}
+};
+
+let currentMode = 'quick';
+let currentPark = 'mk';
+let rides = [];
+let selected = new Set();
+let priority = {};
+let ridePos = {};
+let routeOrder = [];
+let hours = 13;
+
+// ── Screen management ────────────────────────────────────────────────────────
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+  window.scrollTo(0, 0);
+  var rf = document.getElementById('rides-footer');
+  var pf = document.getElementById('priority-footer');
+  if (rf) rf.style.display = (id === 'rides' && rides.length) ? 'block' : 'none';
+  if (pf) pf.style.display = (id === 'priority') ? 'block' : 'none';
+}
+
+// ── Setup screen ─────────────────────────────────────────────────────────────
+
+function selectMode(btn) {
+  document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  currentMode = btn.dataset.mode;
+  document.getElementById('hours-section').style.display = currentMode === 'fullday' ? 'block' : 'none';
+}
+
+function selectPark(btn) {
+  document.querySelectorAll('.park-card').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  currentPark = btn.dataset.park;
+}
+
+function calcHours() {
+  if (currentMode === 'fullday') {
+    var open = parseInt(document.getElementById('open-hour').value) || 9;
+    var close = parseInt(document.getElementById('close-hour').value) || 10;
+    return (close + 12) - open;
+  }
+  return 13;
+}
+
+async function goToRides() {
+  hours = calcHours();
+  var meta = PARK_META[currentPark];
+  document.getElementById('rides-title').textContent = meta.emoji + ' ' + meta.name;
+  showScreen('rides');
+  await reloadRides();
+}
+
+// ── Rides screen ─────────────────────────────────────────────────────────────
+
+async function reloadRides() {
+  document.getElementById('rides-body').innerHTML = '<div class="loading"><div class="loading-spinner"></div><p>Loading wait times...</p></div>';
+  document.getElementById('rides-footer').style.display = 'none';
+
+  var tpId = TP_IDS[currentPark];
+  var urls = [
+    'https://api.themeparks.wiki/v1/entity/' + tpId + '/live',
+    'https://corsproxy.io/?' + encodeURIComponent('https://api.themeparks.wiki/v1/entity/' + tpId + '/live'),
+    PROXY_URL + '/waittimes?park=' + currentPark + '&source=auto'
+  ];
+
+  for (var i = 0; i < urls.length; i++) {
+    try {
+      var res = await fetch(urls[i]);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      var data = await res.json();
+
+      // themeparks.wiki direct or corsproxy response
+      if (data.liveData) {
+        rides = [];
+        data.liveData.forEach(function(e) {
+          if (e.entityType !== 'ATTRACTION' || e.status !== 'OPERATING') return;
+          var wait = 0;
+          if (e.queue && e.queue.STANDBY && e.queue.STANDBY.waitTime != null)
+            wait = e.queue.STANDBY.waitTime;
+          rides.push({ id: e.id, name: e.name, waitTime: wait, area: '' });
+        });
+      } else if (data.rides) {
+        // proxy response
+        rides = data.rides;
+      } else {
+        throw new Error('Unrecognised response format');
+      }
+
+      if (!rides.length) throw new Error('No open rides');
+      rides.sort(function(a, b) { return a.waitTime - b.waitTime; });
+      selected = new Set(rides.map(function(r) { return r.id; }));
+      assignPositions();
+      renderRides(i === 0 ? 'themeparks.wiki' : i === 1 ? 'themeparks.wiki (proxy)' : 'queue-times.com');
+      document.getElementById('rides-footer').style.display = 'block';
+      updateSelInfo();
+      return;
+    } catch(e) {
+      console.warn('Source ' + i + ' failed: ' + e.message);
+    }
+  }
+
+  document.getElementById('rides-body').innerHTML =
+    '<div class="error-box"><p>Could not load wait times. Check your connection and try again.</p>' +
+    '<button id="retry-btn">Try again</button></div>';
+  var btn = document.getElementById('retry-btn');
+  if (btn) btn.addEventListener('click', reloadRides);
+}
+
+function wc(w) { return w <= 20 ? 'wl' : w <= 45 ? 'wm' : 'wh'; }
+
+function renderRides(source) {
+  var html = '';
+  if (source) {
+    var cls = source.includes('themeparks') ? 'sc-tp' : 'sc-qt';
+    var label = source.includes('themeparks') ? 'ThemeParks.wiki' : 'Queue-Times.com';
+    html += '<div style="padding:10px 16px 2px;display:flex;align-items:center;gap:8px;"><span class="source-chip ' + cls + '">' + label + '</span><span style="font-size:12px;color:#8e8e93;">' + rides.length + ' open rides</span></div>';
+  }
+  html += '<div class="rides-list">';
+  rides.forEach(function(r) {
+    var on = selected.has(r.id);
+    html += '<div class="ride-card' + (on ? ' on' : '') + '" data-id="' + r.id + '">' +
+      '<div class="ride-check"><span class="ride-check-mark">✓</span></div>' +
+      '<div class="ride-info"><div class="ride-name">' + r.name + '</div>' +
+      (r.area ? '<div class="ride-area">' + r.area + '</div>' : '') + '</div>' +
+      '<span class="wait-badge ' + wc(r.waitTime) + '">' + r.waitTime + 'm</span></div>';
+  });
+  html += '</div>';
+  document.getElementById('rides-body').innerHTML = html;
+  document.querySelectorAll('.ride-card[data-id]').forEach(function(card) {
+    card.addEventListener('click', function() { toggleRide(card.dataset.id); });
+  });
+}
+
+function toggleRide(id) {
+  if (selected.has(id)) selected.delete(id); else selected.add(id);
+  var card = document.querySelector('.ride-card[data-id="' + id + '"]');
+  if (card) card.classList.toggle('on', selected.has(id));
+  updateSelInfo();
+}
+
+function toggleAll() {
+  var btn = document.querySelector('.sm-btn.outline');
+  if (selected.size === rides.length) {
+    selected.clear();
+    if (btn) btn.textContent = 'Select all';
+  } else {
+    rides.forEach(function(r) { selected.add(r.id); });
+    if (btn) btn.textContent = 'Deselect all';
+  }
+  document.querySelectorAll('.ride-card[data-id]').forEach(function(card) {
+    card.classList.toggle('on', selected.has(card.dataset.id));
+  });
+  updateSelInfo();
+}
+
+function updateSelInfo() {
+  var el = document.getElementById('sel-info');
+  if (el) el.textContent = selected.size + ' rides selected';
+  var btn = document.getElementById('rides-cta-btn');
+  if (btn) btn.textContent = currentMode === 'fullday' ? 'Pick must-dos →' : 'Optimize route →';
+}
+
+function handleRidesCTA() {
+  if (currentMode === 'fullday') {
+    openPriorityPicker();
+  } else {
+    var sel = rides.filter(function(r) { return selected.has(r.id); });
+    if (sel.length < 2) { alert('Select at least 2 rides to plan a route.'); return; }
+    optimizeRoute();
+  }
+}
+
+// ── GPS / distance helpers ────────────────────────────────────────────────────
+
+function getRideCoords(name) {
+  var lower = name.toLowerCase();
+  var keys = Object.keys(RIDE_COORDS);
+  for (var i = 0; i < keys.length; i++) {
+    if (lower.includes(keys[i])) return RIDE_COORDS[keys[i]];
+  }
+  return null;
+}
+
+function distMetres(a, b) {
+  var R = 6371000;
+  var dLat = (b.lat - a.lat) * Math.PI / 180;
+  var dLng = (b.lng - a.lng) * Math.PI / 180;
+  var s = Math.pow(Math.sin(dLat/2), 2) + Math.cos(a.lat*Math.PI/180) * Math.cos(b.lat*Math.PI/180) * Math.pow(Math.sin(dLng/2), 2);
+  return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1-s));
+}
+
+function walkMins(a, b) {
+  var ca = getRideCoords(a.name);
+  var cb = getRideCoords(b.name);
+  if (!ca || !cb) return 8;
+  return Math.round(distMetres(ca, cb) / 80 * 10) / 10;
+}
+
+function rideScore(current, candidate, isMust) {
+  var walk = walkMins(current, candidate);
+  return (isMust ? 0 : 20) + candidate.waitTime + walk * 1.5;
+}
+
+// ── Map position helpers ──────────────────────────────────────────────────────
+
+function assignPositions() {
+  ridePos = {};
+  var box = PARK_BOXES[currentPark];
+  var W = 800, H = 600;
+  // Named landmark positions for known rides — placed at real map locations
+  var LANDMARK_POS = {
+    mk: {
+      'castle':         {x:400,y:260},
+      'bigthunder':     {x:195,y:245},
+      'haunted':        {x:318,y:272},
+      'pirates':        {x:168,y:400},
+      'jungle':         {x:148,y:348},
+      'tiana':          {x:300,y:338},
+      'sevend':         {x:488,y:195},
+      'peterpan':       {x:375,y:188},
+      'smallworld':     {x:488,y:168},
+      'spacemtn':       {x:568,y:255},
+      'tron':           {x:615,y:215},
+      'buzz':           {x:558,y:325},
+      'carousel':       {x:638,y:328}
+    },
+    ep: {
+      'spaceship':      {x:400,y:108},
+      'guardians':      {x:590,y:168},
+      'testtrack':      {x:548,y:218},
+      'missionspace':   {x:582,y:155},
+      'soarin':         {x:248,y:218},
+      'remy':           {x:244,y:168},
+      'frozen':         {x:650,y:288}
+    },
+    hs: {
+      'chinese':        {x:388,y:310},
+      'tower':          {x:620,y:192},
+      'rocknroller':    {x:555,y:278},
+      'falcon':         {x:185,y:218},
+      'rise':           {x:118,y:238},
+      'slinky':         {x:598,y:398},
+      'tsmania':        {x:648,y:362},
+      'railway':        {x:388,y:265}
+    },
+    ak: {
+      'treeoflife':     {x:400,y:278},
+      'everest':        {x:602,y:148},
+      'kilimanjaro':    {x:158,y:215},
+      'flightofpassage':{x:598,y:428},
+      'naviriver':      {x:512,y:405},
+      'kali':           {x:652,y:272},
+      'dinosaur':       {x:212,y:435}
+    }
+  };
+
+  var lpos = LANDMARK_POS[currentPark] || {};
+  var zones = PARK_META[currentPark].zones || [];
+  var usedSlots = [];
+
+  rides.forEach(function(ride, i) {
+    // Try to match ride name to a landmark
+    var matched = null;
+    var rideLower = ride.name.toLowerCase();
+    var keyMap = {
+      mk: {
+        'bigthunder': ['big thunder','thunder mountain'],
+        'haunted': ['haunted mansion'],
+        'pirates': ['pirates'],
+        'jungle': ['jungle cruise'],
+        'tiana': ['tiana','bayou','splash mountain'],
+        'sevend': ['seven dwarfs','mine train'],
+        'peterpan': ["peter pan"],
+        'smallworld': ['small world'],
+        'spacemtn': ['space mountain'],
+        'tron': ['tron'],
+        'buzz': ['buzz lightyear'],
+        'carousel': ['carousel of progress','peoplemover','people mover'],
+        'castle': ['cinderella']
+      },
+      ep: {
+        'spaceship': ['spaceship earth'],
+        'guardians': ['guardians'],
+        'testtrack': ['test track'],
+        'missionspace': ['mission'],
+        'soarin': ["soarin"],
+        'remy': ["remy","ratatouille"],
+        'frozen': ['frozen']
+      },
+      hs: {
+        'chinese': ['chinese theatre','chinese theater','runaway railway','mickey'],
+        'tower': ['tower of terror'],
+        'rocknroller': ["rock"],
+        'falcon': ['millennium falcon','smugglers'],
+        'rise': ['rise of the resistance'],
+        'slinky': ['slinky dog'],
+        'tsmania': ['toy story mania'],
+        'railway': ['runaway railway','mickey']
+      },
+      ak: {
+        'treeoflife': ['tree of life','discovery','it\'s tough'],
+        'everest': ['expedition everest','everest'],
+        'kilimanjaro': ['kilimanjaro','safari'],
+        'flightofpassage': ['flight of passage','avatar'],
+        'naviriver': ["na'vi","navi river"],
+        'kali': ['kali river'],
+        'dinosaur': ['dinosaur','dinoland']
+      }
+    };
+    var parkKeys = keyMap[currentPark] || {};
+    Object.keys(parkKeys).forEach(function(key) {
+      parkKeys[key].forEach(function(kw) {
+        if (rideLower.indexOf(kw) >= 0 && !matched) matched = key;
+      });
+    });
+
+    if (matched && lpos[matched]) {
+      ridePos[ride.id] = {x: lpos[matched].x, y: lpos[matched].y, landmark: matched};
+    } else {
+      // Fallback: place in a grid avoiding used slots
+      var angle = (i / Math.max(rides.length, 1)) * Math.PI * 2;
+      var radius = 55 + (i % 5) * 28;
+      var cx = W/2, cy = H/2;
+      var z = zones[i % zones.length];
+      if (z) { cx = z.x * W/500; cy = z.y * H/500; }
+      ridePos[ride.id] = {
+        x: Math.max(40, Math.min(W-40, cx + Math.cos(angle)*radius)),
+        y: Math.max(40, Math.min(H-40, cy + Math.sin(angle)*radius))
+      };
+    }
+  });
+}
+
+// ── Detailed illustrated park maps ───────────────────────────────────────────
+
+function buildMap(route) {
+  var ns = 'http://www.w3.org/2000/svg';
+  var svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('width','100%');
+  svg.setAttribute('viewBox','0 0 800 600');
+
+  function el(tag, a, p) {
+    var n = document.createElementNS(ns, tag);
+    Object.keys(a).forEach(function(k){n.setAttribute(k,a[k]);});
+    (p||svg).appendChild(n); return n;
+  }
+  function pg(d,a,p){return el('path',Object.assign({d:d,fill:'none'},a),p);}
+  function ci(cx,cy,r,a,p){return el('circle',Object.assign({cx:cx,cy:cy,r:r},a),p);}
+  function rr(x,y,w,h,a,p){return el('rect',Object.assign({x:x,y:y,width:w,height:h},a),p);}
+  function ep(cx,cy,rx,ry,a,p){return el('ellipse',Object.assign({cx:cx,cy:cy,rx:rx,ry:ry},a),p);}
+  function ln(x1,y1,x2,y2,a,p){return el('line',Object.assign({x1:x1,y1:y1,x2:x2,y2:y2},a),p);}
+  function tx(s,x,y,sz,fill,bold,p) {
+    var n=el('text',{x:x,y:y,'font-family':'system-ui','text-anchor':'middle',
+      'font-size':sz,fill:fill,'font-weight':bold?700:400,
+      'paint-order':'stroke','stroke':'rgba(0,0,0,0.55)','stroke-width':bold?2.5:1.5},p);
+    n.textContent=s; return n;
+  }
+
+  // Tappable landmark wrapper
+  function landmark(id, x, y, label, drawFn) {
+    var inRoute = route.indexOf(id) >= 0;
+    var isSel = selected.has(id);
+    var g = el('g',{cursor:'pointer','data-id':id},svg);
+    drawFn(g, isSel, inRoute);
+    // Label below
+    if (label) {
+      var lt = el('text',{x:x,y:y+32,'font-family':'system-ui','text-anchor':'middle',
+        'font-size':7.5,fill:'#1a1a1a','font-weight':600,
+        'paint-order':'stroke','stroke':'rgba(255,255,255,0.9)','stroke-width':2.5},g);
+      lt.textContent = label;
+    }
+    // Selection ring
+    if (isSel && !inRoute) {
+      ci(x,y,22,{fill:'none',stroke:'#185FA5','stroke-width':2.5,'stroke-dasharray':'4,3'},g);
+    }
+    g.addEventListener('click', function() {
+      if (selected.has(id)) selected.delete(id); else selected.add(id);
+      renderRides(null); updateSelInfo();
+      var cont = svg.parentNode;
+      if (cont) { var ns2 = buildMap(routeOrder); cont.replaceChild(ns2, svg); }
+    });
+    return g;
+  }
+
+  if (currentPark === 'mk') {
+    // Background
+    rr(0,0,800,600,{fill:'#9dd4ee'},svg);
+    // Park ground
+    ep(400,308,378,268,{fill:'#8dc85a',stroke:'#6aaa38','stroke-width':2},svg);
+    // Water left
+    ep(62,395,75,62,{fill:'#5bb8e0',stroke:'#3898c8','stroke-width':1.5},svg);
+    tx('Seven Seas Lagoon',62,397,7,'#d8f4ff',true);
+    // Water right
+    ep(742,412,65,55,{fill:'#5bb8e0',stroke:'#3898c8','stroke-width':1.5,opacity:0.8},svg);
+    tx('Bay Lake',742,414,6.5,'#d8f4ff',true);
+    // River Frontierland
+    pg('M225,78 C238,105 250,135 248,165 C246,194 232,215 226,240 C222,265 230,288 244,308 C258,328 278,340 298,345',
+       {stroke:'#5bb8e0','stroke-width':20,fill:'none','stroke-linecap':'round'},svg);
+    pg('M225,78 C238,105 250,135 248,165 C246,194 232,215 226,240 C222,265 230,288 244,308 C258,328 278,340 298,345',
+       {stroke:'#80cce8','stroke-width':11,fill:'none','stroke-linecap':'round',opacity:0.65},svg);
+    // Railroad
+    ep(400,308,358,238,{fill:'none',stroke:'#8a7040','stroke-width':6,'stroke-dasharray':'14,7',opacity:0.6},svg);
+    // Hub
+    ci(400,308,44,{fill:'#e0d498',stroke:'#c0b468','stroke-width':2.5},svg);
+    // Main Street road
+    rr(382,352,36,115,{fill:'#ddd090',stroke:'#c0b060','stroke-width':1},svg);
+    // Hub spokes
+    [['M400,264 L400,205'],['M360,285 L298,252'],['M440,285 L502,252'],
+     ['M368,332 L308,368'],['M432,332 L492,368'],['M355,298 L292,262'],['M445,298 L508,262']
+    ].forEach(function(d){pg(d[0],{stroke:'#ddd090','stroke-width':18,fill:'none','stroke-linecap':'round',opacity:0.82},svg);});
+    // TL inner loop
+    pg('M538,298 C562,278 572,312 558,345 C545,372 518,378 498,365',
+       {stroke:'#ddd090','stroke-width':12,fill:'none','stroke-linecap':'round',opacity:0.7},svg);
+    // Land zones
+    pg('M400,308 L98,378 C78,342 72,305 82,268 L168,252 Z',{fill:'#2a7c18',stroke:'#186010','stroke-width':1.5,opacity:0.88},svg);
+    pg('M400,308 L168,252 C152,208 156,158 182,130 L268,198 Z',{fill:'#c07828',stroke:'#985818','stroke-width':1.5,opacity:0.88},svg);
+    pg('M400,308 L268,198 C288,178 308,170 328,174 L352,232 Z',{fill:'#a83828',stroke:'#802818','stroke-width':1.5,opacity:0.88},svg);
+    pg('M400,308 L352,232 C378,208 408,200 438,204 L452,258 Z',{fill:'#7848c0',stroke:'#5828a8','stroke-width':1.5,opacity:0.88},svg);
+    pg('M400,308 L452,258 C485,232 525,235 548,255 L522,295 Z',{fill:'#7848c0',stroke:'#5828a8','stroke-width':1,opacity:0.78},svg);
+    pg('M400,308 L522,295 C548,312 558,348 542,378 L505,358 Z',{fill:'#2858b0',stroke:'#184898','stroke-width':1.5,opacity:0.88},svg);
+    pg('M400,308 L505,358 C495,398 435,408 400,370 Z',{fill:'#c8a848',stroke:'#a88828','stroke-width':1.2},svg);
+    pg('M400,370 C378,405 345,408 265,372 L400,308 Z',{fill:'#c8a848',stroke:'#a88828','stroke-width':1,opacity:0.88},svg);
+    // MS buildings
+    [[330,382,38,48],[375,382,38,48],[330,436,38,35],[375,436,38,35]].forEach(function(b){
+      rr(b[0],b[1],b[2],b[3],{fill:'#c8a858',stroke:'#a88838','stroke-width':1,rx:1},svg);
+    });
+    // Railroad stations
+    rr(370,52,60,22,{fill:'#c8a858',stroke:'#a88838','stroke-width':1.2,rx:2},svg);
+    pg('M370,52 L400,38 L430,52',{fill:'#b89848'},svg);
+    rr(370,520,60,22,{fill:'#c8a858',stroke:'#a88838','stroke-width':1.2,rx:2},svg);
+    // Entry plaza
+    ep(400,555,72,28,{fill:'#d8c878',stroke:'#b8a858','stroke-width':1.5},svg);
+    // Vegetation clusters
+    [[105,328],[88,352],[112,368]].forEach(function(p){
+      ci(p[0],p[1],15,{fill:'#28880e',opacity:0.78},svg);
+      ci(p[0]+4,p[1]-3,10,{fill:'#358812',opacity:0.68},svg);
+    });
+    [[298,148],[318,135],[342,142]].forEach(function(p){
+      ci(p[0],p[1],12,{fill:'#5840b0',opacity:0.48},svg);
+    });
+    [[525,362],[542,375],[558,362]].forEach(function(p){
+      ci(p[0],p[1],11,{fill:'#1e4898',opacity:0.42},svg);
+    });
+
+    // ── Landmarks (small, precise, non-overlapping) ──
+    // CINDERELLA CASTLE
+    landmark('castle',400,248,'Cinderella Castle',function(g,sel,inR){
+      var x=400,y=248;
+      ep(x,y+22,40,12,{fill:'#7ec8e0',opacity:0.5},g);
+      rr(x-18,y+5,36,26,{fill:'#f0e8e0',stroke:'#c8b8a8','stroke-width':1},g);
+      rr(x-8,y-5,16,16,{fill:'#e8e0d8',stroke:'#c0b0a0','stroke-width':0.8},g);
+      rr(x-18,y+1,10,14,{fill:'#eee8e0',stroke:'#c8b8a0','stroke-width':0.8},g);
+      rr(x+8,y+1,10,14,{fill:'#eee8e0',stroke:'#c8b8a0','stroke-width':0.8},g);
+      rr(x-3,y-22,6,20,{fill:'#ccd8ea',stroke:'#a0b8d0','stroke-width':0.8},g);
+      pg('M'+x+','+(y-30)+' L'+(x-4)+','+(y-22)+' L'+(x+4)+','+(y-22)+' Z',{fill:'#3858c0'},g);
+      rr(x-17,y-10,4,16,{fill:'#ccd8ea'},g); pg('M'+(x-15)+','+(y-18)+' L'+(x-18)+','+(y-10)+' L'+(x-12)+','+(y-10)+' Z',{fill:'#4868cc'},g);
+      rr(x+13,y-10,4,16,{fill:'#ccd8ea'},g); pg('M'+(x+15)+','+(y-18)+' L'+(x+12)+','+(y-10)+' L'+(x+18)+','+(y-10)+' Z',{fill:'#4868cc'},g);
+      pg('M'+(x-3)+','+(y+31)+' Q'+x+','+(y+25)+' '+(x+3)+','+(y+31),{fill:'#6858a0','stroke-width':0},g);
+      rr(x-15,y+11,5,6,{fill:'#a8c8e8',rx:0.5},g); rr(x+10,y+11,5,6,{fill:'#a8c8e8',rx:0.5},g);
+      rr(x-3,y+1,6,5,{fill:'#a8c8e8',rx:0.5},g);
+    });
+
+    // BIG THUNDER MOUNTAIN
+    landmark('bigthunder',195,238,'Big Thunder Mtn',function(g,sel,inR){
+      var x=195,y=232;
+      pg('M'+(x-32)+','+(y+18)+' C'+(x-38)+','+(y+5)+' '+(x-35)+','+(y-12)+' '+(x-24)+','+(y-20)+' C'+(x-15)+','+(y-28)+' '+(x-2)+','+(y-30)+' '+x+','+(y-25)+' C'+(x+8)+','+(y-30)+' '+(x+18)+','+(y-28)+' '+(x+22)+','+(y-14)+' C'+(x+26)+','+(y-2)+' '+(x+24)+','+(y+10)+' '+(x+18)+','+(y+18)+' Z',
+        {fill:'#c07028',stroke:'#985018','stroke-width':1.5},g);
+      [[x-18,y-22],[x+2,y-28],[x+15,y-20]].forEach(function(p){ci(p[0],p[1],3,{fill:'#e0a050'},g);});
+      pg('M'+(x-32)+','+(y+18)+' C'+(x-38)+','+(y+28)+' '+(x-36)+','+(y+38)+' '+(x-28)+','+(y+45),
+         {stroke:'#785828','stroke-width':3.5,fill:'none','stroke-dasharray':'5,3'},g);
+      rr(x+10,y+32,16,9,{fill:'#8a5018',rx:1.5},g);
+      ci(x+13,y+42,3,{fill:'#222'},g); ci(x+22,y+42,3,{fill:'#222'},g);
+    });
+
+    // HAUNTED MANSION
+    landmark('haunted',318,268,'Haunted Mansion',function(g,sel,inR){
+      var x=318,y=262;
+      pg('M'+(x-14)+','+(y+25)+' L'+(x+14)+','+(y+25),{stroke:'#38304a','stroke-width':2},g);
+      for(var i=x-12;i<=x+12;i+=7){rr(i-1,y+17,2,8,{fill:'#38304a'},g);}
+      rr(x-14,y+2,28,24,{fill:'#504c64',stroke:'#303048','stroke-width':1.2,rx:1},g);
+      rr(x-11,y-9,22,14,{fill:'#5c5872',stroke:'#3c3858','stroke-width':1},g);
+      rr(x-7,y-18,14,12,{fill:'#686480',stroke:'#484462','stroke-width':0.8},g);
+      pg('M'+x+','+(y-26)+' L'+(x-8)+','+(y-16)+' L'+(x+8)+','+(y-16)+' Z',{fill:'#484060'},g);
+      [[x-8,y+6,true],[x+4,y+6,false],[x-8,y+14,false],[x+4,y+14,true]].forEach(function(w){
+        rr(w[0],w[1],5,6,{fill:w[2]?'#f0e040':'#201828',rx:0.4},g);
+      });
+    });
+
+    // PIRATES
+    landmark('pirates',168,392,'Pirates of Caribbean',function(g,sel,inR){
+      var x=168,y=385;
+      rr(x-18,y-5,36,28,{fill:'#285228',stroke:'#183818','stroke-width':1.2,rx:1},g);
+      rr(x+2,y-18,3,18,{fill:'#7a5028'},g);
+      pg('M'+(x+5)+','+(y-18)+' L'+(x+18)+','+(y-10)+' L'+(x+5)+','+(y-5)+' Z',{fill:'#181818'},g);
+      ep(x,y+28,18,7,{fill:'#3898c0',opacity:0.7},g);
+    });
+
+    // JUNGLE CRUISE
+    landmark('jungle',148,342,'Jungle Cruise',function(g,sel,inR){
+      var x=148,y=335;
+      ep(x,y,26,19,{fill:'#1e7228',stroke:'#0e5218','stroke-width':1.2},g);
+      ep(x-6,y-2,18,14,{fill:'#247c2a',opacity:0.82},g);
+      ep(x+8,y-4,15,11,{fill:'#1c7020',opacity:0.78},g);
+      ep(x,y+12,18,7,{fill:'#2878b0',opacity:0.65},g);
+      pg('M'+(x-8)+','+(y+14)+' C'+(x-2)+','+(y+10)+' '+(x+4)+','+(y+12)+' '+(x+8)+','+(y+14),
+         {stroke:'#3a6820','stroke-width':2.5,'stroke-linecap':'round'},g);
+    });
+
+    // TIANA'S BAYOU
+    landmark('tiana',300,330,"Tiana's Bayou",function(g,sel,inR){
+      var x=300,y=322;
+      rr(x-20,y-12,40,34,{fill:'#286028',stroke:'#185018','stroke-width':1.2,rx:1.5},g);
+      pg('M'+(x-20)+','+(y-12)+' L'+x+','+(y-28)+' L'+(x+20)+','+(y-12),{fill:'#1e5020',stroke:'#143818','stroke-width':1},g);
+      ep(x,y+28,20,8,{fill:'#3898c0',opacity:0.72},g);
+      [[x+12,y+22],[x-12,y+25]].forEach(function(p){ci(p[0],p[1],4,{fill:'#38a028',opacity:0.68},g);ci(p[0],p[1],1.5,{fill:'#e04848',opacity:0.8},g);});
+    });
+
+    // SEVEN DWARFS
+    landmark('sevend',488,188,'7 Dwarfs Mine Train',function(g,sel,inR){
+      var x=488,y=182;
+      pg('M'+(x-32)+','+(y+14)+' C'+(x-36)+','+(y+2)+' '+(x-32)+','+(y-12)+' '+(x-20)+','+(y-22)+' C'+(x-10)+','+(y-30)+' '+x+','+(y-32)+' '+(x+12)+','+(y-26)+' C'+(x+24)+','+(y-32)+' '+(x+34)+','+(y-24)+' '+(x+36)+','+(y-12)+' C'+(x+38)+','+(y-2)+' '+(x+32)+','+(y+10)+' '+(x+24)+','+(y+14)+' Z',
+        {fill:'#a07828',stroke:'#785810','stroke-width':1.5},g);
+      pg('M'+(x-10)+','+(y+14)+' Q'+x+','+(y+5)+' '+(x+10)+','+(y+14),{fill:'#4a3018',stroke:'#2a1808','stroke-width':1},g);
+      pg('M'+(x-30)+','+(y+14)+' C'+(x-38)+','+(y+24)+' '+(x-36)+','+(y+35)+' '+(x-28)+','+(y+42),
+         {stroke:'#785818','stroke-width':3.5,fill:'none','stroke-dasharray':'5,3'},g);
+      rr(x+15,y+7,16,10,{fill:'#c09840',rx:1.5},g);
+      ci(x+18,y+18,2.5,{fill:'#222'},g); ci(x+26,y+18,2.5,{fill:'#222'},g);
+      [[x+18,y+4,3,'#e04848'],[x+23,y+3,2.5,'#4888e0'],[x+28,y+4,3,'#48c840']].forEach(function(gem){ci(gem[0],gem[1],gem[2],{fill:gem[3]},g);});
+    });
+
+    // PETER PAN
+    landmark('peterpan',375,182,"Peter Pan's Flight",function(g,sel,inR){
+      var x=375,y=176;
+      rr(x-15,y-5,30,20,{fill:'#5038a8',stroke:'#3018a0','stroke-width':1.2,rx:1.5},g);
+      rr(x-1,y-22,3,18,{fill:'#7a5028'},g);
+      pg('M'+(x+2)+','+(y-22)+' L'+(x+13)+','+(y-15)+' L'+(x+2)+','+(y-10)+' Z',{fill:'#181818'},g);
+      [[x-8,y],[x+2,y],[x-3,y+8]].forEach(function(s){ci(s[0],s[1],1.5,{fill:'#f0e870',opacity:0.9},g);});
+    });
+
+    // SMALL WORLD
+    landmark('smallworld',488,162,"It's a Small World",function(g,sel,inR){
+      var x=488,y=155;
+      rr(x-20,y-3,40,30,{fill:'#e8f0f8',stroke:'#b8c8e0','stroke-width':1.2,rx:1},g);
+      pg('M'+(x-22)+','+(y-3)+' L'+x+','+(y-20)+' L'+(x+22)+','+(y-3),{fill:'#d8e8f8',stroke:'#a8c0e0','stroke-width':1},g);
+      ci(x,y+5,8,{fill:'#f8f4e8',stroke:'#c8b870','stroke-width':1.5},g);
+      ln(x,y+5,x,y+0,{stroke:'#484048','stroke-width':1.5},g);
+      ln(x,y+5,x+5,y+8,{stroke:'#484048','stroke-width':1.2},g);
+    });
+
+    // SPACE MOUNTAIN
+    landmark('spacemtn',568,248,'Space Mountain',function(g,sel,inR){
+      var x=568,y=242;
+      ep(x,y,32,26,{fill:'#a8b8c0',stroke:'#788898','stroke-width':2},g);
+      ep(x,y,21,16,{fill:'#88a0b0',stroke:'#5878a0','stroke-width':1.5},g);
+      ep(x,y,10,8,{fill:'#6080a0'},g);
+      for(var a=0;a<360;a+=45){ln(x,y,x+Math.cos(a*Math.PI/180)*32,y+Math.sin(a*Math.PI/180)*26,{stroke:'#6080a0','stroke-width':0.7,opacity:0.55},g);}
+      ln(x-32,y,x+32,y,{stroke:'#6888a0','stroke-width':1.2,opacity:0.7},g);
+      ln(x,y-26,x,y+26,{stroke:'#6888a0','stroke-width':1.2,opacity:0.7},g);
+    });
+
+    // TRON
+    landmark('tron',615,208,'TRON Lightcycle Run',function(g,sel,inR){
+      var x=615,y=202;
+      ep(x,y,36,22,{fill:'#0c2038',stroke:'#1070d0','stroke-width':2.5},g);
+      ep(x,y,22,14,{fill:'#081428'},g);
+      pg('M'+(x-36)+','+y+' A36,22 0 0,1 '+(x+36)+','+y,{stroke:'#20a0f0','stroke-width':2.5,fill:'none'},g);
+      pg('M'+(x-22)+','+(y+8)+' C'+(x-10)+','+(y+20)+' '+(x+10)+','+(y+20)+' '+(x+22)+','+(y+8),
+         {stroke:'#40d0ff','stroke-width':1.5,'stroke-dasharray':'3,2',fill:'none',opacity:0.8},g);
+    });
+
+    // BUZZ
+    landmark('buzz',558,318,'Buzz Lightyear',function(g,sel,inR){
+      var x=558,y=312;
+      ep(x,y,22,16,{fill:'#1040a0',stroke:'#0828a8','stroke-width':1.5},g);
+      ci(x,y,9,{fill:'#2868e0'},g); ci(x,y,5,{fill:'#50b0ff'},g); ci(x,y,2,{fill:'#a0e8ff'},g);
+      [[x-12,y+7],[x+12,y+7],[x,y-12]].forEach(function(s){ci(s[0],s[1],3.5,{fill:'#e03030',opacity:0.72},g); ci(s[0],s[1],1.5,{fill:'#ff6060'},g);});
+    });
+
+    // CAROUSEL
+    landmark('carousel',638,322,'Carousel of Progress',function(g,sel,inR){
+      var x=638,y=316;
+      ci(x,y,20,{fill:'#287890',stroke:'#185878','stroke-width':1.5},g);
+      ci(x,y,12,{fill:'#1e6880'},g); ci(x,y,5,{fill:'#158068'},g);
+      for(var a=0;a<360;a+=45){
+        var ax=x+Math.cos(a*Math.PI/180)*15, ay=y+Math.sin(a*Math.PI/180)*15;
+        rr(ax-3,ay-4,6,8,{fill:'#2888a0',rx:1,opacity:0.8},g);
+      }
+      pg('M'+(x-20)+','+(y-4)+' Q'+x+','+(y-15)+' '+(x+20)+','+(y-4),{fill:'#38909a',stroke:'#196a78','stroke-width':1},g);
+    });
+
+    // People Mover track
+    ep(580,322,55,35,{fill:'none',stroke:'#5898d0','stroke-width':2.5,'stroke-dasharray':'8,4',opacity:0.6},svg);
+
+    // Land labels
+    tx('FRONTIERLAND',188,108,9.5,'#f8e028',true);
+    tx('FANTASYLAND',415,118,9.5,'#e0b8ff',true);
+    tx('LIBERTY SQUARE',322,255,8,'#ffd0b0',true);
+    tx('TOMORROWLAND',578,178,9,'#a8d8ff',true);
+    tx('ADVENTURELAND',162,490,9,'#b8f898',true);
+    tx('MAIN STREET U.S.A.',400,478,8.5,'#f8f0d0',true);
+
+  } else if (currentPark === 'ep') {
+    rr(0,0,800,600,{fill:'#9dd4ee'},svg);
+    ep(400,295,378,278,{fill:'#78b840',stroke:'#58981a','stroke-width':2},svg);
+    // Lagoon
+    ep(402,368,240,185,{fill:'#38a8d0',stroke:'#1888c0','stroke-width':2.5},svg);
+    tx('World Showcase Lagoon',402,370,9,'#d8f4ff',true);
+    // Future World
+    ep(398,195,368,155,{fill:'#68a838',stroke:'#489818','stroke-width':1.5},svg);
+    // World Discovery NE
+    pg('M398,255 L398,162 C448,145 505,150 538,175 C562,195 568,228 550,252 Z',{fill:'#3aa898',stroke:'#1a8878','stroke-width':1.5},svg);
+    // World Nature NW
+    pg('M398,255 L398,162 C348,145 290,150 258,175 C235,195 228,228 248,252 Z',{fill:'#58a828',stroke:'#389808','stroke-width':1.5},svg);
+    // World Celebration
+    ep(398,208,62,48,{fill:'#6878c0',stroke:'#4858a8','stroke-width':1.5},svg);
+    // Monorail
+    pg('M18,105 C150,93 278,88 398,88 C518,88 648,93 782,105',{stroke:'#c8a840','stroke-width':3.5,'stroke-dasharray':'12,6',opacity:0.78},svg);
+    tx('MONORAIL',115,86,6.5,'#a08028',false);
+    // Paths
+    rr(388,255,24,72,{fill:'#d8c868',opacity:0.82},svg);
+    ep(402,368,258,198,{fill:'none',stroke:'#d0b858','stroke-width':6,opacity:0.48},svg);
+    [['M398,255 L298,278'],['M398,255 L498,278'],['M398,255 L398,168']].forEach(function(d){
+      pg(d[0],{stroke:'#d8c868','stroke-width':16,fill:'none','stroke-linecap':'round',opacity:0.72},svg);
+    });
+    // Entry
+    ep(400,548,75,32,{fill:'#c8b860',stroke:'#a89840','stroke-width':1.5},svg);
+    // Trees FW
+    [[128,212],[144,196],[128,178],[158,205]].forEach(function(p){ci(p[0],p[1],14,{fill:'#48980e',opacity:0.75},svg); ci(p[0]+4,p[1]-3,9,{fill:'#58a810',opacity:0.65},svg);});
+
+    // SPACESHIP EARTH
+    landmark('spaceship',398,108,'Spaceship Earth',function(g,sel,inR){
+      var x=398,y=108;
+      ci(x,y,42,{fill:'#c8d8e2',stroke:'#98b8ca','stroke-width':2},g);
+      [0,30,60,90,120,150].forEach(function(a){
+        var r=42,s=Math.sin(a*Math.PI/180)*34;
+        ln(x-r*Math.cos(a*Math.PI/180),y-s,x+r*Math.cos(a*Math.PI/180),y+s,{stroke:'#88a8b8','stroke-width':0.8,opacity:0.6},g);
+      });
+      ln(x-42,y,x+42,y,{stroke:'#88a8b8','stroke-width':1.2},g);
+      ln(x,y-42,x,y+42,{stroke:'#88a8b8','stroke-width':1.2},g);
+      ci(x,y,8,{fill:'#6888a8'},g);
+      [[x-15,y+42,x-22,y+62],[x,y+42,x,y+62],[x+15,y+42,x+22,y+62]].forEach(function(l){
+        pg('M'+l[0]+','+l[1]+' L'+l[2]+','+l[3],{stroke:'#98a8b8','stroke-width':4,'stroke-linecap':'round'},g);
+      });
+    });
+
+    // GUARDIANS
+    landmark('guardians',590,162,'Guardians of Galaxy',function(g,sel,inR){
+      var x=590,y=155;
+      ci(x,y,30,{fill:'#3a2050',stroke:'#5830a0','stroke-width':2},g);
+      ci(x,y,19,{fill:'#281440'},g); ci(x,y,9,{fill:'#5040a0'},g);
+      pg('M'+(x-30)+','+y+' A30,30 0 0,1 '+(x+30)+','+y,{stroke:'#8060d0','stroke-width':2.5,fill:'none'},g);
+      ci(x,y,3,{fill:'#9070e0'},g);
+    });
+
+    // TEST TRACK
+    landmark('testtrack',548,212,'Test Track',function(g,sel,inR){
+      var x=548,y=205;
+      rr(x-24,y-12,48,30,{fill:'#306078',stroke:'#185060','stroke-width':1.2,rx:2},g);
+      pg('M'+(x-20)+','+(y+2)+' L'+(x+20)+','+(y-5),{stroke:'#50b8d8','stroke-width':2.5},g);
+      rr(x+10,y-5,15,9,{fill:'#e0e0e0',rx:2.5},g);
+      ci(x+14,y+6,3,{fill:'#222'},g); ci(x+21,y+6,3,{fill:'#222'},g);
+    });
+
+    // MISSION SPACE
+    landmark('missionspace',582,148,'Mission: Space',function(g,sel,inR){
+      var x=582,y=142;
+      ci(x,y,18,{fill:'#587890',stroke:'#385878','stroke-width':1.5},g);
+      pg('M'+x+','+(y-18)+' L'+(x-3)+','+(y-10)+' L'+(x+3)+','+(y-10)+' Z',{fill:'#e0eef8'},g);
+      pg('M'+(x-18)+','+y+' L'+(x-10)+','+(y-3)+' L'+(x-10)+','+(y+3)+' Z',{fill:'#e0eef8'},g);
+      pg('M'+(x+18)+','+y+' L'+(x+10)+','+(y-3)+' L'+(x+10)+','+(y+3)+' Z',{fill:'#e0eef8'},g);
+      ci(x,y,5,{fill:'#c03848'},g);
+    });
+
+    // SOARIN
+    landmark('soarin',248,212,"Soarin'",function(g,sel,inR){
+      var x=248,y=205;
+      rr(x-28,y-12,56,28,{fill:'#385828',stroke:'#204818','stroke-width':1.2,rx:2},g);
+      pg('M'+(x-24)+','+y+' L'+(x+24)+','+y,{stroke:'#70b030','stroke-width':3.5},g);
+      pg('M'+(x-16)+','+(y-12)+' L'+x+','+(y-24)+' L'+(x+16)+','+(y-12),{stroke:'#80c040','stroke-width':2.5,fill:'none'},g);
+      pg('M'+(x-10)+','+(y-12)+' L'+x+','+(y-20)+' L'+(x+10)+','+(y-12)+' L'+x+','+(y-8)+' Z',{fill:'#60a830',stroke:'#409018','stroke-width':0.8},g);
+    });
+
+    // REMY'S
+    landmark('remy',244,162,"Remy's Ratatouille",function(g,sel,inR){
+      var x=244,y=155;
+      rr(x-22,y-10,44,28,{fill:'#c03838',stroke:'#982020','stroke-width':1.2,rx:1.5},g);
+      pg('M'+(x-24)+','+(y-10)+' L'+x+','+(y-28)+' L'+(x+24)+','+(y-10),{fill:'#a82828',stroke:'#801818','stroke-width':1},g);
+      ci(x-8,y+5,5,{fill:'#d85848'},g); ci(x+8,y+5,5,{fill:'#d85848'},g);
+      pg('M'+(x+14)+','+(y-24)+' C'+(x+17)+','+(y-30)+' '+(x+23)+','+(y-29)+' '+(x+22)+','+(y-23)+' C'+(x+22)+','+(y-18)+' '+(x+17)+','+(y-18)+' Z',{fill:'#8a8a98'},g);
+    });
+
+    // FROZEN
+    landmark('frozen',650,282,'Frozen Ever After',function(g,sel,inR){
+      var x=650,y=275;
+      rr(x-17,y-6,34,30,{fill:'#4870b8',stroke:'#285898','stroke-width':1.2,rx:1},g);
+      pg('M'+(x-19)+','+(y-6)+' L'+x+','+(y-26)+' L'+(x+19)+','+(y-6),{fill:'#3860a8',stroke:'#184898','stroke-width':1},g);
+      rr(x-6,y+8,12,16,{fill:'#285898',rx:1},g);
+      ep(x-15,y+5,8,5,{fill:'#90c8f0',opacity:0.72},g);
+      [[x-9,y-15],[x+9,y-15],[x,y-20]].forEach(function(p){
+        pg('M'+p[0]+','+(p[1]-4)+' L'+p[0]+','+(p[1]+4)+' M'+(p[0]-4)+','+p[1]+' L'+(p[0]+4)+','+p[1],{stroke:'#c8e8ff','stroke-width':1.2},g);
+      });
+    });
+
+    // Pavilion dots around lagoon
+    var pvs=[{x:155,y:298,c:'#a83028',l:'Canada'},{x:195,y:272,c:'#2840b0',l:'UK'},
+      {x:238,y:256,c:'#3850c0',l:'France'},{x:282,y:248,c:'#988020',l:'Morocco'},
+      {x:325,y:246,c:'#c02828',l:'Japan'},{x:368,y:246,c:'#1038a8',l:'USA'},
+      {x:412,y:246,c:'#108038',l:'Italy'},{x:455,y:248,c:'#383838',l:'Germany'},
+      {x:498,y:255,c:'#c02828',l:'China'},{x:658,y:308,c:'#508028',l:'Mexico'}];
+    pvs.forEach(function(pv){
+      rr(pv.x-8,pv.y-3,16,15,{fill:'#c8b070',stroke:pv.c,'stroke-width':1.2,rx:1},svg);
+      ci(pv.x,pv.y-12,8,{fill:pv.c,stroke:'#fff','stroke-width':1.2,opacity:0.95},svg);
+      tx(pv.l,pv.x,pv.y+16,5.5,'#1a2818',true);
+    });
+
+    tx('World Discovery',525,145,8.5,'#c0fff8',true);
+    tx('World Nature',272,145,8.5,'#d0ffc8',true);
+    tx('World Celebration',398,208,8,'#d8e8ff',true);
+
+  } else if (currentPark === 'hs') {
+    rr(0,0,800,600,{fill:'#d0c090'},svg);
+    ep(398,298,378,268,{fill:'#c0a870',stroke:'#a08848','stroke-width':2},svg);
+    // GE dark
+    ep(175,215,168,148,{fill:'#141228',stroke:'#242040','stroke-width':2.5},svg);
+    ep(175,215,145,128,{fill:'#100e22'},svg);
+    [[142,200],[55,45]],[[215,232],[52,40]],[[175,248],[38,28]],[[128,242],[32,24]].forEach(function(e){
+      if(e[0])ep(e[0][0],e[0][1],e[1][0],e[1][1],{fill:'#181628',opacity:0.88},svg);
+    });
+    // TSL
+    ep(610,398,138,118,{fill:'#78b030',stroke:'#589010','stroke-width':2},svg);
+    rr(562,368,48,32,{fill:'#d0d838',stroke:'#a8b018','stroke-width':1.2,rx:2},svg);
+    rr(628,362,44,36,{fill:'#e03828',stroke:'#b81818','stroke-width':1.2,rx:2},svg);
+    // Sunset Blvd
+    ep(528,238,175,162,{fill:'#b09040',stroke:'#908020','stroke-width':1.5},svg);
+    // HW Blvd
+    rr(332,362,84,128,{fill:'#c0a050',stroke:'#a08030','stroke-width':1.2,rx:2},svg);
+    [[338,370],[370,370],[402,370],[338,408],[370,408],[402,408]].forEach(function(p){
+      rr(p[0],p[1],26,34,{fill:'#c8a858',stroke:'#a88838','stroke-width':0.8,rx:1},svg);
+    });
+    // Grand Ave
+    ep(295,272,105,92,{fill:'#a88840',stroke:'#887028','stroke-width':1.2},svg);
+    // Paths
+    rr(365,415,55,125,{fill:'#d0b870',opacity:0.8},svg);
+    [['M392,415 L212,298'],['M392,415 L528,298'],['M392,415 L392,315']].forEach(function(d){
+      pg(d[0],{stroke:'#d0b860','stroke-width':18,fill:'none','stroke-linecap':'round',opacity:0.62},svg);
+    });
+    ep(390,538,72,30,{fill:'#c8aa58',stroke:'#a88838','stroke-width':1.5},svg);
+    [[72,335],[85,318],[72,302],[102,310]].forEach(function(p){ci(p[0],p[1],15,{fill:'#207010',opacity:0.72},svg); ci(p[0]+4,p[1]-3,10,{fill:'#288012',opacity:0.62},svg);});
+
+    // CHINESE THEATRE
+    landmark('chinese',388,302,'Chinese Theatre',function(g,sel,inR){
+      var x=388,y=295;
+      rr(x-28,y-4,56,42,{fill:'#c89858',stroke:'#a07838','stroke-width':1.5,rx:1},g);
+      pg('M'+(x-30)+','+(y-4)+' L'+x+','+(y-26)+' L'+(x+30)+','+(y-4),{fill:'#b88840',stroke:'#906820','stroke-width':1.5},g);
+      pg('M'+(x-26)+','+(y-4)+' L'+x+','+(y-20)+' L'+(x+26)+','+(y-4),{fill:'#c89850'},g);
+      pg('M'+(x-30)+','+(y-4)+' C'+(x-34)+','+(y-11)+' '+(x-33)+','+(y-18)+' '+(x-28)+','+(y-20),{stroke:'#d8a858','stroke-width':2,fill:'none'},g);
+      pg('M'+(x+30)+','+(y-4)+' C'+(x+34)+','+(y-11)+' '+(x+33)+','+(y-18)+' '+(x+28)+','+(y-20),{stroke:'#d8a858','stroke-width':2,fill:'none'},g);
+      rr(x-8,y+16,16,22,{fill:'#7a5028',rx:1},g);
+      ep(x,y+50,30,10,{fill:'#d8c878',opacity:0.55},g);
+    });
+
+    // TOWER OF TERROR
+    landmark('tower',620,188,'Tower of Terror',function(g,sel,inR){
+      var x=620,y=158;
+      rr(x-25,y,50,105,{fill:'#6a5828',stroke:'#483808','stroke-width':1.5,rx:1},g);
+      rr(x-30,y-5,60,13,{fill:'#584818',stroke:'#382808','stroke-width':1.2,rx:1},g);
+      rr(x-27,y-17,54,15,{fill:'#483808',rx:1},g);
+      rr(x-22,y-28,44,13,{fill:'#3a2c08',rx:1},g);
+      rr(x-17,y-39,34,13,{fill:'#342808',rx:1},g);
+      rr(x-11,y-50,22,13,{fill:'#2e2408',rx:1},g);
+      for(var row=0;row<5;row++){
+        [[x-17,y+8+row*18],[x-4,y+8+row*18],[x+8,y+8+row*18]].forEach(function(w,wi){
+          rr(w[0],w[1],8,11,{fill:(row+wi)%3===0?'#e8c038':'#201808',rx:0.8},g);
+        });
+      }
+    });
+
+    // ROCK N ROLLER
+    landmark('rocknroller',555,272,"Rock 'n' Roller Coaster",function(g,sel,inR){
+      var x=555,y=265;
+      ep(x,y,40,27,{fill:'#502858',stroke:'#301040','stroke-width':2},g);
+      pg('M'+(x-40)+','+y+' A40,27 0 0,1 '+(x+40)+','+y,{stroke:'#c058e0','stroke-width':3.5,fill:'none'},g);
+      rr(x-17,y-6,34,15,{fill:'#381848',rx:2},g);
+      pg('M'+x+','+(y-6)+' L'+(x-6)+','+(y-17)+' L'+(x+6)+','+(y-17)+' Z',{fill:'#e080ff'},g);
+    });
+
+    // MILLENNIUM FALCON
+    landmark('falcon',185,212,'Millennium Falcon',function(g,sel,inR){
+      var x=185,y=205;
+      ep(x,y,42,27,{fill:'#484858',stroke:'#686878','stroke-width':2},g);
+      ep(x,y,28,17,{fill:'#383848'},g);
+      rr(x+22,y-5,24,12,{fill:'#484f58',stroke:'#585f68','stroke-width':1,rx:4},g);
+      ci(x-16,y,11,{fill:'#282838'},g); ci(x-16,y,7,{fill:'#181828'},g); ci(x-16,y,3,{fill:'#383860'},g);
+    });
+
+    // RISE
+    landmark('rise',118,232,'Rise of Resistance',function(g,sel,inR){
+      var x=118,y=225;
+      rr(x-37,y-14,74,54,{fill:'#18162c',stroke:'#30284e','stroke-width':2,rx:2},g);
+      rr(x-29,y-5,22,32,{fill:'#22203a',rx:1},g); rr(x+7,y-5,22,32,{fill:'#22203a',rx:1},g);
+      pg('M'+(x-37)+','+(y-14)+' L'+x+','+(y-30)+' L'+(x+37)+','+(y-14),{fill:'#100e20',stroke:'#282040','stroke-width':1.2},g);
+      rr(x-14,y-11,28,12,{fill:'#d83030',opacity:0.9,rx:1},g);
+    });
+
+    // SLINKY DOG
+    landmark('slinky',598,392,'Slinky Dog Dash',function(g,sel,inR){
+      var x=598,y=382;
+      ep(x,y,50,34,{fill:'none',stroke:'#e8c020','stroke-width':6},g);
+      ep(x,y,32,22,{fill:'none',stroke:'#3898e0','stroke-width':4},g);
+      ci(x-50,y,10,{fill:'#f0d830',stroke:'#c0a010','stroke-width':1.5},g);
+      for(var i=-22;i<=22;i+=8){pg('M'+(x+i)+','+(y-8)+' Q'+(x+i+4)+','+y+' '+(x+i)+','+(y+8),{stroke:'#e8c820','stroke-width':1.8,fill:'none',opacity:0.6},g);}
+    });
+
+    // TOY STORY MANIA
+    landmark('tsmania',648,358,'Toy Story Mania',function(g,sel,inR){
+      var x=648,y=350;
+      rr(x-22,y-10,44,33,{fill:'#c84820',stroke:'#982808','stroke-width':1.2,rx:2},g);
+      pg('M'+(x-24)+','+(y-10)+' L'+x+','+(y-30)+' L'+(x+24)+','+(y-10),{fill:'#b03818',stroke:'#882008','stroke-width':1},g);
+      ci(x-10,y+6,6,{fill:'#f0f0a0',stroke:'#c0c068','stroke-width':1},g);
+      ci(x+10,y+6,6,{fill:'#a0c8e8',stroke:'#6898c0','stroke-width':1},g);
+    });
+
+    // RUNAWAY RAILWAY
+    landmark('railway',388,258,"Runaway Railway",function(g,sel,inR){
+      var x=388,y=252;
+      ci(x,y,24,{fill:'#c09828',stroke:'#987010','stroke-width':2},g);
+      rr(x-17,y-5,34,16,{fill:'#e0b840',rx:2},g);
+      ci(x-12,y+12,6,{fill:'#282828'},g); ci(x+2,y+12,6,{fill:'#282828'},g); ci(x+14,y+12,5,{fill:'#282828'},g);
+      pg('M'+(x-10)+','+(y-5)+' L'+x+','+(y-17)+' L'+(x+10)+','+(y-5),{fill:'#b09030',stroke:'#887010','stroke-width':1},g);
+      ci(x-6,y-22,5,{fill:'#181818'},g); ci(x+6,y-22,5,{fill:'#181818'},g);
+    });
+
+    tx("GALAXY'S EDGE",175,215,10.5,'#9090e0',true);
+    tx('TOY STORY LAND',610,398,9,'#d0f888',true);
+    tx('SUNSET BLVD',535,178,9,'#f8e898',true);
+    tx('HOLLYWOOD BLVD',388,448,9,'#f8e8c0',true);
+
+  } else if (currentPark === 'ak') {
+    rr(0,0,800,600,{fill:'#b0d870'},svg);
+    ep(400,295,372,268,{fill:'#70b038',stroke:'#509818','stroke-width':2},svg);
+    // Discovery Island
+    ep(400,278,82,78,{fill:'#48a018',stroke:'#289000','stroke-width':2.5},svg);
+    // Pandora SE
+    ep(598,428,168,138,{fill:'#070e1c',stroke:'#121e30','stroke-width':2.5},svg);
+    ep(598,428,142,115,{fill:'#090c1a'},svg);
+    [[575,402],[620,415],[558,420],[605,442]].forEach(function(p){ep(p[0],p[1],46,19,{fill:'#162038',opacity:0.88},svg);});
+    ep(598,430,88,65,{fill:'none',stroke:'#1828a0','stroke-width':1.2,opacity:0.35},svg);
+    // Africa NW
+    ep(162,215,162,142,{fill:'#c8a028',stroke:'#a08008','stroke-width':2},svg);
+    ep(148,208,102,88,{fill:'#b89018',opacity:0.42},svg);
+    pg('M85,175 C102,142 135,128 168,134 C205,140 225,165 222,195 C220,225 198,242 168,245 C138,248 108,232 92,208 Z',
+       {stroke:'#a08818','stroke-width':5,fill:'none',opacity:0.9},svg);
+    // Asia NE
+    ep(608,208,162,148,{fill:'#389028',stroke:'#207818','stroke-width':2},svg);
+    ep(618,198,118,98,{fill:'#2e8020',opacity:0.5},svg);
+    // DinoLand S
+    ep(215,438,158,115,{fill:'#a06018',stroke:'#784808','stroke-width':2},svg);
+    ep(212,432,118,88,{fill:'#906015',opacity:0.5},svg);
+    // Water channels
+    pg('M400,355 C407,375 420,390 438,398',{stroke:'#2888c8','stroke-width':13,fill:'none','stroke-linecap':'round',opacity:0.82},svg);
+    pg('M400,355 C393,375 380,390 362,398',{stroke:'#2888c8','stroke-width':13,fill:'none','stroke-linecap':'round',opacity:0.82},svg);
+    pg('M400,355 C408,378 420,408 432,428',{stroke:'#2888c8','stroke-width':9,fill:'none','stroke-linecap':'round',opacity:0.65},svg);
+    // Paths
+    [['M400,202 L400,135'],['M335,252 L242,215'],['M465,252 L542,215'],
+     ['M342,342 L248,408'],['M458,342 L522,408']].forEach(function(d){
+      pg(d[0],{stroke:'#d0b858','stroke-width':16,fill:'none','stroke-linecap':'round',opacity:0.62},svg);
+    });
+    ep(400,545,85,38,{fill:'#58a020',stroke:'#389008','stroke-width':2},svg);
+    [[48,252],[62,235],[48,218],[75,228]].forEach(function(p){ci(p[0],p[1],16,{fill:'#207010',opacity:0.72},svg); ci(p[0]+4,p[1]-3,11,{fill:'#288012',opacity:0.62},svg);});
+
+    // TREE OF LIFE
+    landmark('treeoflife',400,272,'Tree of Life',function(g,sel,inR){
+      var x=400,y=268;
+      [[x-14,y+52,x-28,y+68],[x+14,y+52,x+28,y+68],[x,y+54,x,y+70]].forEach(function(r){
+        pg('M'+r[0]+','+r[1]+' C'+r[2]+','+r[3]+' '+(r[2]+4)+','+(r[3]+10)+' '+(r[2]+6)+','+(r[3]+16),{stroke:'#5a3408','stroke-width':5,'stroke-linecap':'round',fill:'none'},g);
+      });
+      rr(x-14,y+22,28,32,{fill:'#5e3608',stroke:'#422408','stroke-width':1.5},g);
+      pg('M'+(x-14)+','+(y+22)+' C'+(x-21)+','+(y+12)+' '+(x-19)+','+(y-1)+' '+x+','+(y-6)+' C'+(x+19)+','+(y-1)+' '+(x+21)+','+(y+12)+' '+(x+14)+','+(y+22)+' Z',{fill:'#543008',stroke:'#3c2004','stroke-width':1.5},g);
+      [[x,y-18,72,62],[x-14,y-28,56,48],[x+14,y-32,50,44],[x,y-40,42,37],[x-10,y-48,33,29],[x+10,y-50,30,27],[x,y-57,26,23],[x,y-65,20,18],[x,y-73,15,13],[x,y-80,11,10]].forEach(function(e){
+        ep(e[0],e[1],e[2],e[3],{fill:'#' + ['145608','185e08','1c6408','206808','267010','2a7410','307810','368010','3a8410','408810'][Math.floor(e[2]/8)]||'145608',opacity:0.9},g);
+      });
+    });
+
+    // EVEREST
+    landmark('everest',602,142,'Expedition Everest',function(g,sel,inR){
+      var x=602,y=135;
+      pg('M'+x+','+(y-55)+' L'+(x-28)+','+(y-10)+' L'+(x-52)+','+(y-10)+' Z',{fill:'#eaf2f8',stroke:'#c8d8e8','stroke-width':1.5},g);
+      pg('M'+x+','+(y-55)+' L'+(x+28)+','+(y-10)+' L'+(x+52)+','+(y-10)+' Z',{fill:'#e2ecf5',stroke:'#c0d0e2','stroke-width':1.5},g);
+      pg('M'+(x-52)+','+(y-10)+' L'+(x+52)+','+(y-10)+' L'+x+','+(y-55)+' Z',{fill:'#c8d5e8',opacity:0.52},g);
+      pg('M'+(x-65)+','+(y+12)+' L'+(x-52)+','+(y-10)+' L'+x+','+(y-55)+' L'+(x+52)+','+(y-10)+' L'+(x+65)+','+(y+12)+' Z',{fill:'#9898a8',stroke:'#787898','stroke-width':1.5},g);
+      pg('M'+(x-14)+','+(y-36)+' L'+x+','+(y-55)+' L'+(x+14)+','+(y-36)+' C'+(x+9)+','+(y-43)+' '+x+','+(y-45)+' '+(x-9)+','+(y-43)+' Z',{fill:'#f5f8ff'},g);
+      ep(x,y+12,66,38,{fill:'none',stroke:'#786040','stroke-width':4,opacity:0.85},g);
+      ep(x,y+12,48,26,{fill:'none',stroke:'#685830','stroke-width':3,opacity:0.65},g);
+      rr(x+46,y+5,18,11,{fill:'#d03028',rx:2},g);
+      ci(x+49,y+17,4,{fill:'#222'},g); ci(x+59,y+17,4,{fill:'#222'},g);
+    });
+
+    // KILIMANJARO
+    landmark('kilimanjaro',158,208,'Kilimanjaro Safaris',function(g,sel,inR){
+      var x=158,y=202;
+      rr(x-14,y-4,30,18,{fill:'#485e20',stroke:'#283808','stroke-width':1.5,rx:2},g);
+      ci(x-9,y+16,6,{fill:'#202020'},g); ci(x+10,y+16,6,{fill:'#202020'},g);
+      pg('M'+(x+36)+','+(y-20)+' C'+(x+40)+','+(y-38)+' '+(x+42)+','+(y-52)+' '+(x+40)+','+(y-60),{stroke:'#c09020','stroke-width':6,'stroke-linecap':'round',fill:'none'},g);
+      ep(x+40,y-62,7,5,{fill:'#c89828'},g);
+      pg('M'+(x+27)+','+(y-20)+' L'+(x+43)+','+(y-20)+' L'+(x+40)+','+(y-8)+' L'+(x+30)+','+(y-8)+' Z',{fill:'#d0a830'},g);
+      [[x+30,y-16],[x+37,y-12],[x+42,y-16]].forEach(function(p){ci(p[0],p[1],3,{fill:'#a07015'},g);});
+      pg('M'+(x-40)+','+(y-2)+' C'+(x-48)+','+(y-14)+' '+(x-46)+','+(y-25)+' '+(x-38)+','+(y-30)+' C'+(x-30)+','+(y-35)+' '+(x-18)+','+(y-32)+' '+(x-14)+','+(y-22)+' Z',{fill:'#808878',stroke:'#606658','stroke-width':1},g);
+      pg('M'+(x-48)+','+(y-2)+' C'+(x-54)+','+(y+4)+' '+(x-52)+','+(y+14)+' '+(x-47)+','+(y+17),{stroke:'#708070','stroke-width':4,fill:'none'},g);
+      ep(x+18,y+18,14,8,{fill:'#e8e8d8',stroke:'#282828','stroke-width':0.5},g);
+      [[x+8,y+17],[x+14,y+16],[x+20,y+17],[x+26,y+17],[x+32,y+17]].forEach(function(p){pg('M'+p[0]+','+p[1]+' L'+p[0]+','+(p[1]+9),{stroke:'#282828','stroke-width':1.8},g);});
+    });
+
+    // FLIGHT OF PASSAGE
+    landmark('flightofpassage',598,422,'Flight of Passage',function(g,sel,inR){
+      var x=598,y=415;
+      rr(x-42,y-14,84,52,{fill:'#0c1422',stroke:'#182030','stroke-width':1.5,rx:2},g);
+      rr(x-34,y-5,25,33,{fill:'#141c30',rx:1},g); rr(x+9,y-5,25,33,{fill:'#141c30',rx:1},g);
+      pg('M'+(x-42)+','+(y-14)+' L'+x+','+(y-33)+' L'+(x+42)+','+(y-14),{fill:'#081018',stroke:'#182030','stroke-width':1.2},g);
+      ep(x,y-24,22,9,{fill:'#1030a8',opacity:0.55},g);
+      [[x-24,y-4],[x-8,y-1],[x+8,y-1],[x+24,y-4]].forEach(function(p){ci(p[0],p[1],4.5,{fill:'#3050d0',opacity:0.62},g);});
+      pg('M'+x+','+(y-44)+' C'+(x-12)+','+(y-38)+' '+(x-17)+','+(y-32)+' '+(x-14)+','+(y-26)+' C'+(x-17)+','+(y-29)+' '+(x-28)+','+(y-26)+' '+(x-32)+','+(y-30)+' C'+(x-34)+','+(y-22)+' '+(x-24)+','+(y-19)+' '+(x-14)+','+(y-22)+' C'+(x-6)+','+(y-19)+' '+x+','+(y-24)+' C'+(x+6)+','+(y-19)+' '+(x+14)+','+(y-22)+' C'+(x+24)+','+(y-19)+' '+(x+34)+','+(y-22)+' '+(x+32)+','+(y-30)+' C'+(x+28)+','+(y-26)+' '+(x+17)+','+(y-29)+' '+(x+14)+','+(y-26)+' C'+(x+17)+','+(y-32)+' '+(x+12)+','+(y-38)+' Z',{fill:'#184870',stroke:'#2060a0','stroke-width':1,opacity:0.85},g);
+    });
+
+    // NAVI RIVER
+    landmark('naviriver',512,398,"Na'vi River Journey",function(g,sel,inR){
+      var x=512,y=390;
+      pg('M'+(x-38)+','+(y-8)+' C'+(x-22)+','+(y-26)+' '+(x+10)+','+(y-30)+' '+(x+30)+','+(y-22)+' C'+(x+46)+','+(y-14)+' '+(x+50)+','+(y+6)+' '+(x+44)+','+(y+18),
+         {stroke:'#1838a8','stroke-width':13,'stroke-linecap':'round',opacity:0.88},g);
+      pg('M'+(x-38)+','+(y-8)+' C'+(x-22)+','+(y-26)+' '+(x+10)+','+(y-30)+' '+(x+30)+','+(y-22)+' C'+(x+46)+','+(y-14)+' '+(x+50)+','+(y+6)+' '+(x+44)+','+(y+18),
+         {stroke:'#4868d8','stroke-width':6.5,'stroke-linecap':'round','stroke-dasharray':'7,5',opacity:0.68},g);
+      ep(x,y+5,16,6,{fill:'#2848a0',stroke:'#3858c8','stroke-width':1},g);
+      [[x-22,y-3],[x+5,y-17],[x+26,y-8]].forEach(function(p){ci(p[0],p[1],4,{fill:'#5080e8',opacity:0.65},g);});
+    });
+
+    // KALI RIVER RAPIDS
+    landmark('kali',652,265,'Kali River Rapids',function(g,sel,inR){
+      var x=652,y=258;
+      ci(x,y,30,{fill:'#1870a8',stroke:'#0850a8','stroke-width':2.5},g);
+      ci(x,y,19,{fill:'#1058a0'},g);
+      pg('M'+(x-30)+','+y+' A30,30 0 0,1 '+(x+30)+','+y,{stroke:'#50c0e8','stroke-width':4.5,fill:'none'},g);
+      pg('M'+(x-19)+','+(y+6)+' C'+(x-9)+','+(y-6)+' '+(x+9)+','+(y-6)+' '+(x+19)+','+(y+6),{stroke:'#80d8f0','stroke-width':3,fill:'none'},g);
+      [[x-19,y-18],[x+19,y-15],[x,y-26]].forEach(function(p){pg('M'+p[0]+','+p[1]+' L'+(p[0]-2)+','+(p[1]-8)+' L'+(p[0]+2)+','+(p[1]-8),{fill:'#88d8f8',opacity:0.7},g);});
+    });
+
+    // DINOSAUR
+    landmark('dinosaur',212,432,'DINOSAUR',function(g,sel,inR){
+      var x=212,y=425;
+      pg('M'+(x-45)+','+(y+17)+' C'+(x-52)+','+(y+4)+' '+(x-48)+','+(y-14)+' '+(x-36)+','+(y-24)+' C'+(x-25)+','+(y-33)+' '+(x-6)+','+(y-36)+' '+x+','+(y-30)+' C'+(x+10)+','+(y-36)+' '+(x+28)+','+(y-30)+' '+(x+34)+','+(y-14)+' C'+(x+38)+','+(y-2)+' '+(x+34)+','+(y+12)+' '+(x+22)+','+(y+19)+' Z',{fill:'#483008',stroke:'#281804','stroke-width':1.5},g);
+      pg('M'+(x+22)+','+(y-14)+' C'+(x+32)+','+(y-22)+' '+(x+44)+','+(y-24)+' '+(x+46)+','+(y-13)+' C'+(x+48)+','+(y-4)+' '+(x+40)+','+(y+3)+' '+(x+32)+','+(y+0)+' Z',{fill:'#5a3818'},g);
+      ci(x+40,y-16,3.5,{fill:'#d8b850'},g);
+      [[x-22,y-22],[x-6,y-29],[x+9,y-30],[x+22,y-29]].forEach(function(p){pg('M'+p[0]+','+p[1]+' L'+(p[0]-2)+','+(p[1]-13)+' L'+(p[0]+4)+','+(p[1]-10)+' Z',{fill:'#604018'},g);});
+      rr(x-38,y+17,12,18,{fill:'#382008',rx:2},g); rr(x-10,y+19,12,18,{fill:'#382008',rx:2},g); rr(x+18,y+17,12,18,{fill:'#382008',rx:2},g);
+    });
+
+    tx('PANDORA',598,428,10,'#7880ff',true);
+    tx('AFRICA',162,215,10,'#f8e030',true);
+    tx('ASIA',608,210,10,'#a0f860',true);
+    tx('DINOLAND U.S.A.',215,438,8.5,'#f8c048',true);
+    tx('DISCOVERY ISLAND',400,280,8,'#d0ff88',true);
+  }
+
+  // Route path
+  if (route.length > 1) {
+    var pts = route.map(function(id){return ridePos[id];}).filter(Boolean);
+    if (pts.length > 1) {
+      var d = 'M'+pts[0].x+' '+pts[0].y;
+      for (var i=1;i<pts.length;i++) d+=' L'+pts[i].x+' '+pts[i].y;
+      pg(d,{stroke:'rgba(0,0,0,0.4)','stroke-width':10,'stroke-linecap':'round'});
+      pg(d,{stroke:'#ffffff','stroke-width':6,'stroke-dasharray':'12,7','stroke-linecap':'round'});
+    }
+  }
+
+  // Numbered stops
+  var meta = PARK_META[currentPark];
+  route.forEach(function(id,idx){
+    var pos=ridePos[id]; if(!pos)return;
+    ci(pos.x,pos.y,24,{fill:'rgba(0,0,0,0.38)'},svg);
+    ci(pos.x,pos.y,21,{fill:meta.color,stroke:'#ffffff','stroke-width':3.5},svg);
+    var n=el('text',{x:pos.x,y:pos.y+7,'text-anchor':'middle','font-size':17,'font-weight':700,fill:'#fff','font-family':'system-ui'});
+    n.textContent=idx+1; svg.appendChild(n);
+  });
+
+  return svg;
+}
+
+
+// ── Quick route (3 rides) ─────────────────────────────────────────────────────
+
+function computeLocalRoute(sel) {
+  if (!sel.length) return [];
+  var remaining = sel.slice();
+  var route = [];
+  var current = {name:'entrance', waitTime:0};
+  while (remaining.length && route.length < 3) {
+    var best = null, bestScore = Infinity;
+    remaining.forEach(function(r) {
+      var s = r.waitTime + walkMins(current, r) * 1.5;
+      if (s < bestScore) { bestScore = s; best = r; }
+    });
+    route.push(best);
+    remaining.splice(remaining.indexOf(best), 1);
+    current = best;
+  }
+  return route;
+}
+
+async function optimizeRoute() {
+  var sel = rides.filter(function(r) { return selected.has(r.id); });
+  if (sel.length < 2) { alert('Select at least 2 rides.'); return; }
+  showScreen('route');
+  document.getElementById('route-back-btn').onclick = function() { showScreen('rides'); };
+  document.getElementById('route-body').innerHTML = '<div class="loading" style="padding-top:80px"><div class="loading-spinner"></div><p>Building your route...</p></div>';
+
+  var meta = PARK_META[currentPark];
+  var top3 = computeLocalRoute(sel);
+  routeOrder = top3.map(function(r) { return r.id; });
+
+  var walkLabels = [];
+  for (var i = 0; i < top3.length - 1; i++) {
+    var w = walkMins(top3[i], top3[i+1]);
+    walkLabels.push(w < 1 ? '<1 min walk' : Math.round(w) + ' min walk');
+  }
+
+  var tip = 'Start with the closest high-demand ride, then work through the area.';
+  try {
+    var lines = top3.map(function(r) { return r.name + ': ' + r.waitTime + ' min wait'; }).join(', ');
+    var res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({model:'claude-sonnet-4-6', max_tokens:120, messages:[{role:'user',
+        content:'Disney World ' + meta.name + '. These 3 rides are in optimal order: ' + lines + '. Give one short practical tip (under 20 words). Plain text only.'}]})
+    });
+    var d = await res.json();
+    tip = d.content.map(function(b) { return b.text || ''; }).join('').trim();
+  } catch(e) {}
+
+  var totalWait = top3.reduce(function(s,r) { return s + r.waitTime; }, 0);
+  var totalWalk = top3.reduce(function(s,r,i) { return i === 0 ? s : s + walkMins(top3[i-1], r); }, 0);
+  var totalTime = totalWait + Math.round(totalWalk) + top3.length * 5;
+  var heroBg = HERO_COLORS[currentPark] || '#185FA5';
+
+  var mapSvg = buildMap(routeOrder);
+  var html = '<div class="route-hero" style="background:' + heroBg + '"><h2>' + meta.emoji + ' Next 3 rides</h2><p>' + tip + '</p></div>' +
+    '<div class="route-stats"><div class="route-stat"><div class="route-stat-v">' + top3.length + '</div><div class="route-stat-l">rides</div></div>' +
+    '<div class="route-stat"><div class="route-stat-v">' + Math.round(totalWait) + 'm</div><div class="route-stat-l">wait time</div></div>' +
+    '<div class="route-stat"><div class="route-stat-v">' + Math.round(totalTime) + 'm</div><div class="route-stat-l">total time</div></div></div>' +
+    '<div class="map-section"><h3>Route map</h3><div class="map-wrap" id="map-container"></div></div>' +
+    '<div class="steps-section"><h3>Your next stops</h3>';
+
+  top3.forEach(function(ride, i) {
+    var walkNote = i < walkLabels.length ? '<div class="walk-note">↓ ' + walkLabels[i] + '</div>' : '';
+    html += '<div class="step-card"><div class="step-num">' + (i+1) + '</div>' +
+      '<div style="flex:1"><div class="step-name">' + ride.name + '</div>' +
+      '<div class="step-wait">' + ride.waitTime + ' min wait' + (ride.area ? ' · ' + ride.area : '') + '</div></div>' +
+      '<span class="wait-badge ' + wc(ride.waitTime) + '">' + ride.waitTime + 'm</span></div>' + walkNote;
+  });
+
+  var remaining = sel.filter(function(r) { return routeOrder.indexOf(r.id) < 0; });
+  if (remaining.length) {
+    html += '<div style="margin-top:16px;padding:14px 16px;background:#fff;border-radius:12px;">' +
+      '<div style="font-size:12px;font-weight:600;color:#8e8e93;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px;">After these 3</div>';
+    remaining.forEach(function(r) {
+      html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid #f3f4f6;">' +
+        '<span style="font-size:14px;color:#6b7280;">' + r.name + '</span>' +
+        '<span class="wait-badge ' + wc(r.waitTime) + '">' + r.waitTime + 'm</span></div>';
+    });
+    html += '</div>';
+  }
+
+  html += '</div><div style="margin:16px;display:grid;grid-template-columns:1fr 1fr;gap:10px;">' +
+    '<button class="sm-btn outline" id="back-rides-btn">‹ Back</button>' +
+    '<button class="sm-btn filled" id="reopt-btn">Re-optimize</button></div>';
+
+  document.getElementById('route-body').innerHTML = html;
+  document.getElementById('map-container').appendChild(mapSvg);
+  document.getElementById('back-rides-btn').onclick = function() { showScreen('rides'); };
+  document.getElementById('reopt-btn').onclick = reoptimize;
+}
+
+function reoptimize() {
+  if (routeOrder.length > 0) selected.delete(routeOrder[0]);
+  optimizeRoute();
+}
+
+// ── Priority picker ───────────────────────────────────────────────────────────
+
+function openPriorityPicker() {
+  priority = {};
+  rides.forEach(function(r) { priority[r.id] = 'skip'; });
+  renderPriorityList();
+  showScreen('priority');
+  var pf = document.getElementById('priority-footer');
+  if (pf) pf.style.display = 'block';
+}
+
+function renderPriorityList() {
+  var mustCount = Object.values(priority).filter(function(v) { return v === 'must'; }).length;
+  var wantCount = Object.values(priority).filter(function(v) { return v === 'want'; }).length;
+  var info = document.getElementById('priority-info');
+  if (info) info.textContent = mustCount + ' must-dos · ' + wantCount + ' want-to-dos';
+  var list = document.getElementById('priority-list');
+  list.innerHTML = '';
+  rides.forEach(function(r) {
+    var p = priority[r.id] || 'skip';
+    var icons = {must:'★', want:'✓', skip:''};
+    var div = document.createElement('div');
+    div.className = 'priority-card' + (p === 'must' ? ' must' : p === 'want' ? ' want' : '');
+    div.innerHTML = '<div class="priority-dot">' + (icons[p] || '') + '</div>' +
+      '<div style="flex:1"><div class="priority-name">' + r.name + '</div>' +
+      (r.area ? '<div class="priority-area">' + r.area + ' · ' + r.waitTime + ' min wait</div>' : '') + '</div>' +
+      '<span class="wait-badge ' + wc(r.waitTime) + '">' + r.waitTime + 'm</span>';
+    div.addEventListener('click', function() {
+      var cur = priority[r.id] || 'skip';
+      priority[r.id] = cur === 'skip' ? 'must' : cur === 'must' ? 'want' : 'skip';
+      renderPriorityList();
+    });
+    list.appendChild(div);
+  });
+}
+
+// ── Full day route ────────────────────────────────────────────────────────────
+
+async function buildFullDayRoute() {
+  showScreen('route');
+  document.getElementById('route-back-btn').onclick = function() { showScreen('priority'); };
+  document.getElementById('route-body').innerHTML = '<div class="loading" style="padding-top:80px"><div class="loading-spinner"></div><p>Building your full day...</p></div>';
+
+  var meta = PARK_META[currentPark];
+  var mustRides = rides.filter(function(r) { return priority[r.id] === 'must'; });
+  var wantRides = rides.filter(function(r) { return priority[r.id] === 'want'; });
+  var allRides = mustRides.concat(wantRides);
+
+  if (!allRides.length) {
+    document.getElementById('route-body').innerHTML = '<div class="error-box"><p>Pick at least one must-do or want-to ride first.</p><button id="err-back-btn">‹ Go back</button></div>';
+    var eb = document.getElementById('err-back-btn');
+    if (eb) eb.onclick = function() { showScreen('priority'); };
+    return;
+  }
+
+  var budgetMins = hours * 60;
+  var remaining = allRides.slice();
+  var fullRoute = [];
+  var elapsed = 0;
+  var current = {name:'entrance', waitTime:0};
+
+  while (remaining.length && elapsed < budgetMins - 20) {
+    var musts = remaining.filter(function(r) { return priority[r.id] === 'must'; });
+    var pool = musts.length ? musts : remaining;
+    var best = null, bestScore = Infinity;
+    pool.forEach(function(r) {
+      var walk = walkMins(current, r);
+      var s = (priority[r.id] === 'must' ? 0 : 20) + r.waitTime + walk * 1.5;
+      if (s < bestScore) { bestScore = s; best = r; }
+    });
+    var walk = current.name === 'entrance' ? 5 : walkMins(current, best);
+    var rideCost = best.waitTime + walk + 5;
+    if (elapsed + rideCost > budgetMins) break;
+    fullRoute.push({ride:best, walkFromPrev:Math.round(walk), startMin:Math.round(elapsed + walk)});
+    elapsed += rideCost;
+    remaining.splice(remaining.indexOf(best), 1);
+    current = best;
+  }
+
+  routeOrder = fullRoute.map(function(s) { return s.ride.id; });
+
+  var tip = 'Must-dos are prioritized early, then grouped by area to minimize walking.';
+  try {
+    var lines = fullRoute.map(function(s, i) {
+      return (i+1) + '. ' + s.ride.name + ' (' + (priority[s.ride.id] === 'must' ? 'MUST' : 'want') + ', ' + s.ride.waitTime + 'min)';
+    }).join(', ');
+    var res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({model:'claude-sonnet-4-6', max_tokens:100, messages:[{role:'user',
+        content:'Disney World ' + meta.name + ', ' + hours + 'hr visit. Order: ' + lines + '. One practical tip (under 20 words). Plain text only.'}]})
+    });
+    var d = await res.json();
+    tip = d.content.map(function(b) { return b.text || ''; }).join('').trim();
+  } catch(e) {}
+
+  var mapSvg = buildMap(routeOrder);
+  var heroBg = HERO_COLORS[currentPark] || '#185FA5';
+  var openHour = currentMode === 'fullday' ? (parseInt(document.getElementById('open-hour').value) || 9) : 9;
+
+  function minToTime(min) {
+    var total = openHour * 60 + min;
+    var h = Math.floor(total / 60);
+    var m = total % 60;
+    var ampm = h >= 12 ? 'pm' : 'am';
+    var disp = h > 12 ? h - 12 : h === 0 ? 12 : h;
+    return disp + ':' + (m < 10 ? '0' : '') + m + ampm;
+  }
+
+  var totalWait = fullRoute.reduce(function(s,r) { return s + r.ride.waitTime; }, 0);
+  var mustDone = mustRides.filter(function(r) { return fullRoute.find(function(s) { return s.ride.id === r.id; }); }).length;
+  var heroBg2 = HERO_COLORS[currentPark] || '#185FA5';
+
+  var html = '<div class="route-hero" style="background:' + heroBg2 + '"><h2>' + meta.emoji + ' Your full day</h2><p>' + tip + '</p></div>' +
+    '<div class="route-stats">' +
+    '<div class="route-stat"><div class="route-stat-v">' + fullRoute.length + '</div><div class="route-stat-l">rides</div></div>' +
+    '<div class="route-stat"><div class="route-stat-v">' + mustDone + '</div><div class="route-stat-l">must-dos</div></div>' +
+    '<div class="route-stat"><div class="route-stat-v">' + Math.round(totalWait) + 'm</div><div class="route-stat-l">total wait</div></div>' +
+    '</div><div class="map-section"><h3>Full day route</h3><div class="map-wrap" id="map-container"></div></div>';
+
+  var totalMins = hours * 60;
+  var third = totalMins / 3;
+  var segments = [
+    {label:'Morning', icon:'🌅', rides:fullRoute.filter(function(s) { return s.startMin < third; })},
+    {label:'Afternoon', icon:'☀️', rides:fullRoute.filter(function(s) { return s.startMin >= third && s.startMin < third * 2; })},
+    {label:'Evening', icon:'🌙', rides:fullRoute.filter(function(s) { return s.startMin >= third * 2; })}
+  ];
+
+  segments.forEach(function(seg) {
+    if (!seg.rides.length) return;
+    html += '<div class="day-segment"><div class="seg-label">' + seg.icon + ' ' + seg.label + '</div><div class="seg-card">';
+    seg.rides.forEach(function(s) {
+      var isMust = priority[s.ride.id] === 'must';
+      var walkNote = s.walkFromPrev > 0 ? ' · ' + s.walkFromPrev + ' min walk' : '';
+      html += '<div class="seg-row">' +
+        '<div class="seg-time">' + minToTime(s.startMin) + '</div>' +
+        '<div class="seg-icon">' + (isMust ? '★' : '·') + '</div>' +
+        '<div class="seg-detail"><div class="seg-name">' + s.ride.name + '</div>' +
+        '<div class="seg-sub">' + s.ride.waitTime + ' min wait' + walkNote + '</div></div>' +
+        '<div>' + (isMust ? '<span class="must-tag">MUST</span>' : '') + '</div></div>';
+    });
+    html += '</div></div>';
+  });
+
+  if (remaining.length) {
+    html += '<div class="day-segment"><div class="seg-label">⏭ Didn&#39;t fit today</div><div class="seg-card">';
+    remaining.forEach(function(r) {
+      html += '<div class="seg-row">' +
+        '<div class="seg-time" style="color:#c7c7cc;">—</div>' +
+        '<div class="seg-icon" style="opacity:0.4">·</div>' +
+        '<div class="seg-detail"><div class="seg-name" style="color:#8e8e93;">' + r.name + '</div>' +
+        '<div class="seg-sub">' + r.waitTime + ' min wait</div></div>' +
+        '<span class="wait-badge ' + wc(r.waitTime) + '">' + r.waitTime + 'm</span></div>';
+    });
+    html += '</div></div>';
+  }
+
+  html += '<div style="margin:8px 16px 32px;display:grid;grid-template-columns:1fr 1fr;gap:10px;">' +
+    '<button class="sm-btn outline" id="adjust-btn">‹ Adjust</button>' +
+    '<button class="sm-btn filled" id="livewaits-btn">Live waits</button></div>';
+
+  document.getElementById('route-body').innerHTML = html;
+  document.getElementById('map-container').appendChild(mapSvg);
+  document.getElementById('adjust-btn').onclick = function() { showScreen('priority'); };
+  document.getElementById('livewaits-btn').onclick = function() { showScreen('rides'); };
+}
+</script>
+</body>
+</html>
