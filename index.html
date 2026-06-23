@@ -1,0 +1,1354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<title>Park Route Planner</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{-webkit-text-size-adjust:100%;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f2f2f7;color:#1c1c1e;min-height:100dvh;}
+.screen{display:none;}.screen.active{display:block;}
+.setup{padding:24px 20px 40px;}
+.logo{display:flex;align-items:center;gap:10px;margin-bottom:20px;}
+.logo-icon{width:44px;height:44px;background:#185FA5;border-radius:12px;display:flex;align-items:center;justify-content:center;}
+.logo-icon svg{width:24px;height:24px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.logo h1{font-size:22px;font-weight:700;color:#1c1c1e;}
+.logo p{font-size:13px;color:#8e8e93;margin-top:1px;}
+.section-label{font-size:12px;font-weight:600;color:#8e8e93;text-transform:uppercase;letter-spacing:0.06em;margin:20px 0 8px;}
+.inset-group{background:#fff;border-radius:12px;overflow:hidden;}
+.inset-row{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:0.5px solid #e5e5ea;}
+.inset-row:last-child{border-bottom:none;}
+.inset-row label{font-size:15px;color:#1c1c1e;flex-shrink:0;}
+.inset-row input[type=number]{width:60px;border:none;outline:none;font-size:15px;color:#185FA5;background:transparent;text-align:right;font-weight:600;}
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.mode-card{background:#fff;border-radius:14px;padding:18px 14px;border:2px solid transparent;cursor:pointer;transition:border-color 0.15s,background 0.15s;text-align:left;-webkit-tap-highlight-color:transparent;}
+.mode-card.active{border-color:#185FA5;background:#f0f6ff;}
+.mode-card .mode-icon{font-size:26px;display:block;margin-bottom:10px;}
+.mode-card .mode-name{font-size:14px;font-weight:700;color:#1c1c1e;}
+.mode-card .mode-sub{font-size:11px;color:#8e8e93;margin-top:4px;line-height:1.4;}
+.mode-card.active .mode-name{color:#185FA5;}
+.park-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.park-card{background:#fff;border-radius:14px;padding:16px 14px;border:2px solid transparent;cursor:pointer;transition:border-color 0.15s,background 0.15s;text-align:left;-webkit-tap-highlight-color:transparent;}
+.park-card.active{border-color:#185FA5;background:#f0f6ff;}
+.park-card .park-emoji{font-size:28px;display:block;margin-bottom:8px;}
+.park-card .park-name{font-size:14px;font-weight:600;color:#1c1c1e;line-height:1.3;}
+.park-card .park-sub{font-size:12px;color:#8e8e93;margin-top:2px;}
+.cta{margin-top:28px;}
+.big-btn{width:100%;padding:16px;background:#185FA5;color:#fff;border:none;border-radius:14px;font-size:17px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;-webkit-tap-highlight-color:transparent;}
+.big-btn:active{opacity:0.85;}
+.big-btn.secondary{background:#e5e5ea;color:#1c1c1e;}
+.rides-screen{padding-bottom:100px;}
+.top-bar{background:#fff;border-bottom:0.5px solid #e5e5ea;padding:12px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10;}
+.back-btn{background:none;border:none;color:#185FA5;font-size:15px;font-weight:500;cursor:pointer;padding:4px 0;}
+.top-bar-title{font-size:17px;font-weight:600;flex:1;}
+.refresh-btn{background:none;border:none;color:#185FA5;font-size:22px;cursor:pointer;padding:4px;line-height:1;}
+.source-chip{font-size:11px;font-weight:600;padding:3px 8px;border-radius:99px;}
+.sc-tp{background:#dcfce7;color:#166534;}
+.sc-qt{background:#fef9c3;color:#854d0e;}
+.rides-list{padding:12px 16px;display:flex;flex-direction:column;gap:8px;}
+.ride-card{background:#fff;border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;border:2px solid transparent;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.ride-card.on{border-color:#185FA5;background:#f0f6ff;}
+.ride-check{width:24px;height:24px;border-radius:50%;border:2px solid #c7c7cc;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.ride-card.on .ride-check{background:#185FA5;border-color:#185FA5;}
+.ride-check-mark{display:none;color:#fff;font-size:13px;font-weight:700;line-height:1;}
+.ride-card.on .ride-check-mark{display:block;}
+.ride-info{flex:1;min-width:0;}
+.ride-name{font-size:15px;font-weight:500;color:#1c1c1e;line-height:1.3;}
+.ride-area{font-size:12px;color:#8e8e93;margin-top:2px;}
+.wait-badge{flex-shrink:0;padding:5px 11px;border-radius:99px;font-size:13px;font-weight:700;}
+.wl{background:#dcfce7;color:#166534;}
+.wm{background:#fef9c3;color:#854d0e;}
+.wh{background:#fee2e2;color:#991b1b;}
+.bottom-bar{position:fixed;bottom:0;left:0;right:0;padding:12px 20px;padding-bottom:max(12px,env(safe-area-inset-bottom));background:#f2f2f7;border-top:0.5px solid #e5e5ea;}
+.sel-info{font-size:13px;color:#8e8e93;text-align:center;margin-bottom:8px;}
+.bottom-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.sm-btn{padding:13px;border-radius:12px;font-size:15px;font-weight:600;border:none;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.sm-btn.outline{background:#fff;color:#185FA5;border:1.5px solid #185FA5;}
+.sm-btn.filled{background:#185FA5;color:#fff;}
+.priority-screen{padding-bottom:110px;}
+.priority-list{padding:12px 16px;display:flex;flex-direction:column;gap:8px;}
+.priority-card{background:#fff;border-radius:12px;padding:13px 16px;display:flex;align-items:center;gap:12px;border:2px solid transparent;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:border-color 0.12s,background 0.12s;}
+.priority-card.must{border-color:#ff9500;background:#fff8f0;}
+.priority-card.want{border-color:#185FA5;background:#f0f6ff;}
+.priority-dot{width:24px;height:24px;border-radius:50%;border:2px solid #c7c7cc;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;}
+.priority-card.must .priority-dot{background:#ff9500;border-color:#ff9500;color:#fff;}
+.priority-card.want .priority-dot{background:#185FA5;border-color:#185FA5;color:#fff;}
+.priority-name{font-size:15px;font-weight:500;color:#1c1c1e;}
+.priority-area{font-size:12px;color:#8e8e93;margin-top:2px;}
+.legend-row{display:flex;gap:14px;padding:10px 16px 4px;flex-wrap:wrap;}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:#6b6b72;}
+.legend-dot{width:12px;height:12px;border-radius:50%;}
+.route-screen{padding-bottom:40px;}
+.route-hero{color:#fff;padding:24px 20px 20px;}
+.route-hero h2{font-size:20px;font-weight:700;margin-bottom:4px;}
+.route-hero p{font-size:14px;opacity:0.85;line-height:1.5;}
+.route-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:#e5e5ea;border-radius:14px;overflow:hidden;margin:16px 20px;}
+.route-stat{background:#fff;padding:14px 10px;text-align:center;}
+.route-stat-v{font-size:22px;font-weight:700;color:#1c1c1e;}
+.route-stat-l{font-size:11px;color:#8e8e93;margin-top:3px;}
+.map-section{margin:0 16px 16px;}
+.map-section h3{font-size:13px;font-weight:600;color:#8e8e93;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;}
+.map-wrap{background:#fff;border-radius:14px;overflow:hidden;}
+.map-wrap svg{display:block;width:100%;height:auto;}
+.steps-section{padding:0 16px;}
+.steps-section h3{font-size:13px;font-weight:600;color:#8e8e93;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;}
+.step-card{background:#fff;border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:14px;margin-bottom:8px;}
+.step-num{width:32px;height:32px;border-radius:50%;background:#185FA5;color:#fff;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.step-name{font-size:15px;font-weight:500;color:#1c1c1e;}
+.step-wait{font-size:13px;color:#8e8e93;margin-top:2px;}
+.walk-note{text-align:center;font-size:12px;color:#8e8e93;padding:4px 0 2px;}
+.day-segment{margin:0 16px 12px;}
+.seg-label{font-size:11px;font-weight:700;color:#8e8e93;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;padding-left:4px;}
+.seg-card{background:#fff;border-radius:12px;overflow:hidden;margin-bottom:6px;}
+.seg-row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:0.5px solid #f3f4f6;}
+.seg-row:last-child{border-bottom:none;}
+.seg-time{font-size:12px;font-weight:600;color:#8e8e93;width:44px;flex-shrink:0;}
+.seg-icon{font-size:16px;flex-shrink:0;width:22px;text-align:center;}
+.seg-detail{flex:1;min-width:0;}
+.seg-name{font-size:14px;font-weight:500;color:#1c1c1e;}
+.seg-sub{font-size:12px;color:#8e8e93;margin-top:1px;}
+.must-tag{font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;background:#fff3e0;color:#e65100;}
+.loading{text-align:center;padding:60px 20px;}
+.loading-spinner{width:36px;height:36px;border:3px solid #e5e5ea;border-top-color:#185FA5;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 16px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading p{font-size:15px;color:#8e8e93;}
+.error-box{margin:16px;background:#fff;border-radius:12px;padding:20px;text-align:center;}
+.error-box p{font-size:14px;color:#ff3b30;line-height:1.5;}
+.error-box button{margin-top:14px;padding:10px 24px;background:#185FA5;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;}
+</style>
+</head>
+<body>
+
+<!-- SCREEN 1: Setup -->
+<div class="screen active" id="screen-setup">
+  <div class="setup">
+    <div class="logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      </div>
+      <div>
+        <h1>Park Planner</h1>
+        <p>Disney World · Live wait times</p>
+      </div>
+    </div>
+
+    <div class="section-label">Planning mode</div>
+    <div class="mode-grid">
+      <button class="mode-card active" data-mode="quick" onclick="selectMode(this)">
+        <span class="mode-icon">⚡</span>
+        <div class="mode-name">Quick picks</div>
+        <div class="mode-sub">Next 3 rides, re-optimize as you go</div>
+      </button>
+      <button class="mode-card" data-mode="fullday" onclick="selectMode(this)">
+        <span class="mode-icon">📅</span>
+        <div class="mode-name">Full day plan</div>
+        <div class="mode-sub">Complete schedule for your whole visit</div>
+      </button>
+    </div>
+
+    <div id="hours-section" style="display:none">
+      <div class="section-label">Park hours</div>
+      <div class="inset-group">
+        <div class="inset-row">
+          <label>Opens at</label>
+          <input type="number" id="open-hour" value="9" min="7" max="12"/>
+          <span style="font-size:15px;color:#8e8e93;margin-left:4px;">am</span>
+        </div>
+        <div class="inset-row">
+          <label>Closes at</label>
+          <input type="number" id="close-hour" value="10" min="6" max="12"/>
+          <span style="font-size:15px;color:#8e8e93;margin-left:4px;">pm</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-label">Choose a park</div>
+    <div class="park-grid">
+      <button class="park-card active" data-park="mk" onclick="selectPark(this)">
+        <span class="park-emoji">🏰</span>
+        <div class="park-name">Magic Kingdom</div>
+        <div class="park-sub">Classic Disney</div>
+      </button>
+      <button class="park-card" data-park="ep" onclick="selectPark(this)">
+        <span class="park-emoji">🌍</span>
+        <div class="park-name">EPCOT</div>
+        <div class="park-sub">World & tech</div>
+      </button>
+      <button class="park-card" data-park="hs" onclick="selectPark(this)">
+        <span class="park-emoji">🎬</span>
+        <div class="park-name">Hollywood Studios</div>
+        <div class="park-sub">Star Wars & more</div>
+      </button>
+      <button class="park-card" data-park="ak" onclick="selectPark(this)">
+        <span class="park-emoji">🦁</span>
+        <div class="park-name">Animal Kingdom</div>
+        <div class="park-sub">Nature & Pandora</div>
+      </button>
+    </div>
+
+    <div class="cta">
+      <button class="big-btn" onclick="goToRides()">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        See wait times
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 1b: Priority picker -->
+<div class="screen" id="screen-priority">
+  <div class="priority-screen">
+    <div class="top-bar">
+      <button class="back-btn" onclick="showScreen('rides')">‹ Back</button>
+      <div class="top-bar-title">Pick your must-dos</div>
+    </div>
+    <div class="legend-row">
+      <div class="legend-item"><div class="legend-dot" style="background:#ff9500"></div>Tap once = Must ride</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#185FA5"></div>Twice = Want to</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#e5e5ea"></div>Three times = Skip</div>
+    </div>
+    <div class="priority-list" id="priority-list"></div>
+    <div class="bottom-bar" id="priority-footer" style="display:none">
+      <div class="sel-info" id="priority-info"></div>
+      <button class="big-btn" onclick="buildFullDayRoute()">Build my day plan →</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 2: Rides -->
+<div class="screen" id="screen-rides">
+  <div class="rides-screen">
+    <div class="top-bar">
+      <button class="back-btn" onclick="showScreen('setup')">‹ Back</button>
+      <div class="top-bar-title" id="rides-title">Magic Kingdom</div>
+      <button class="refresh-btn" onclick="reloadRides()" aria-label="Refresh">↻</button>
+    </div>
+    <div id="rides-body">
+      <div class="loading"><div class="loading-spinner"></div><p>Loading wait times...</p></div>
+    </div>
+    <div class="bottom-bar" id="rides-footer" style="display:none">
+      <div class="sel-info" id="sel-info"></div>
+      <div class="bottom-actions">
+        <button class="sm-btn outline" onclick="toggleAll()">Select all</button>
+        <button class="sm-btn filled" id="rides-cta-btn" onclick="handleRidesCTA()">Next →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 3: Route -->
+<div class="screen" id="screen-route">
+  <div class="route-screen">
+    <div class="top-bar">
+      <button class="back-btn" id="route-back-btn" onclick="showScreen('rides')">‹ Rides</button>
+      <div class="top-bar-title">Your route</div>
+    </div>
+    <div id="route-body"></div>
+  </div>
+</div>
+
+<script>
+const PARK_META = {
+  mk:{name:'Magic Kingdom',color:'#185FA5',emoji:'🏰',zones:[
+    {n:'Main Street',x:200,y:270,c:'#bfdbfe'},{n:'Adventureland',x:85,y:200,c:'#bbf7d0'},
+    {n:'Frontierland',x:80,y:145,c:'#fde68a'},{n:'Liberty Square',x:140,y:115,c:'#fecaca'},
+    {n:'Fantasyland',x:240,y:95,c:'#ddd6fe'},{n:'Tomorrowland',x:315,y:175,c:'#a7f3d0'}
+  ]},
+  ep:{name:'EPCOT',color:'#0F6E56',emoji:'🌍',zones:[
+    {n:'World Discovery',x:160,y:95,c:'#a7f3d0'},{n:'World Nature',x:95,y:195,c:'#bbf7d0'},
+    {n:'World Showcase',x:265,y:225,c:'#fde68a'},{n:'World Celebration',x:240,y:105,c:'#ddd6fe'}
+  ]},
+  hs:{name:'Hollywood Studios',color:'#7c2d12',emoji:'🎬',zones:[
+    {n:'Hollywood Blvd',x:200,y:265,c:'#fecaca'},{n:"Galaxy's Edge",x:80,y:135,c:'#c7d2fe'},
+    {n:'Toy Story Land',x:295,y:185,c:'#fde68a'},{n:'Animation Courtyard',x:170,y:170,c:'#ddd6fe'},
+    {n:'Grand Ave',x:250,y:135,c:'#bbf7d0'}
+  ]},
+  ak:{name:'Animal Kingdom',color:'#3B6D11',emoji:'🦁',zones:[
+    {n:'Discovery Island',x:200,y:180,c:'#bbf7d0'},{n:'Pandora',x:285,y:255,c:'#ddd6fe'},
+    {n:'Africa',x:100,y:135,c:'#fde68a'},{n:'Asia',x:290,y:130,c:'#a7f3d0'},
+    {n:'DinoLand',x:150,y:260,c:'#fecaca'}
+  ]}
+};
+
+const RIDE_COORDS={
+  'seven dwarfs':{lat:28.4204,lng:-81.5793},'big thunder':{lat:28.4195,lng:-81.5835},
+  'splash mountain':{lat:28.4191,lng:-81.5831},'haunted mansion':{lat:28.4199,lng:-81.5822},
+  'pirates':{lat:28.4185,lng:-81.5836},'jungle cruise':{lat:28.4183,lng:-81.5833},
+  'space mountain':{lat:28.4198,lng:-81.5757},'tron':{lat:28.4207,lng:-81.5752},
+  'buzz lightyear':{lat:28.4196,lng:-81.5762},'people mover':{lat:28.4201,lng:-81.5758},
+  'peter pan':{lat:28.4208,lng:-81.5798},'its a small world':{lat:28.4212,lng:-81.5804},
+  'barnstormer':{lat:28.4215,lng:-81.5800},'dumbo':{lat:28.4214,lng:-81.5793},
+  'under the sea':{lat:28.4213,lng:-81.5808},'mad tea':{lat:28.4210,lng:-81.5796},
+  'winnie the pooh':{lat:28.4209,lng:-81.5805},'monsters':{lat:28.4200,lng:-81.5763},
+  'guardians':{lat:28.3747,lng:-81.5500},'test track':{lat:28.3733,lng:-81.5496},
+  'frozen':{lat:28.3736,lng:-81.5484},'remy':{lat:28.3738,lng:-81.5476},
+  'soarin':{lat:28.3726,lng:-81.5503},'living with the land':{lat:28.3724,lng:-81.5500},
+  'mission space':{lat:28.3745,lng:-81.5494},'spaceship earth':{lat:28.3758,lng:-81.5497},
+  'figment':{lat:28.3748,lng:-81.5489},
+  'rise of the resistance':{lat:28.3558,lng:-81.5631},'millennium falcon':{lat:28.3553,lng:-81.5623},
+  'tower of terror':{lat:28.3573,lng:-81.5606},'rock n roller':{lat:28.3575,lng:-81.5613},
+  'slinky dog':{lat:28.3548,lng:-81.5594},'toy story mania':{lat:28.3543,lng:-81.5591},
+  'alien swirling':{lat:28.3546,lng:-81.5597},'runaway railway':{lat:28.3564,lng:-81.5612},
+  'muppet vision':{lat:28.3568,lng:-81.5602},
+  'avatar':{lat:28.3553,lng:-81.5903},'navi river':{lat:28.3556,lng:-81.5897},
+  'expedition everest':{lat:28.3598,lng:-81.5890},'kali river':{lat:28.3594,lng:-81.5895},
+  'kilimanjaro':{lat:28.3617,lng:-81.5927},'maharajah':{lat:28.3601,lng:-81.5884},
+  'dinosaur':{lat:28.3577,lng:-81.5924},'triceratop spin':{lat:28.3572,lng:-81.5920}
+};
+
+// ThemeParks.wiki direct API (supports CORS from browsers - no proxy needed)
+const TP_BASE = 'https://api.themeparks.wiki/v1/entity/';
+const TP_IDS = {
+  mk: '75ea578a-adc8-4116-a54d-dccb60765ef9',
+  ep: '47f90d2c-e191-4239-a466-5892ef59a88b',
+  hs: '288747d1-8b4f-4a64-867e-ea7c9b27bad8',
+  ak: '1c84a229-8862-4648-9c71-378ddd2c7693'
+};
+// Proxy fallback for Queue-Times (still needs CORS proxy)
+const PROXY_URL = 'https://waittimes.johnson96eric.workers.dev';
+const HERO_COLORS = {mk:'#1a2744',ep:'#0F6E56',hs:'#4a1a08',ak:'#1a2e0a'};
+const PARK_BOXES = {
+  mk:{minLat:28.418,maxLat:28.423,minLng:-81.586,maxLng:-81.574},
+  ep:{minLat:28.372,maxLat:28.378,minLng:-81.552,maxLng:-81.546},
+  hs:{minLat:28.354,maxLat:28.359,minLng:-81.565,maxLng:-81.558},
+  ak:{minLat:28.354,maxLat:28.363,minLng:-81.595,maxLng:-81.587}
+};
+
+let currentMode = 'quick';
+let currentPark = 'mk';
+let rides = [];
+let selected = new Set();
+let priority = {};
+let ridePos = {};
+let routeOrder = [];
+let hours = 13;
+
+// ── Screen management ────────────────────────────────────────────────────────
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+  window.scrollTo(0, 0);
+  var rf = document.getElementById('rides-footer');
+  var pf = document.getElementById('priority-footer');
+  if (rf) rf.style.display = (id === 'rides' && rides.length) ? 'block' : 'none';
+  if (pf) pf.style.display = (id === 'priority') ? 'block' : 'none';
+}
+
+// ── Setup screen ─────────────────────────────────────────────────────────────
+
+function selectMode(btn) {
+  document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  currentMode = btn.dataset.mode;
+  document.getElementById('hours-section').style.display = currentMode === 'fullday' ? 'block' : 'none';
+}
+
+function selectPark(btn) {
+  document.querySelectorAll('.park-card').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  currentPark = btn.dataset.park;
+}
+
+function calcHours() {
+  if (currentMode === 'fullday') {
+    var open = parseInt(document.getElementById('open-hour').value) || 9;
+    var close = parseInt(document.getElementById('close-hour').value) || 10;
+    return (close + 12) - open;
+  }
+  return 13;
+}
+
+async function goToRides() {
+  hours = calcHours();
+  var meta = PARK_META[currentPark];
+  document.getElementById('rides-title').textContent = meta.emoji + ' ' + meta.name;
+  showScreen('rides');
+  await reloadRides();
+}
+
+// ── Rides screen ─────────────────────────────────────────────────────────────
+
+async function reloadRides() {
+  document.getElementById('rides-body').innerHTML = '<div class="loading"><div class="loading-spinner"></div><p>Loading wait times...</p></div>';
+  document.getElementById('rides-footer').style.display = 'none';
+
+  var tpId = TP_IDS[currentPark];
+  var urls = [
+    'https://api.themeparks.wiki/v1/entity/' + tpId + '/live',
+    'https://corsproxy.io/?' + encodeURIComponent('https://api.themeparks.wiki/v1/entity/' + tpId + '/live'),
+    PROXY_URL + '/waittimes?park=' + currentPark + '&source=auto'
+  ];
+
+  for (var i = 0; i < urls.length; i++) {
+    try {
+      var res = await fetch(urls[i]);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      var data = await res.json();
+
+      // themeparks.wiki direct or corsproxy response
+      if (data.liveData) {
+        rides = [];
+        data.liveData.forEach(function(e) {
+          if (e.entityType !== 'ATTRACTION' || e.status !== 'OPERATING') return;
+          var wait = 0;
+          if (e.queue && e.queue.STANDBY && e.queue.STANDBY.waitTime != null)
+            wait = e.queue.STANDBY.waitTime;
+          rides.push({ id: e.id, name: e.name, waitTime: wait, area: '' });
+        });
+      } else if (data.rides) {
+        // proxy response
+        rides = data.rides;
+      } else {
+        throw new Error('Unrecognised response format');
+      }
+
+      if (!rides.length) throw new Error('No open rides');
+      rides.sort(function(a, b) { return a.waitTime - b.waitTime; });
+      selected = new Set(rides.map(function(r) { return r.id; }));
+      assignPositions();
+      renderRides(i === 0 ? 'themeparks.wiki' : i === 1 ? 'themeparks.wiki (proxy)' : 'queue-times.com');
+      document.getElementById('rides-footer').style.display = 'block';
+      updateSelInfo();
+      return;
+    } catch(e) {
+      console.warn('Source ' + i + ' failed: ' + e.message);
+    }
+  }
+
+  document.getElementById('rides-body').innerHTML =
+    '<div class="error-box"><p>Could not load wait times. Check your connection and try again.</p>' +
+    '<button id="retry-btn">Try again</button></div>';
+  var btn = document.getElementById('retry-btn');
+  if (btn) btn.addEventListener('click', reloadRides);
+}
+
+function wc(w) { return w <= 20 ? 'wl' : w <= 45 ? 'wm' : 'wh'; }
+
+function renderRides(source) {
+  var html = '';
+  if (source) {
+    var cls = source.includes('themeparks') ? 'sc-tp' : 'sc-qt';
+    var label = source.includes('themeparks') ? 'ThemeParks.wiki' : 'Queue-Times.com';
+    html += '<div style="padding:10px 16px 2px;display:flex;align-items:center;gap:8px;"><span class="source-chip ' + cls + '">' + label + '</span><span style="font-size:12px;color:#8e8e93;">' + rides.length + ' open rides</span></div>';
+  }
+  html += '<div class="rides-list">';
+  rides.forEach(function(r) {
+    var on = selected.has(r.id);
+    html += '<div class="ride-card' + (on ? ' on' : '') + '" data-id="' + r.id + '">' +
+      '<div class="ride-check"><span class="ride-check-mark">✓</span></div>' +
+      '<div class="ride-info"><div class="ride-name">' + r.name + '</div>' +
+      (r.area ? '<div class="ride-area">' + r.area + '</div>' : '') + '</div>' +
+      '<span class="wait-badge ' + wc(r.waitTime) + '">' + r.waitTime + 'm</span></div>';
+  });
+  html += '</div>';
+  document.getElementById('rides-body').innerHTML = html;
+  document.querySelectorAll('.ride-card[data-id]').forEach(function(card) {
+    card.addEventListener('click', function() { toggleRide(card.dataset.id); });
+  });
+}
+
+function toggleRide(id) {
+  if (selected.has(id)) selected.delete(id); else selected.add(id);
+  var card = document.querySelector('.ride-card[data-id="' + id + '"]');
+  if (card) card.classList.toggle('on', selected.has(id));
+  updateSelInfo();
+}
+
+function toggleAll() {
+  var btn = document.querySelector('.sm-btn.outline');
+  if (selected.size === rides.length) {
+    selected.clear();
+    if (btn) btn.textContent = 'Select all';
+  } else {
+    rides.forEach(function(r) { selected.add(r.id); });
+    if (btn) btn.textContent = 'Deselect all';
+  }
+  document.querySelectorAll('.ride-card[data-id]').forEach(function(card) {
+    card.classList.toggle('on', selected.has(card.dataset.id));
+  });
+  updateSelInfo();
+}
+
+function updateSelInfo() {
+  var el = document.getElementById('sel-info');
+  if (el) el.textContent = selected.size + ' rides selected';
+  var btn = document.getElementById('rides-cta-btn');
+  if (btn) btn.textContent = currentMode === 'fullday' ? 'Pick must-dos →' : 'Optimize route →';
+}
+
+function handleRidesCTA() {
+  if (currentMode === 'fullday') {
+    openPriorityPicker();
+  } else {
+    var sel = rides.filter(function(r) { return selected.has(r.id); });
+    if (sel.length < 2) { alert('Select at least 2 rides to plan a route.'); return; }
+    optimizeRoute();
+  }
+}
+
+// ── GPS / distance helpers ────────────────────────────────────────────────────
+
+function getRideCoords(name) {
+  var lower = name.toLowerCase();
+  var keys = Object.keys(RIDE_COORDS);
+  for (var i = 0; i < keys.length; i++) {
+    if (lower.includes(keys[i])) return RIDE_COORDS[keys[i]];
+  }
+  return null;
+}
+
+function distMetres(a, b) {
+  var R = 6371000;
+  var dLat = (b.lat - a.lat) * Math.PI / 180;
+  var dLng = (b.lng - a.lng) * Math.PI / 180;
+  var s = Math.pow(Math.sin(dLat/2), 2) + Math.cos(a.lat*Math.PI/180) * Math.cos(b.lat*Math.PI/180) * Math.pow(Math.sin(dLng/2), 2);
+  return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1-s));
+}
+
+function walkMins(a, b) {
+  var ca = getRideCoords(a.name);
+  var cb = getRideCoords(b.name);
+  if (!ca || !cb) return 8;
+  return Math.round(distMetres(ca, cb) / 80 * 10) / 10;
+}
+
+function rideScore(current, candidate, isMust) {
+  var walk = walkMins(current, candidate);
+  return (isMust ? 0 : 20) + candidate.waitTime + walk * 1.5;
+}
+
+// ── Map position helpers ──────────────────────────────────────────────────────
+
+function assignPositions() {
+  ridePos = {};
+  var zones = PARK_META[currentPark].zones || [];
+  var box = PARK_BOXES[currentPark];
+  rides.forEach(function(ride, i) {
+    var coords = getRideCoords(ride.name);
+    if (coords && box) {
+      var x = 20 + ((coords.lng - box.minLng) / (box.maxLng - box.minLng)) * 360;
+      var y = 20 + ((box.maxLat - coords.lat) / (box.maxLat - box.minLat)) * 270;
+      ridePos[ride.id] = {x: Math.max(20, Math.min(380, x)), y: Math.max(20, Math.min(290, y))};
+    } else {
+      var z = zones[i % zones.length] || {x:200, y:155};
+      var angle = (i / Math.max(rides.length, 1)) * Math.PI * 2;
+      var radius = 28 + (i % 4) * 14;
+      ridePos[ride.id] = {
+        x: Math.max(20, Math.min(380, z.x + Math.cos(angle) * radius)),
+        y: Math.max(20, Math.min(290, z.y + Math.sin(angle) * radius))
+      };
+    }
+  });
+}
+
+// ── Map builder ───────────────────────────────────────────────────────────────
+
+function buildMap(route) {
+  var ns = 'http://www.w3.org/2000/svg';
+  var svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('width', '100%');
+
+  function el(tag, attrs, parent) {
+    var node = document.createElementNS(ns, tag);
+    Object.keys(attrs).forEach(function(k) { node.setAttribute(k, attrs[k]); });
+    (parent || svg).appendChild(node);
+    return node;
+  }
+  function path(d, attrs, parent) { return el('path', Object.assign({ d: d, fill: 'none' }, attrs), parent); }
+  function txt(str, x, y, opts, parent) {
+    var node = el('text', Object.assign({ x: x, y: y, 'font-family': 'system-ui', 'text-anchor': 'middle', 'font-size': opts.size || 7, fill: opts.fill || '#2a1a0a', 'font-weight': opts.w || 400 }, opts.extra || {}), parent);
+    node.textContent = str;
+    return node;
+  }
+
+  if (currentPark === 'mk') {
+    svg.setAttribute('viewBox', '0 0 420 440');
+    // Sky background
+    el('rect', { width: 420, height: 440, fill: '#b8d4f0' });
+    // Outer park terrain
+    el('circle', { cx: 210, cy: 218, r: 188, fill: '#7ab84a', stroke: '#5a9830', 'stroke-width': 2 });
+    // Seven Seas Lagoon
+    el('ellipse', { cx: 68, cy: 300, rx: 62, ry: 52, fill: '#4ab0d8', stroke: '#2a90c0', 'stroke-width': 1.5 });
+    txt('Seven Seas', 68, 298, { fill: '#e0f4ff', size: 6.5, w: 600 });
+    txt('Lagoon', 68, 307, { fill: '#e0f4ff', size: 6.5, w: 600 });
+    // Bay Lake
+    el('ellipse', { cx: 355, cy: 332, rx: 55, ry: 44, fill: '#4ab0d8', stroke: '#2a90c0', 'stroke-width': 1.5, opacity: 0.8 });
+    txt('Bay Lake', 355, 334, { fill: '#e0f4ff', size: 6, w: 600 });
+
+    // ── LAND ZONES ──────────────────────────────────────────
+    // Adventureland SW - deep jungle green
+    path('M210,220 L108,298 C86,270 78,238 84,208 L152,192 Z', { fill: '#3a8c28', stroke: '#286818', 'stroke-width': 1 });
+    // Frontierland W - warm tan/brown
+    path('M210,220 L152,192 C130,158 130,118 152,98 L192,155 Z', { fill: '#c8883a', stroke: '#a06820', 'stroke-width': 1 });
+    // Liberty Square NW - colonial red-brick
+    path('M210,220 L192,155 C205,142 220,138 232,142 L220,175 Z', { fill: '#b84838', stroke: '#883028', 'stroke-width': 1 });
+    // Fantasyland N - soft lavender purple
+    path('M210,220 L220,175 C248,148 282,152 298,172 L262,202 Z', { fill: '#9868c8', stroke: '#7048b0', 'stroke-width': 1 });
+    // Tomorrowland NE - steel blue
+    path('M210,220 L262,202 C288,218 295,254 278,274 L238,248 Z', { fill: '#3870b8', stroke: '#205898', 'stroke-width': 1 });
+    // Main Street USA S - warm cream
+    path('M210,220 L238,248 C226,292 194,292 182,248 Z', { fill: '#d4b870', stroke: '#b49848', 'stroke-width': 1 });
+    // Adventureland lower
+    path('M210,220 L182,248 C165,272 128,284 108,298 Z', { fill: '#3a8c28', stroke: '#286818', 'stroke-width': 0.5 });
+    // Central hub circle
+    el('circle', { cx: 210, cy: 220, r: 32, fill: '#e8dfa8', stroke: '#c8b870', 'stroke-width': 2 });
+    // Main walkway
+    el('rect', { x: 200, y: 252, width: 20, height: 90, fill: '#ddd090', stroke: '#bbb060', 'stroke-width': 0.5 });
+    // Entry plaza
+    el('ellipse', { cx: 210, cy: 380, rx: 55, ry: 24, fill: '#d8c880', stroke: '#b8a860', 'stroke-width': 1 });
+
+    // ── CINDERELLA CASTLE ──────────────────────────────────
+    var cx = 210, cy = 158;
+    // Castle base & body
+    el('rect', { x: cx-22, y: cy+8, width: 44, height: 28, fill: '#f0e8e0', stroke: '#c8b8a8', 'stroke-width': 0.8, rx: 1 });
+    // Center tower
+    el('rect', { x: cx-8, y: cy-2, width: 16, height: 18, fill: '#e8ddd5', stroke: '#c0b0a0', 'stroke-width': 0.8 });
+    // Left wing tower
+    el('rect', { x: cx-22, y: cy+2, width: 10, height: 16, fill: '#ede5da', stroke: '#c8b8a0', 'stroke-width': 0.7 });
+    // Right wing tower
+    el('rect', { x: cx+12, y: cy+2, width: 10, height: 16, fill: '#ede5da', stroke: '#c8b8a0', 'stroke-width': 0.7 });
+    // Center spire
+    el('rect', { x: cx-3, y: cy-18, width: 6, height: 20, fill: '#d0d8e8', stroke: '#a8b8d0', 'stroke-width': 0.8 });
+    path('M' + cx + ',' + (cy-28) + ' L' + (cx-4) + ',' + (cy-18) + ' L' + (cx+4) + ',' + (cy-18) + ' Z', { fill: '#5878c0', stroke: '#4060a8', 'stroke-width': 0.5 });
+    // Left spire
+    el('rect', { x: cx-20, y: cy-8, width: 4, height: 14, fill: '#d0d8e8' });
+    path('M' + (cx-18) + ',' + (cy-18) + ' L' + (cx-21) + ',' + (cy-8) + ' L' + (cx-15) + ',' + (cy-8) + ' Z', { fill: '#6888d0' });
+    // Right spire
+    el('rect', { x: cx+16, y: cy-8, width: 4, height: 14, fill: '#d0d8e8' });
+    path('M' + (cx+18) + ',' + (cy-18) + ' L' + (cx+15) + ',' + (cy-8) + ' L' + (cx+21) + ',' + (cy-8) + ' Z', { fill: '#6888d0' });
+    // Smaller flanking spires
+    path('M' + (cx-8) + ',' + (cy-8) + ' L' + (cx-11) + ',' + (cy-2) + ' L' + (cx-5) + ',' + (cy-2) + ' Z', { fill: '#7898d8' });
+    path('M' + (cx+8) + ',' + (cy-8) + ' L' + (cx+5) + ',' + (cy-2) + ' L' + (cx+11) + ',' + (cy-2) + ' Z', { fill: '#7898d8' });
+    // Castle arch
+    path('M' + (cx-4) + ',' + (cy+36) + ' Q' + cx + ',' + (cy+28) + ' ' + (cx+4) + ',' + (cy+36), { fill: '#8060a0', 'stroke-width': 0 });
+    // Castle windows
+    el('rect', { x: cx-16, y: cy+14, width: 5, height: 6, fill: '#a8c0e8', rx: 1 });
+    el('rect', { x: cx+11, y: cy+14, width: 5, height: 6, fill: '#a8c0e8', rx: 1 });
+    el('rect', { x: cx-4, y: cy+8, width: 8, height: 6, fill: '#a8c0e8', rx: 1 });
+    txt('Cinderella Castle', cx, cy + 52, { fill: '#3a2870', size: 7.5, w: 700 });
+
+    // ── SPACE MOUNTAIN DOME ────────────────────────────────
+    el('ellipse', { cx: 278, cy: 196, rx: 22, ry: 17, fill: '#b0c0c8', stroke: '#8098a8', 'stroke-width': 1.5 });
+    el('ellipse', { cx: 278, cy: 196, rx: 14, ry: 11, fill: '#90a8b8', stroke: '#6888a0', 'stroke-width': 1 });
+    el('ellipse', { cx: 278, cy: 196, rx: 6, ry: 5, fill: '#6880a0' });
+    // geodesic lines
+    el('line', { x1: 256, y1: 196, x2: 300, y2: 196, stroke: '#8098a8', 'stroke-width': 0.7 });
+    el('line', { x1: 278, y1: 179, x2: 278, y2: 213, stroke: '#8098a8', 'stroke-width': 0.7 });
+    txt('Space Mountain', 278, 218, { fill: '#e8f4ff', size: 6, w: 600 });
+
+    // ── TRON LIGHTCYCLE ────────────────────────────────────
+    el('ellipse', { cx: 256, cy: 180, rx: 18, ry: 12, fill: '#1a3858', stroke: '#2070c8', 'stroke-width': 2 });
+    el('ellipse', { cx: 256, cy: 180, rx: 10, ry: 6, fill: '#102848' });
+    path('M238,180 A18,12 0 0,1 274,180', { stroke: '#40a0e8', 'stroke-width': 1.5, fill: 'none' });
+    txt('TRON', 256, 196, { fill: '#80d0ff', size: 6, w: 600 });
+
+    // ── BIG THUNDER MOUNTAIN ──────────────────────────────
+    path('M152,188 C145,175 138,165 140,155 C143,145 155,142 162,148 C168,142 178,140 180,150 C183,142 192,142 193,152 C196,145 204,146 202,158 C200,168 190,178 180,185 Z', { fill: '#c87838', stroke: '#a05820', 'stroke-width': 1 });
+    path('M152,188 C155,192 165,194 175,192 C185,190 192,186 193,182', { stroke: '#e09050', 'stroke-width': 1.5, fill: 'none' });
+    // Mine train track
+    path('M145,185 C138,195 136,205 140,212', { stroke: '#806030', 'stroke-width': 2, fill: 'none' });
+    el('circle', { cx: 165, cy: 155, r: 3, fill: '#e8a860' });
+    el('circle', { cx: 180, cy: 148, r: 3, fill: '#e8a860' });
+    txt('Big Thunder', 165, 202, { fill: '#f8e8d0', size: 6, w: 600 });
+
+    // ── HAUNTED MANSION ────────────────────────────────────
+    el('rect', { x: 170, y: 172, width: 18, height: 20, fill: '#5a5268', stroke: '#3a3248', 'stroke-width': 1, rx: 1 });
+    el('rect', { x: 173, y: 162, width: 12, height: 14, fill: '#6a6078', stroke: '#4a4058', 'stroke-width': 0.8 });
+    path('M179,154 L173,164 L185,164 Z', { fill: '#504860' });
+    // Windows lit yellow
+    el('rect', { x: 173, y: 176, width: 4, height: 4, fill: '#e8d850', rx: 0.5 });
+    el('rect', { x: 181, y: 176, width: 4, height: 4, fill: '#e8d850', rx: 0.5 });
+    el('rect', { x: 175, y: 184, width: 4, height: 5, fill: '#2a2038', rx: 0.5 });
+    txt('Haunted Mansion', 179, 196, { fill: '#d8d0f0', size: 6, w: 600 });
+
+    // ── PIRATES ────────────────────────────────────────────
+    el('rect', { x: 102, y: 248, width: 26, height: 20, fill: '#3a5c30', stroke: '#284820', 'stroke-width': 1, rx: 1 });
+    path('M102,258 C108,252 120,252 128,258', { stroke: '#5a8840', 'stroke-width': 1.5 });
+    // Water
+    el('ellipse', { cx: 112, cy: 275, rx: 16, ry: 8, fill: '#3090b0', opacity: 0.7 });
+    el('rect', { x: 113, y: 244, width: 3, height: 16, fill: '#7a5028' });
+    path('M116,244 L128,250 L116,254 Z', { fill: '#1a2818' });
+    txt('Pirates', 112, 288, { fill: '#c0f0b0', size: 6, w: 600 });
+
+    // ── JUNGLE CRUISE ──────────────────────────────────────
+    el('ellipse', { cx: 95, cy: 238, rx: 20, ry: 14, fill: '#2a7030', stroke: '#1a5020', 'stroke-width': 1 });
+    el('ellipse', { cx: 92, cy: 238, rx: 12, ry: 10, fill: '#3a8838', opacity: 0.8 });
+    el('ellipse', { cx: 100, cy: 234, rx: 10, ry: 8, fill: '#2a7828', opacity: 0.8 });
+    el('ellipse', { cx: 93, cy: 242, rx: 14, ry: 6, fill: '#2060a8', opacity: 0.6 });
+    txt('Jungle Cruise', 95, 256, { fill: '#c0f8b0', size: 6, w: 600 });
+
+    // ── SEVEN DWARFS MINE TRAIN ────────────────────────────
+    path('M228,158 C222,148 224,138 232,136 C240,134 248,140 246,150 C252,138 262,136 264,148 C266,138 274,138 274,150 C278,142 284,145 282,156 C280,165 268,170 255,168 Z', { fill: '#b08038', stroke: '#887820', 'stroke-width': 1 });
+    el('rect', { x: 238, y: 162, width: 20, height: 10, fill: '#d0a048', rx: 1 });
+    path('M228,158 C232,168 250,172 268,166', { stroke: '#907028', 'stroke-width': 2, fill: 'none' });
+    txt('7 Dwarfs Mine', 255, 182, { fill: '#f8f0d0', size: 6, w: 600 });
+
+    // ── PETER PAN'S FLIGHT ─────────────────────────────────
+    el('rect', { x: 198, y: 162, width: 20, height: 14, fill: '#6848a0', stroke: '#482888', 'stroke-width': 0.8, rx: 1 });
+    path('M198,169 Q208,160 218,169', { stroke: '#c090f0', 'stroke-width': 1.2 });
+    // Pirate ship silhouette on roof
+    path('M202,162 L208,157 L214,162', { stroke: '#c090e8', 'stroke-width': 1 });
+
+    // ── BUZZ LIGHTYEAR ─────────────────────────────────────
+    el('ellipse', { cx: 262, cy: 222, rx: 14, ry: 10, fill: '#2860a8', stroke: '#1848a0', 'stroke-width': 1 });
+    el('circle', { cx: 262, cy: 222, r: 5, fill: '#50a0e0' });
+    el('circle', { cx: 262, cy: 222, r: 2, fill: '#80d0ff' });
+    txt('Buzz Lightyear', 262, 235, { fill: '#c0e8ff', size: 6, w: 600 });
+
+    // Railroad ring
+    el('circle', { cx: 210, cy: 218, r: 168, fill: 'none', stroke: '#907840', 'stroke-width': 4, 'stroke-dasharray': '12,6', opacity: 0.7 });
+    // Land labels
+    txt('Tomorrowland', 268, 218, { fill: '#d0eeff', size: 6.5, w: 700 });
+    txt('Fantasyland', 240, 170, { fill: '#e8d8ff', size: 6.5, w: 700 });
+    txt('Frontierland', 150, 162, { fill: '#f8e8c0', size: 6.5, w: 700 });
+    txt('Liberty Sq', 196, 148, { fill: '#ffd8d0', size: 6, w: 600 });
+    txt('Adventureland', 118, 252, { fill: '#c8f8a8', size: 6.5, w: 700 });
+    txt('Main Street', 210, 270, { fill: '#f8f0d0', size: 6.5, w: 700 });
+
+  } else if (currentPark === 'ep') {
+    svg.setAttribute('viewBox', '0 0 420 450');
+    el('rect', { width: 420, height: 450, fill: '#b8d8f0' });
+    el('ellipse', { cx: 210, cy: 218, rx: 188, ry: 178, fill: '#7ab848', stroke: '#5a9830', 'stroke-width': 2 });
+    // World Showcase Lagoon - dominant blue
+    el('ellipse', { cx: 213, cy: 298, rx: 120, ry: 98, fill: '#3ab0d0', stroke: '#2090c0', 'stroke-width': 2 });
+    txt('World Showcase Lagoon', 213, 300, { fill: '#d8f4ff', size: 8, w: 700 });
+    // Future World upper
+    el('ellipse', { cx: 208, cy: 148, rx: 155, ry: 95, fill: '#68a840', stroke: '#489828', 'stroke-width': 1 });
+
+    // World Discovery - teal
+    path('M208,198 L208,130 C242,115 282,118 308,138 C328,158 330,185 315,202 Z', { fill: '#4aa898', stroke: '#2a8878', 'stroke-width': 1 });
+    // World Nature - green
+    path('M208,198 L208,130 C175,115 135,118 108,138 C88,158 86,185 102,202 Z', { fill: '#68b040', stroke: '#489820', 'stroke-width': 1 });
+    // World Celebration
+    el('ellipse', { cx: 208, cy: 165, rx: 42, ry: 34, fill: '#7888c0', stroke: '#5868a8', 'stroke-width': 1 });
+
+    // ── SPACESHIP EARTH ────────────────────────────────────
+    el('circle', { cx: 208, cy: 88, r: 34, fill: '#c8d8e0', stroke: '#98b0c0', 'stroke-width': 2 });
+    // Geodesic triangles
+    el('line', { x1: 174, y1: 88, x2: 242, y2: 88, stroke: '#88a0b0', 'stroke-width': 0.8 });
+    el('line', { x1: 208, y1: 54, x2: 208, y2: 122, stroke: '#88a0b0', 'stroke-width': 0.8 });
+    el('line', { x1: 180, y1: 62, x2: 236, y2: 114, stroke: '#88a0b0', 'stroke-width': 0.6 });
+    el('line', { x1: 236, y1: 62, x2: 180, y2: 114, stroke: '#88a0b0', 'stroke-width': 0.6 });
+    el('line', { x1: 176, y1: 75, x2: 240, y2: 100, stroke: '#88a0b0', 'stroke-width': 0.4 });
+    el('line', { x1: 176, y1: 100, x2: 240, y2: 75, stroke: '#88a0b0', 'stroke-width': 0.4 });
+    el('circle', { cx: 208, cy: 88, r: 6, fill: '#7898b0' });
+    // Support legs
+    path('M196,122 L188,145', { stroke: '#98a8b0', 'stroke-width': 2.5 });
+    path('M220,122 L228,145', { stroke: '#98a8b0', 'stroke-width': 2.5 });
+    txt('Spaceship Earth', 208, 132, { fill: '#2a5a3a', size: 7.5, w: 700 });
+
+    // ── GUARDIANS OF THE GALAXY ────────────────────────────
+    el('circle', { cx: 320, cy: 140, r: 22, fill: '#483060', stroke: '#6848a0', 'stroke-width': 2 });
+    el('circle', { cx: 320, cy: 140, r: 14, fill: '#382050' });
+    el('circle', { cx: 320, cy: 140, r: 7, fill: '#604898' });
+    path('M298,140 A22,22 0 0,1 342,140', { stroke: '#9070d0', 'stroke-width': 2, fill: 'none' });
+    txt('Guardians', 320, 166, { fill: '#d8c8ff', size: 6.5, w: 700 });
+
+    // ── TEST TRACK ─────────────────────────────────────────
+    el('rect', { x: 272, y: 162, width: 38, height: 24, fill: '#3c6880', stroke: '#2a5070', 'stroke-width': 1, rx: 2 });
+    path('M275,174 L305,168', { stroke: '#60b8d8', 'stroke-width': 2 });
+    el('rect', { x: 278, y: 167, width: 18, height: 12, fill: '#2a5068', rx: 1 });
+    txt('Test Track', 291, 194, { fill: '#b0e0f8', size: 6, w: 600 });
+
+    // ── MISSION SPACE ──────────────────────────────────────
+    el('circle', { cx: 290, cy: 128, r: 14, fill: '#6888a0', stroke: '#4870a0', 'stroke-width': 1.5 });
+    path('M290,114 L287,120 L293,120 Z', { fill: '#e8f0f8' });
+    path('M276,128 L282,125 L282,131 Z', { fill: '#e8f0f8' });
+    path('M304,128 L298,125 L298,131 Z', { fill: '#e8f0f8' });
+    el('circle', { cx: 290, cy: 128, r: 4, fill: '#d04858' });
+    txt('Mission: Space', 290, 147, { fill: '#c0d8e8', size: 6, w: 600 });
+
+    // ── SOARIN' ────────────────────────────────────────────
+    el('rect', { x: 95, y: 168, width: 48, height: 22, fill: '#4a7030', stroke: '#326018', 'stroke-width': 1, rx: 2 });
+    path('M98,179 L140,179', { stroke: '#80b840', 'stroke-width': 2 });
+    path('M108,171 L120,162 L132,171', { stroke: '#90c850', 'stroke-width': 2, fill: 'none' });
+    txt("Soarin'", 119, 198, { fill: '#c8f898', size: 6.5, w: 700 });
+
+    // ── REMY'S RATATOUILLE ─────────────────────────────────
+    el('rect', { x: 100, y: 148, width: 34, height: 20, fill: '#c84040', stroke: '#a02828', 'stroke-width': 1, rx: 2 });
+    path('M100,148 L117,134 L134,148', { fill: '#b03030', stroke: '#882020', 'stroke-width': 0.8 });
+    el('circle', { cx: 110, cy: 156, r: 4, fill: '#e06050' });
+    el('circle', { cx: 122, cy: 156, r: 4, fill: '#e06050' });
+    txt("Remy's Ratatouille", 117, 176, { fill: '#ffe0e0', size: 6, w: 600 });
+
+    // ── FROZEN (Norway) ────────────────────────────────────
+    el('rect', { x: 296, y: 218, width: 26, height: 22, fill: '#5878b0', stroke: '#3858a0', 'stroke-width': 1, rx: 1 });
+    path('M296,218 L309,204 L322,218', { fill: '#4868a0', stroke: '#2848a0', 'stroke-width': 0.8 });
+    el('rect', { x: 304, y: 228, width: 10, height: 12, fill: '#3858a0', rx: 1 });
+    txt('Frozen', 309, 248, { fill: '#c8e8ff', size: 6.5, w: 700 });
+
+    // World Showcase pavilion rings
+    var pv = [
+      { x: 84, y: 230, c: '#b04030', l: 'Canada' },
+      { x: 108, y: 210, c: '#3048b0', l: 'UK' },
+      { x: 135, y: 198, c: '#4858b8', l: 'France' },
+      { x: 162, y: 194, c: '#a08820', l: 'Morocco' },
+      { x: 187, y: 193, c: '#c03030', l: 'Japan' },
+      { x: 213, y: 196, c: '#1848a8', l: 'USA' },
+      { x: 236, y: 193, c: '#208040', l: 'Italy' },
+      { x: 260, y: 198, c: '#404040', l: 'Germany' },
+      { x: 286, y: 210, c: '#c03030', l: 'China' },
+      { x: 320, y: 236, c: '#608030', l: 'Mexico' },
+    ];
+    pv.forEach(function(p) {
+      el('circle', { cx: p.x, cy: p.y, r: 8, fill: p.c, stroke: '#fff', 'stroke-width': 1.2, opacity: 0.92 });
+      txt(p.l, p.x, p.y + 18, { fill: '#1a3828', size: 5.5, w: 600 });
+    });
+    // Walkway ring
+    el('ellipse', { cx: 213, cy: 298, rx: 134, ry: 112, fill: 'none', stroke: '#d0c060', 'stroke-width': 4, opacity: 0.5 });
+    // Monorail beam
+    path('M30,84 C100,76 160,72 208,72 C256,72 310,76 390,84', { stroke: '#d0b050', 'stroke-width': 3, 'stroke-dasharray': '8,4', opacity: 0.7 });
+
+    txt('World Discovery', 305, 118, { fill: '#d0fff8', size: 6.5, w: 700 });
+    txt('World Nature', 110, 118, { fill: '#d8ffc8', size: 6.5, w: 700 });
+    txt('World Celebration', 208, 165, { fill: '#dce8ff', size: 6.5, w: 700 });
+
+  } else if (currentPark === 'hs') {
+    svg.setAttribute('viewBox', '0 0 420 430');
+    el('rect', { width: 420, height: 430, fill: '#d8c8a8' });
+    el('ellipse', { cx: 206, cy: 208, rx: 182, ry: 175, fill: '#c8b888', stroke: '#a89868', 'stroke-width': 2 });
+
+    // Galaxy's Edge - dark corner
+    el('ellipse', { cx: 108, cy: 155, rx: 92, ry: 80, fill: '#181628', stroke: '#282440', 'stroke-width': 2 });
+    el('ellipse', { cx: 108, cy: 155, rx: 78, ry: 66, fill: '#141220' });
+    // Rock terrain in GE
+    el('ellipse', { cx: 95, cy: 148, rx: 35, ry: 25, fill: '#1e1c2c', opacity: 0.8 });
+    el('ellipse', { cx: 128, cy: 162, rx: 30, ry: 20, fill: '#1c1a2a', opacity: 0.8 });
+
+    // Toy Story Land - bright
+    el('ellipse', { cx: 308, cy: 285, rx: 70, ry: 60, fill: '#80b840', stroke: '#60982a', 'stroke-width': 2 });
+    // Toy building outlines
+    el('rect', { x: 280, y: 260, width: 30, height: 20, fill: '#d8e840', stroke: '#a8c020', 'stroke-width': 1, rx: 2 });
+    el('rect', { x: 316, y: 258, width: 28, height: 22, fill: '#e84030', stroke: '#c02020', 'stroke-width': 1, rx: 2 });
+
+    // Sunset Blvd
+    el('rect', { x: 240, y: 140, width: 85, height: 110, fill: '#b89848', stroke: '#988028', 'stroke-width': 1, rx: 4 });
+    // Grand Ave / Muppets
+    el('ellipse', { cx: 172, cy: 185, rx: 58, ry: 52, fill: '#a08848', stroke: '#807028', 'stroke-width': 1 });
+    // Hollywood Blvd
+    el('rect', { x: 175, y: 255, width: 50, height: 90, fill: '#c0a858', stroke: '#a08838', 'stroke-width': 1 });
+    // Entry plaza
+    el('ellipse', { cx: 200, cy: 372, rx: 58, ry: 26, fill: '#c8b060', stroke: '#a89040', 'stroke-width': 1 });
+
+    // ── CHINESE THEATRE ────────────────────────────────────
+    el('rect', { x: 183, y: 232, width: 38, height: 30, fill: '#c89860', stroke: '#a07840', 'stroke-width': 1, rx: 1 });
+    // Pagoda roof layers
+    path('M179,232 L202,212 L225,232', { fill: '#b88848', stroke: '#907028', 'stroke-width': 1 });
+    path('M185,228 L202,216 L219,228', { fill: '#c89858' });
+    // Roof tips curl up
+    path('M179,232 C175,228 176,222 181,220', { stroke: '#d0a050', 'stroke-width': 1.5, fill: 'none' });
+    path('M225,232 C229,228 228,222 223,220', { stroke: '#d0a050', 'stroke-width': 1.5, fill: 'none' });
+    el('rect', { x: 195, y: 248, width: 14, height: 14, fill: '#8a6030', rx: 1 });
+    // Forecourt detail
+    el('ellipse', { cx: 202, cy: 270, rx: 20, ry: 8, fill: '#d0c080', opacity: 0.7 });
+    txt('Chinese Theatre', 202, 275, { fill: '#2a1808', size: 7, w: 700 });
+
+    // ── TOWER OF TERROR ────────────────────────────────────
+    // Building base
+    el('rect', { x: 278, y: 168, width: 35, height: 72, fill: '#6a5830', stroke: '#4a3818', 'stroke-width': 1.5, rx: 1 });
+    // Roof decorations
+    el('rect', { x: 273, y: 163, width: 45, height: 12, fill: '#5a4820', stroke: '#3a2808', 'stroke-width': 1, rx: 1 });
+    el('rect', { x: 276, y: 154, width: 39, height: 12, fill: '#4a3818', stroke: '#2a1808', 'stroke-width': 1, rx: 1 });
+    // Elevator shaft top
+    el('rect', { x: 285, y: 145, width: 22, height: 14, fill: '#382808', rx: 1 });
+    el('rect', { x: 289, y: 136, width: 14, height: 12, fill: '#3a2c10', rx: 1 });
+    // Windows - some lit, some dark
+    el('rect', { x: 285, y: 178, width: 6, height: 7, fill: '#e8c840', rx: 0.5 });
+    el('rect', { x: 297, y: 178, width: 6, height: 7, fill: '#281808', rx: 0.5 });
+    el('rect', { x: 285, y: 192, width: 6, height: 7, fill: '#281808', rx: 0.5 });
+    el('rect', { x: 297, y: 192, width: 6, height: 7, fill: '#e8c840', rx: 0.5 });
+    el('rect', { x: 285, y: 206, width: 6, height: 7, fill: '#e8c840', rx: 0.5 });
+    el('rect', { x: 297, y: 206, width: 6, height: 7, fill: '#281808', rx: 0.5 });
+    el('rect', { x: 285, y: 220, width: 6, height: 7, fill: '#281808', rx: 0.5 });
+    el('rect', { x: 297, y: 220, width: 6, height: 7, fill: '#e8c840', rx: 0.5 });
+    txt('Tower of Terror', 296, 250, { fill: '#f0e8c0', size: 6.5, w: 700 });
+
+    // ── ROCK N ROLLER COASTER ─────────────────────────────
+    el('ellipse', { cx: 262, cy: 196, rx: 24, ry: 16, fill: '#5a3060', stroke: '#3a1848', 'stroke-width': 1.5 });
+    path('M238,196 A24,16 0 0,1 286,196', { stroke: '#c060e0', 'stroke-width': 2.5, fill: 'none' });
+    el('rect', { x: 251, y: 190, width: 22, height: 12, fill: '#401848', rx: 2 });
+    path('M262,190 L258,183 L266,183 Z', { fill: '#e080ff' });
+    txt("Rock 'n' Roller", 262, 216, { fill: '#f0c0ff', size: 6, w: 600 });
+
+    // ── MILLENNIUM FALCON ─────────────────────────────────
+    el('ellipse', { cx: 115, cy: 152, rx: 28, ry: 18, fill: '#585668', stroke: '#787698', 'stroke-width': 2 });
+    el('ellipse', { cx: 115, cy: 152, rx: 18, ry: 11, fill: '#484558' });
+    // Cockpit arm
+    el('rect', { x: 128, y: 148, width: 16, height: 8, fill: '#505860', stroke: '#686878', 'stroke-width': 0.8, rx: 3 });
+    // Dish
+    el('circle', { cx: 104, cy: 152, r: 7, fill: '#383548' });
+    el('circle', { cx: 104, cy: 152, r: 4, fill: '#282438' });
+    el('circle', { cx: 104, cy: 152, r: 1.5, fill: '#484060' });
+    txt('Millennium Falcon', 115, 174, { fill: '#c0c8e8', size: 6, w: 700 });
+
+    // ── RISE OF THE RESISTANCE ────────────────────────────
+    el('rect', { x: 62, y: 155, width: 50, height: 35, fill: '#201e32', stroke: '#403c60', 'stroke-width': 1.5, rx: 2 });
+    el('rect', { x: 66, y: 162, width: 16, height: 20, fill: '#2c2840', rx: 1 });
+    el('rect', { x: 90, y: 162, width: 16, height: 20, fill: '#2c2840', rx: 1 });
+    path('M62,155 L87,143 L112,155', { fill: '#181628', stroke: '#302c48', 'stroke-width': 0.8 });
+    el('rect', { x: 78, y: 156, width: 18, height: 8, fill: '#e03838', opacity: 0.9, rx: 1 });
+    txt('Rise of Resistance', 87, 196, { fill: '#b0b8f0', size: 6, w: 700 });
+
+    // ── SLINKY DOG DASH ───────────────────────────────────
+    el('ellipse', { cx: 302, cy: 278, rx: 32, ry: 22, fill: 'none', stroke: '#e8c828', 'stroke-width': 4 });
+    el('ellipse', { cx: 302, cy: 278, rx: 20, ry: 13, fill: 'none', stroke: '#3898d8', 'stroke-width': 2.5 });
+    el('circle', { cx: 270, cy: 278, r: 6, fill: '#f0e040', stroke: '#c0b020', 'stroke-width': 1 });
+    txt('Slinky Dog Dash', 302, 304, { fill: '#f0f8c0', size: 6, w: 700 });
+
+    // ── TOY STORY MANIA ───────────────────────────────────
+    el('rect', { x: 308, y: 256, width: 32, height: 24, fill: '#d05828', stroke: '#a03818', 'stroke-width': 1, rx: 2 });
+    path('M308,256 L324,242 L340,256', { fill: '#b84020', stroke: '#902810', 'stroke-width': 0.8 });
+    el('circle', { cx: 318, cy: 265, r: 5, fill: '#f0f0b0', stroke: '#c0c080', 'stroke-width': 0.8 });
+    el('circle', { cx: 330, cy: 265, r: 5, fill: '#b0d8f0', stroke: '#80a8c0', 'stroke-width': 0.8 });
+    txt('Toy Story Mania', 324, 288, { fill: '#fff0b0', size: 6, w: 600 });
+
+    // ── RUNAWAY RAILWAY ───────────────────────────────────
+    el('circle', { cx: 196, cy: 188, r: 16, fill: '#c8a038', stroke: '#a07820', 'stroke-width': 1.5 });
+    el('rect', { x: 184, y: 184, width: 24, height: 12, fill: '#e8c050', rx: 2 });
+    el('circle', { cx: 188, cy: 197, r: 5, fill: '#303030' });
+    el('circle', { cx: 202, cy: 197, r: 5, fill: '#303030' });
+    path('M190,184 L196,175 L202,184', { fill: '#b89030', stroke: '#907010', 'stroke-width': 0.8 });
+    txt('Runaway Railway', 196, 210, { fill: '#f8e898', size: 6, w: 600 });
+
+    txt("Galaxy's Edge", 108, 155, { fill: '#9898e8', size: 7, w: 700 });
+    txt('Toy Story Land', 308, 285, { fill: '#d8f898', size: 7, w: 700 });
+    txt('Sunset Blvd', 265, 148, { fill: '#f8e8a0', size: 6.5, w: 700 });
+
+  } else if (currentPark === 'ak') {
+    svg.setAttribute('viewBox', '0 0 420 450');
+    el('rect', { width: 420, height: 450, fill: '#b8d898' });
+    el('ellipse', { cx: 210, cy: 218, rx: 188, ry: 185, fill: '#78b840', stroke: '#58981a', 'stroke-width': 2 });
+
+    // Discovery Island - lush hub
+    el('ellipse', { cx: 210, cy: 210, rx: 58, ry: 55, fill: '#58a828', stroke: '#388808', 'stroke-width': 2 });
+
+    // Pandora - dark alien biome
+    el('ellipse', { cx: 318, cy: 322, rx: 82, ry: 76, fill: '#0c1020', stroke: '#182030', 'stroke-width': 2 });
+    el('ellipse', { cx: 318, cy: 322, rx: 68, ry: 62, fill: '#0e1828' });
+    // Floating mountains hint
+    el('ellipse', { cx: 305, cy: 298, rx: 28, ry: 12, fill: '#182840', opacity: 0.8 });
+    el('ellipse', { cx: 335, cy: 308, rx: 22, ry: 10, fill: '#182840', opacity: 0.7 });
+
+    // Africa - warm savanna
+    el('ellipse', { cx: 105, cy: 152, rx: 88, ry: 80, fill: '#d0a830', stroke: '#a88010', 'stroke-width': 2 });
+    el('ellipse', { cx: 98, cy: 150, rx: 58, ry: 52, fill: '#c89820', opacity: 0.5 });
+    // Safari road loop
+    path('M62,128 C72,108 96,100 120,106 C148,112 162,130 160,148 C158,166 140,178 118,178 C96,178 74,166 62,148 Z', { stroke: '#a88818', 'stroke-width': 3.5, fill: 'none', opacity: 0.8 });
+    path('M62,128 C72,108 96,100 120,106 C148,112 162,130 160,148 C158,166 140,178 118,178 C96,178 74,166 62,148 Z', { fill: '#b89020', opacity: 0.15 });
+
+    // Asia - jungle green
+    el('ellipse', { cx: 316, cy: 148, rx: 80, ry: 74, fill: '#3a9030', stroke: '#208018', 'stroke-width': 2 });
+
+    // DinoLand - earthy
+    el('ellipse', { cx: 148, cy: 332, rx: 80, ry: 68, fill: '#a86820', stroke: '#785008', 'stroke-width': 2 });
+    el('ellipse', { cx: 148, cy: 332, rx: 62, ry: 52, fill: '#986018', opacity: 0.5 });
+
+    // Water channels
+    path('M210,264 C215,280 228,292 248,298', { stroke: '#3898c8', 'stroke-width': 7, 'stroke-linecap': 'round', opacity: 0.8 });
+    path('M210,264 C205,280 190,294 170,300', { stroke: '#3898c8', 'stroke-width': 7, 'stroke-linecap': 'round', opacity: 0.8 });
+    path('M210,264 C218,284 225,310 235,328', { stroke: '#3898c8', 'stroke-width': 5, 'stroke-linecap': 'round', opacity: 0.6 });
+    // Oasis entry
+    el('ellipse', { cx: 210, cy: 400, rx: 60, ry: 32, fill: '#68b038', stroke: '#489018', 'stroke-width': 1.5 });
+
+    // ── TREE OF LIFE ──────────────────────────────────────
+    // Root system
+    path('M200,262 C188,270 175,276 166,280', { stroke: '#5a3808', 'stroke-width': 4, 'stroke-linecap': 'round' });
+    path('M220,262 C232,270 245,276 254,280', { stroke: '#5a3808', 'stroke-width': 4, 'stroke-linecap': 'round' });
+    path('M205,268 C202,280 201,292 202,300', { stroke: '#5a3808', 'stroke-width': 3.5, 'stroke-linecap': 'round' });
+    path('M215,268 C218,280 220,290 218,298', { stroke: '#5a3808', 'stroke-width': 3, 'stroke-linecap': 'round' });
+    // Trunk
+    el('rect', { x: 201, y: 228, width: 18, height: 38, fill: '#623a08', stroke: '#4a2a04', 'stroke-width': 1 });
+    path('M201,228 C196,222 198,212 210,210 C222,212 224,222 219,228 Z', { fill: '#5a3408', stroke: '#422804', 'stroke-width': 1 });
+    // Canopy layers - large lush
+    el('ellipse', { cx: 210, cy: 195, rx: 48, ry: 42, fill: '#1a5808', stroke: '#0e3a04', 'stroke-width': 1.5 });
+    el('ellipse', { cx: 196, cy: 188, rx: 36, ry: 30, fill: '#1e6208', opacity: 0.85 });
+    el('ellipse', { cx: 224, cy: 185, rx: 32, ry: 28, fill: '#226a0a', opacity: 0.85 });
+    el('ellipse', { cx: 210, cy: 175, rx: 28, ry: 24, fill: '#286810', opacity: 0.9 });
+    el('ellipse', { cx: 200, cy: 168, rx: 22, ry: 18, fill: '#2e7010', opacity: 0.85 });
+    el('ellipse', { cx: 220, cy: 166, rx: 20, ry: 17, fill: '#347818', opacity: 0.85 });
+    el('ellipse', { cx: 210, cy: 158, rx: 16, ry: 14, fill: '#3a8018', opacity: 0.9 });
+    // Animal carvings on trunk (simplified shapes)
+    path('M205,218 C202,213 206,208 210,210 C214,212 214,218 210,220 Z', { fill: '#4a2804', opacity: 0.7 });
+    path('M215,224 C218,218 222,215 222,220 C222,226 218,228 215,224 Z', { fill: '#4a2804', opacity: 0.7 });
+    txt('Tree of Life', 210, 192, { fill: '#a0ff60', size: 7.5, w: 700 });
+
+    // ── EXPEDITION EVEREST ────────────────────────────────
+    // Snow-capped mountain
+    path('M316,76 L295,120 L272,120 Z', { fill: '#e8ecf4', stroke: '#c8cce4', 'stroke-width': 1 });
+    path('M316,76 L337,120 L360,120 Z', { fill: '#dce4f0', stroke: '#c0c8e4', 'stroke-width': 1 });
+    path('M272,120 L360,120 L316,76 Z', { fill: '#c8d0e4', opacity: 0.6 });
+    // Mountain body
+    path('M260,138 L272,120 L316,76 L360,120 L372,138 Z', { fill: '#9898a8', stroke: '#787898', 'stroke-width': 1 });
+    path('M260,138 L295,138 L272,120 Z', { fill: '#888898', opacity: 0.8 });
+    path('M337,138 L372,138 L360,120 Z', { fill: '#888898', opacity: 0.8 });
+    // Snow detail
+    path('M300,95 L316,76 L332,95 C325,90 318,88 316,88 C314,88 307,90 300,95 Z', { fill: '#f0f4ff' });
+    // Coaster track
+    el('ellipse', { cx: 316, cy: 138, rx: 40, ry: 24, fill: 'none', stroke: '#786040', 'stroke-width': 3, opacity: 0.8 });
+    el('ellipse', { cx: 316, cy: 138, rx: 30, ry: 16, fill: 'none', stroke: '#705838', 'stroke-width': 2, opacity: 0.6 });
+    txt('Expedition Everest', 316, 162, { fill: '#e0e8f0', size: 6.5, w: 700 });
+
+    // ── KILIMANJARO SAFARIS ───────────────────────────────
+    // Vehicle
+    el('rect', { x: 94, y: 146, width: 20, height: 12, fill: '#506828', stroke: '#304818', 'stroke-width': 1, rx: 2 });
+    el('circle', { cx: 98, cy: 159, r: 4, fill: '#282820' });
+    el('circle', { cx: 110, cy: 159, r: 4, fill: '#282820' });
+    path('M94,152 L114,152', { stroke: '#70982a', 'stroke-width': 1 });
+    // Giraffe
+    path('M132,130 C134,118 136,108 134,100', { stroke: '#c89828', 'stroke-width': 3.5, 'stroke-linecap': 'round' });
+    el('ellipse', { cx: 134, cy: 99, rx: 4, ry: 3, fill: '#c89828' });
+    path('M124,130 L138,130 L134,140 L128,140 Z', { fill: '#d8a830' });
+    // Zebra stripes hint
+    el('ellipse', { cx: 148, cy: 162, rx: 10, ry: 6, fill: '#e8e8d8' });
+    path('M142,160 L142,164', { stroke: '#282828', 'stroke-width': 1.5 });
+    path('M147,159 L147,165', { stroke: '#282828', 'stroke-width': 1.5 });
+    path('M152,160 L152,164', { stroke: '#282828', 'stroke-width': 1.5 });
+    txt('Kilimanjaro Safaris', 105, 178, { fill: '#f8e898', size: 6, w: 700 });
+
+    // ── FLIGHT OF PASSAGE ─────────────────────────────────
+    el('rect', { x: 294, y: 318, width: 52, height: 36, fill: '#101828', stroke: '#202840', 'stroke-width': 1.5, rx: 2 });
+    el('rect', { x: 300, y: 325, width: 16, height: 20, fill: '#181e30', rx: 1 });
+    el('rect', { x: 322, y: 325, width: 16, height: 20, fill: '#181e30', rx: 1 });
+    path('M294,318 L320,305 L346,318', { fill: '#0e1428', stroke: '#202848', 'stroke-width': 0.8 });
+    // Bioluminescent glow patches
+    el('ellipse', { cx: 310, cy: 310, rx: 14, ry: 8, fill: '#1838a0', opacity: 0.5 });
+    el('ellipse', { cx: 340, cy: 328, rx: 10, ry: 6, fill: '#2040c0', opacity: 0.4 });
+    txt('Flight of Passage', 320, 360, { fill: '#8090ff', size: 6.5, w: 700 });
+
+    // ── NAVI RIVER ────────────────────────────────────────
+    path('M278,296 C286,283 302,280 318,284 C334,288 344,300 342,314', { stroke: '#2848a8', 'stroke-width': 6, 'stroke-linecap': 'round', opacity: 0.8 });
+    path('M278,296 C286,283 302,280 318,284 C334,288 344,300 342,314', { stroke: '#5078d8', 'stroke-width': 3, 'stroke-linecap': 'round', 'stroke-dasharray': '4,4', opacity: 0.6 });
+    txt("Na'vi River", 308, 296, { fill: '#9090ff', size: 6, w: 600 });
+
+    // ── KALI RIVER RAPIDS ─────────────────────────────────
+    el('circle', { cx: 328, cy: 178, rx: 18, r: 18, fill: '#2878a8', stroke: '#1858a8', 'stroke-width': 2 });
+    el('circle', { cx: 328, cy: 178, r: 11, fill: '#1858a0' });
+    path('M310,178 A18,18 0 0,1 346,178', { stroke: '#60c0e8', 'stroke-width': 2.5, fill: 'none' });
+    txt('Kali River', 328, 200, { fill: '#a0e8ff', size: 6, w: 600 });
+
+    // ── DINOSAUR ──────────────────────────────────────────
+    // Dino body
+    path('M128,330 C120,318 122,305 132,300 C140,296 152,298 158,306 C165,298 178,296 182,306 C188,300 196,300 194,312 C192,322 180,332 165,335 Z', { fill: '#4a3008', stroke: '#2a1804', 'stroke-width': 1 });
+    // Head
+    path('M182,306 C190,298 200,296 202,304 C204,312 198,318 190,316 Z', { fill: '#603818' });
+    el('circle', { cx: 196, cy: 302, r: 2.5, fill: '#e0c060' });
+    // Spikes
+    path('M148,300 L145,290 L151,292 Z', { fill: '#6a3810' });
+    path('M158,298 L156,287 L163,290 Z', { fill: '#6a3810' });
+    path('M168,298 L167,287 L173,291 Z', { fill: '#6a3810' });
+    // Legs
+    el('rect', { x: 133, y: 330, width: 8, height: 14, fill: '#3a2008', rx: 2 });
+    el('rect', { x: 155, y: 332, width: 8, height: 14, fill: '#3a2008', rx: 2 });
+    txt('DINOSAUR', 158, 352, { fill: '#f8d878', size: 7, w: 700 });
+
+    // Land labels
+    txt('Pandora', 318, 322, { fill: '#8888ff', size: 8, w: 700 });
+    txt('Africa', 100, 152, { fill: '#f8e838', size: 8, w: 700 });
+    txt('Asia', 314, 148, { fill: '#a8f868', size: 8, w: 700 });
+    txt('DinoLand', 148, 332, { fill: '#f8c858', size: 7.5, w: 700 });
+    txt('Discovery Island', 210, 212, { fill: '#d0ff90', size: 6.5, w: 700 });
+  }
+
+  // Non-route ride dots
+  var selRides = rides.filter(function(r) { return selected.has(r.id); });
+  selRides.forEach(function(r) {
+    var pos = ridePos[r.id];
+    if (!pos || route.indexOf(r.id) >= 0) return;
+    el('circle', { cx: pos.x, cy: pos.y, r: 8, fill: 'rgba(255,255,255,0.3)', stroke: 'rgba(255,255,255,0.6)', 'stroke-width': 1 });
+    el('circle', { cx: pos.x, cy: pos.y, r: 5, fill: 'rgba(255,255,255,0.75)', stroke: 'rgba(0,0,0,0.15)', 'stroke-width': 0.8 });
+  });
+
+  // Route path
+  if (route.length > 1) {
+    var pts = route.map(function(id) { return ridePos[id]; }).filter(Boolean);
+    if (pts.length > 1) {
+      var d = 'M' + pts[0].x + ' ' + pts[0].y;
+      for (var i = 1; i < pts.length; i++) d += ' L' + pts[i].x + ' ' + pts[i].y;
+      path(d, { stroke: 'rgba(0,0,0,0.3)', 'stroke-width': 6, 'stroke-linecap': 'round' });
+      path(d, { stroke: '#ffffff', 'stroke-width': 3.5, 'stroke-dasharray': '8,5', 'stroke-linecap': 'round' });
+    }
+  }
+
+  // Numbered stops
+  var meta = PARK_META[currentPark];
+  route.forEach(function(id, idx) {
+    var pos = ridePos[id];
+    if (!pos) return;
+    el('circle', { cx: pos.x, cy: pos.y, r: 18, fill: 'rgba(0,0,0,0.3)' });
+    el('circle', { cx: pos.x, cy: pos.y, r: 16, fill: meta.color, stroke: '#ffffff', 'stroke-width': 2.5 });
+    var n = el('text', { x: pos.x, y: pos.y + 5, 'text-anchor': 'middle', 'font-size': 13, 'font-weight': 700, fill: '#fff', 'font-family': 'system-ui' });
+    n.textContent = idx + 1;
+  });
+
+  return svg;
+}
+
+
+// ── Quick route (3 rides) ─────────────────────────────────────────────────────
+
+function computeLocalRoute(sel) {
+  if (!sel.length) return [];
+  var remaining = sel.slice();
+  var route = [];
+  var current = {name:'entrance', waitTime:0};
+  while (remaining.length && route.length < 3) {
+    var best = null, bestScore = Infinity;
+    remaining.forEach(function(r) {
+      var s = r.waitTime + walkMins(current, r) * 1.5;
+      if (s < bestScore) { bestScore = s; best = r; }
+    });
+    route.push(best);
+    remaining.splice(remaining.indexOf(best), 1);
+    current = best;
+  }
+  return route;
+}
+
+async function optimizeRoute() {
+  var sel = rides.filter(function(r) { return selected.has(r.id); });
+  if (sel.length < 2) { alert('Select at least 2 rides.'); return; }
+  showScreen('route');
+  document.getElementById('route-back-btn').onclick = function() { showScreen('rides'); };
+  document.getElementById('route-body').innerHTML = '<div class="loading" style="padding-top:80px"><div class="loading-spinner"></div><p>Building your route...</p></div>';
+
+  var meta = PARK_META[currentPark];
+  var top3 = computeLocalRoute(sel);
+  routeOrder = top3.map(function(r) { return r.id; });
+
+  var walkLabels = [];
+  for (var i = 0; i < top3.length - 1; i++) {
+    var w = walkMins(top3[i], top3[i+1]);
+    walkLabels.push(w < 1 ? '<1 min walk' : Math.round(w) + ' min walk');
+  }
+
+  var tip = 'Start with the closest high-demand ride, then work through the area.';
+  try {
+    var lines = top3.map(function(r) { return r.name + ': ' + r.waitTime + ' min wait'; }).join(', ');
+    var res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({model:'claude-sonnet-4-6', max_tokens:120, messages:[{role:'user',
+        content:'Disney World ' + meta.name + '. These 3 rides are in optimal order: ' + lines + '. Give one short practical tip (under 20 words). Plain text only.'}]})
+    });
+    var d = await res.json();
+    tip = d.content.map(function(b) { return b.text || ''; }).join('').trim();
+  } catch(e) {}
+
+  var totalWait = top3.reduce(function(s,r) { return s + r.waitTime; }, 0);
+  var totalWalk = top3.reduce(function(s,r,i) { return i === 0 ? s : s + walkMins(top3[i-1], r); }, 0);
+  var totalTime = totalWait + Math.round(totalWalk) + top3.length * 5;
+  var heroBg = HERO_COLORS[currentPark] || '#185FA5';
+
+  var mapSvg = buildMap(routeOrder);
+  var html = '<div class="route-hero" style="background:' + heroBg + '"><h2>' + meta.emoji + ' Next 3 rides</h2><p>' + tip + '</p></div>' +
+    '<div class="route-stats"><div class="route-stat"><div class="route-stat-v">' + top3.length + '</div><div class="route-stat-l">rides</div></div>' +
+    '<div class="route-stat"><div class="route-stat-v">' + Math.round(totalWait) + 'm</div><div class="route-stat-l">wait time</div></div>' +
+    '<div class="route-stat"><div class="route-stat-v">' + Math.round(totalTime) + 'm</div><div class="route-stat-l">total time</div></div></div>' +
+    '<div class="map-section"><h3>Route map</h3><div class="map-wrap" id="map-container"></div></div>' +
+    '<div class="steps-section"><h3>Your next stops</h3>';
+
+  top3.forEach(function(ride, i) {
+    var walkNote = i < walkLabels.length ? '<div class="walk-note">↓ ' + walkLabels[i] + '</div>' : '';
+    html += '<div class="step-card"><div class="step-num">' + (i+1) + '</div>' +
+      '<div style="flex:1"><div class="step-name">' + ride.name + '</div>' +
+      '<div class="step-wait">' + ride.waitTime + ' min wait' + (ride.area ? ' · ' + ride.area : '') + '</div></div>' +
+      '<span class="wait-badge ' + wc(ride.waitTime) + '">' + ride.waitTime + 'm</span></div>' + walkNote;
+  });
+
+  var remaining = sel.filter(function(r) { return routeOrder.indexOf(r.id) < 0; });
+  if (remaining.length) {
+    html += '<div style="margin-top:16px;padding:14px 16px;background:#fff;border-radius:12px;">' +
+      '<div style="font-size:12px;font-weight:600;color:#8e8e93;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px;">After these 3</div>';
+    remaining.forEach(function(r) {
+      html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid #f3f4f6;">' +
+        '<span style="font-size:14px;color:#6b7280;">' + r.name + '</span>' +
+        '<span class="wait-badge ' + wc(r.waitTime) + '">' + r.waitTime + 'm</span></div>';
+    });
+    html += '</div>';
+  }
+
+  html += '</div><div style="margin:16px;display:grid;grid-template-columns:1fr 1fr;gap:10px;">' +
+    '<button class="sm-btn outline" id="back-rides-btn">‹ Back</button>' +
+    '<button class="sm-btn filled" id="reopt-btn">Re-optimize</button></div>';
+
+  document.getElementById('route-body').innerHTML = html;
+  document.getElementById('map-container').appendChild(mapSvg);
+  document.getElementById('back-rides-btn').onclick = function() { showScreen('rides'); };
+  document.getElementById('reopt-btn').onclick = reoptimize;
+}
+
+function reoptimize() {
+  if (routeOrder.length > 0) selected.delete(routeOrder[0]);
+  optimizeRoute();
+}
+
+// ── Priority picker ───────────────────────────────────────────────────────────
+
+function openPriorityPicker() {
+  priority = {};
+  rides.forEach(function(r) { priority[r.id] = 'skip'; });
+  renderPriorityList();
+  showScreen('priority');
+  var pf = document.getElementById('priority-footer');
+  if (pf) pf.style.display = 'block';
+}
+
+function renderPriorityList() {
+  var mustCount = Object.values(priority).filter(function(v) { return v === 'must'; }).length;
+  var wantCount = Object.values(priority).filter(function(v) { return v === 'want'; }).length;
+  var info = document.getElementById('priority-info');
+  if (info) info.textContent = mustCount + ' must-dos · ' + wantCount + ' want-to-dos';
+  var list = document.getElementById('priority-list');
+  list.innerHTML = '';
+  rides.forEach(function(r) {
+    var p = priority[r.id] || 'skip';
+    var icons = {must:'★', want:'✓', skip:''};
+    var div = document.createElement('div');
+    div.className = 'priority-card' + (p === 'must' ? ' must' : p === 'want' ? ' want' : '');
+    div.innerHTML = '<div class="priority-dot">' + (icons[p] || '') + '</div>' +
+      '<div style="flex:1"><div class="priority-name">' + r.name + '</div>' +
+      (r.area ? '<div class="priority-area">' + r.area + ' · ' + r.waitTime + ' min wait</div>' : '') + '</div>' +
+      '<span class="wait-badge ' + wc(r.waitTime) + '">' + r.waitTime + 'm</span>';
+    div.addEventListener('click', function() {
+      var cur = priority[r.id] || 'skip';
+      priority[r.id] = cur === 'skip' ? 'must' : cur === 'must' ? 'want' : 'skip';
+      renderPriorityList();
+    });
+    list.appendChild(div);
+  });
+}
+
+// ── Full day route ────────────────────────────────────────────────────────────
+
+async function buildFullDayRoute() {
+  showScreen('route');
+  document.getElementById('route-back-btn').onclick = function() { showScreen('priority'); };
+  document.getElementById('route-body').innerHTML = '<div class="loading" style="padding-top:80px"><div class="loading-spinner"></div><p>Building your full day...</p></div>';
+
+  var meta = PARK_META[currentPark];
+  var mustRides = rides.filter(function(r) { return priority[r.id] === 'must'; });
+  var wantRides = rides.filter(function(r) { return priority[r.id] === 'want'; });
+  var allRides = mustRides.concat(wantRides);
+
+  if (!allRides.length) {
+    document.getElementById('route-body').innerHTML = '<div class="error-box"><p>Pick at least one must-do or want-to ride first.</p><button id="err-back-btn">‹ Go back</button></div>';
+    var eb = document.getElementById('err-back-btn');
+    if (eb) eb.onclick = function() { showScreen('priority'); };
+    return;
+  }
+
+  var budgetMins = hours * 60;
+  var remaining = allRides.slice();
+  var fullRoute = [];
+  var elapsed = 0;
+  var current = {name:'entrance', waitTime:0};
+
+  while (remaining.length && elapsed < budgetMins - 20) {
+    var musts = remaining.filter(function(r) { return priority[r.id] === 'must'; });
+    var pool = musts.length ? musts : remaining;
+    var best = null, bestScore = Infinity;
+    pool.forEach(function(r) {
+      var walk = walkMins(current, r);
+      var s = (priority[r.id] === 'must' ? 0 : 20) + r.waitTime + walk * 1.5;
+      if (s < bestScore) { bestScore = s; best = r; }
+    });
+    var walk = current.name === 'entrance' ? 5 : walkMins(current, best);
+    var rideCost = best.waitTime + walk + 5;
+    if (elapsed + rideCost > budgetMins) break;
+    fullRoute.push({ride:best, walkFromPrev:Math.round(walk), startMin:Math.round(elapsed + walk)});
+    elapsed += rideCost;
+    remaining.splice(remaining.indexOf(best), 1);
+    current = best;
+  }
+
+  routeOrder = fullRoute.map(function(s) { return s.ride.id; });
+
+  var tip = 'Must-dos are prioritized early, then grouped by area to minimize walking.';
+  try {
+    var lines = fullRoute.map(function(s, i) {
+      return (i+1) + '. ' + s.ride.name + ' (' + (priority[s.ride.id] === 'must' ? 'MUST' : 'want') + ', ' + s.ride.waitTime + 'min)';
+    }).join(', ');
+    var res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({model:'claude-sonnet-4-6', max_tokens:100, messages:[{role:'user',
+        content:'Disney World ' + meta.name + ', ' + hours + 'hr visit. Order: ' + lines + '. One practical tip (under 20 words). Plain text only.'}]})
+    });
+    var d = await res.json();
+    tip = d.content.map(function(b) { return b.text || ''; }).join('').trim();
+  } catch(e) {}
+
+  var mapSvg = buildMap(routeOrder);
+  var heroBg = HERO_COLORS[currentPark] || '#185FA5';
+  var openHour = currentMode === 'fullday' ? (parseInt(document.getElementById('open-hour').value) || 9) : 9;
+
+  function minToTime(min) {
+    var total = openHour * 60 + min;
+    var h = Math.floor(total / 60);
+    var m = total % 60;
+    var ampm = h >= 12 ? 'pm' : 'am';
+    var disp = h > 12 ? h - 12 : h === 0 ? 12 : h;
+    return disp + ':' + (m < 10 ? '0' : '') + m + ampm;
+  }
+
+  var totalWait = fullRoute.reduce(function(s,r) { return s + r.ride.waitTime; }, 0);
+  var mustDone = mustRides.filter(function(r) { return fullRoute.find(function(s) { return s.ride.id === r.id; }); }).length;
+  var heroBg2 = HERO_COLORS[currentPark] || '#185FA5';
+
+  var html = '<div class="route-hero" style="background:' + heroBg2 + '"><h2>' + meta.emoji + ' Your full day</h2><p>' + tip + '</p></div>' +
+    '<div class="route-stats">' +
+    '<div class="route-stat"><div class="route-stat-v">' + fullRoute.length + '</div><div class="route-stat-l">rides</div></div>' +
+    '<div class="route-stat"><div class="route-stat-v">' + mustDone + '</div><div class="route-stat-l">must-dos</div></div>' +
+    '<div class="route-stat"><div class="route-stat-v">' + Math.round(totalWait) + 'm</div><div class="route-stat-l">total wait</div></div>' +
+    '</div><div class="map-section"><h3>Full day route</h3><div class="map-wrap" id="map-container"></div></div>';
+
+  var totalMins = hours * 60;
+  var third = totalMins / 3;
+  var segments = [
+    {label:'Morning', icon:'🌅', rides:fullRoute.filter(function(s) { return s.startMin < third; })},
+    {label:'Afternoon', icon:'☀️', rides:fullRoute.filter(function(s) { return s.startMin >= third && s.startMin < third * 2; })},
+    {label:'Evening', icon:'🌙', rides:fullRoute.filter(function(s) { return s.startMin >= third * 2; })}
+  ];
+
+  segments.forEach(function(seg) {
+    if (!seg.rides.length) return;
+    html += '<div class="day-segment"><div class="seg-label">' + seg.icon + ' ' + seg.label + '</div><div class="seg-card">';
+    seg.rides.forEach(function(s) {
+      var isMust = priority[s.ride.id] === 'must';
+      var walkNote = s.walkFromPrev > 0 ? ' · ' + s.walkFromPrev + ' min walk' : '';
+      html += '<div class="seg-row">' +
+        '<div class="seg-time">' + minToTime(s.startMin) + '</div>' +
+        '<div class="seg-icon">' + (isMust ? '★' : '·') + '</div>' +
+        '<div class="seg-detail"><div class="seg-name">' + s.ride.name + '</div>' +
+        '<div class="seg-sub">' + s.ride.waitTime + ' min wait' + walkNote + '</div></div>' +
+        '<div>' + (isMust ? '<span class="must-tag">MUST</span>' : '') + '</div></div>';
+    });
+    html += '</div></div>';
+  });
+
+  if (remaining.length) {
+    html += '<div class="day-segment"><div class="seg-label">⏭ Didn&#39;t fit today</div><div class="seg-card">';
+    remaining.forEach(function(r) {
+      html += '<div class="seg-row">' +
+        '<div class="seg-time" style="color:#c7c7cc;">—</div>' +
+        '<div class="seg-icon" style="opacity:0.4">·</div>' +
+        '<div class="seg-detail"><div class="seg-name" style="color:#8e8e93;">' + r.name + '</div>' +
+        '<div class="seg-sub">' + r.waitTime + ' min wait</div></div>' +
+        '<span class="wait-badge ' + wc(r.waitTime) + '">' + r.waitTime + 'm</span></div>';
+    });
+    html += '</div></div>';
+  }
+
+  html += '<div style="margin:8px 16px 32px;display:grid;grid-template-columns:1fr 1fr;gap:10px;">' +
+    '<button class="sm-btn outline" id="adjust-btn">‹ Adjust</button>' +
+    '<button class="sm-btn filled" id="livewaits-btn">Live waits</button></div>';
+
+  document.getElementById('route-body').innerHTML = html;
+  document.getElementById('map-container').appendChild(mapSvg);
+  document.getElementById('adjust-btn').onclick = function() { showScreen('priority'); };
+  document.getElementById('livewaits-btn').onclick = function() { showScreen('rides'); };
+}
+</script>
+</body>
+</html>
