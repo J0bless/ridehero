@@ -1484,10 +1484,8 @@ function computeLocalRoute(sel) {
 async function optimizeRoute() {
   var sel = rides.filter(function(r) { return selected.has(r.id); });
   if (sel.length < 2) { alert('Select at least 2 rides.'); return; }
-  showScreen('route');
-  document.getElementById('route-back-btn').onclick = function() { showScreen('rides'); };
-  document.getElementById('route-body').innerHTML = '<div class="loading" style="padding-top:80px"><div class="loading-spinner"></div><p>Building your route...</p></div>';
 
+  // Compute route instantly — no API call blocking the UI
   var meta = PARK_META[currentPark];
   var top3 = computeLocalRoute(sel);
   routeOrder = top3.map(function(r) { return r.id; });
@@ -1498,17 +1496,34 @@ async function optimizeRoute() {
     walkLabels.push(w < 1 ? '<1 min walk' : Math.round(w) + ' min walk');
   }
 
-  var tip = 'Start with the closest high-demand ride, then work through the area.';
-  try {
-    var lines = top3.map(function(r) { return r.name + ': ' + r.waitTime + ' min wait'; }).join(', ');
-    var res = await fetch('https://api.anthropic.com/v1/messages', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({model:'claude-sonnet-4-6', max_tokens:120, messages:[{role:'user',
-        content:'Disney World ' + meta.name + '. These 3 rides are in optimal order: ' + lines + '. Give one short practical tip (under 20 words). Plain text only.'}]})
-    });
-    var d = await res.json();
-    tip = d.content.map(function(b) { return b.text || ''; }).join('').trim();
-  } catch(e) {}
+  // Pre-built tips by park — instant, no API wait
+  var TIPS = {
+    mk: ["Start in Tomorrowland, then sweep toward Fantasyland to minimize backtracking.",
+         "Hit Big Thunder Mountain early - waits spike after 10am.",
+         "Use the hub pathways to move between lands quickly.",
+         "Fantasyland rides board fast when Tomorrowland is crowded.",
+         "Check Lightning Lane for Space Mountain if waits exceed 45 min."],
+    ep: ["Start with Guardians then Test Track before crowds build in World Discovery.",
+         "Soarin fills up fast - go early or late in the day.",
+         "World Showcase opens at 11am - plan Future World rides first.",
+         "Remys Ratatouille waits are shortest right at park open.",
+         "Mission Space orange side has the shortest wait most days."],
+    hs: ["Rise of the Resistance is the top priority - get there at rope drop.",
+         "Millennium Falcon is best tackled in the first hour of the day.",
+         "Tower of Terror and Rock n Roller are fastest in late afternoon.",
+         "Slinky Dog Dash peaks mid-morning - hit it early.",
+         "Galaxys Edge is least crowded the last two hours before close."],
+    ak: ["Flight of Passage is the must-do first ride - waits can hit 120+ min.",
+         "Navi River Journey is best paired back-to-back with Flight of Passage.",
+         "Kilimanjaro Safaris is best in the morning when animals are most active.",
+         "Expedition Everest rarely has waits over 30 min in the evening.",
+         "DINOSAUR waits drop significantly after 3pm."]
+  };
+  var parkTips = TIPS[currentPark] || TIPS.mk;
+  var tip = parkTips[Math.floor(Math.random() * parkTips.length)];
+
+  showScreen('route');
+  document.getElementById('route-back-btn').onclick = function() { showScreen('rides'); };
 
   var totalWait = top3.reduce(function(s,r) { return s + r.waitTime; }, 0);
   var totalWalk = top3.reduce(function(s,r,i) { return i === 0 ? s : s + walkMins(top3[i-1], r); }, 0);
