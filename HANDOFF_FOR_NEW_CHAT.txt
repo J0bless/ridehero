@@ -1,0 +1,107 @@
+RideHero project handoff for a new ChatGPT chat
+
+Project:
+- Single-page RideHero Disney route planner app.
+- Current focus: Animal Kingdom map route visualization, speed cleanup, and runtime/UI debugging.
+- App is deployed through GitHub + Cloudflare Pages.
+- Production URL used earlier: https://ridehero-app.pages.dev
+
+Current best build:
+- ridehero_DEBUG_PATCH_2026-06-25.zip
+- Source markers to confirm deployment:
+  RideHero cleaned runtime build 2026-06-25
+  RideHero debug patch 2026-06-25: preserve source chip + fixed Select/Deselect All targeting
+
+Current behavior included:
+- Animal Kingdom illustrated map uses optimized WebP image asset.
+- Route line is lighter / less opaque.
+- Route line curves more naturally and snaps tighter to bridge/walkway centerlines.
+- Shortened start connector to avoid river/bridge clipping.
+- Automatic shortened final legs so route does not stretch deeply into labels/landmarks.
+- Pins/route numbers show stop title on hover.
+- Equal or nearly equal wait times prioritize shortest walk.
+- Preview mode for users not in the park.
+- Live location mode only if user appears inside Animal Kingdom.
+- Rides / attractions / both filtering.
+- Balanced wait + walking distance routing.
+
+Cleanup previously performed:
+- Removed large hidden Animal Kingdom proximity-pin/search overlay from the runtime.
+- Removed many hidden SVG pin groups and associated event handlers.
+- Switched Animal Kingdom map image to WebP for faster loading.
+- Kept PNG in bundle as backup asset, but the HTML references animal_kingdom_app_map.webp.
+
+Debug patch performed in this build:
+- Fixed Select all / Deselect all button targeting. The old code used document.querySelector('.sm-btn.outline'), which could hit the filter buttons instead of the footer button.
+- Added a dedicated id="toggle-all-btn" to the footer button.
+- Added updateToggleAllButton() so the footer starts as Deselect all when all visible rides are already selected, changes after individual ride toggles, and disables when no visible experiences are shown.
+- Preserved the source chip after switching Rides / Attractions / Both filters.
+- Verified embedded JS with node --check.
+- Exercised Animal Kingdom quick route and full-day route in Chromium/Playwright using mocked ThemeParks.wiki live wait-time data. No page errors observed.
+
+Upload these files to GitHub repo root:
+- index.html
+- animal_kingdom_app_map.webp
+- animal_kingdom_app_map.png
+
+Optional:
+- animal_kingdom_app_map.jpg is included only for convenience if present, but the app does not need it.
+
+If debugging in a new chat:
+- Inspect index.html for the source markers above.
+- Make sure Cloudflare deploys the latest GitHub commit.
+- View source on the deployed app and search for the debug patch marker.
+- Retest Animal Kingdom: choose AK -> See wait times -> verify footer says Deselect all initially -> tap it -> verify filter labels remain Rides / Attractions / Both.
+
+
+4-park Disney build started 2026-07-16:
+- Added original RideHero-style app-map image assets for Magic Kingdom, EPCOT, and Hollywood Studios.
+- Kept Animal Kingdom's existing calibrated WebP map asset.
+- Added PARK_MAP_ASSETS and PARK_START_POINTS config.
+- Unified route map rendering so all four parks use buildMap() and image-backed map canvases.
+- Added more MK/EPCOT/HS attraction anchors so route badges land near the correct park areas.
+- Changed quick-route calculation from greedy next-stop picking to a complete 3-stop order search over the best candidate pool.
+- Added a small backtracking penalty to reduce close -> far -> close routes unless wait savings justify it.
+- Source marker: RideHero 4-park Disney build 2026-07-16: MK/EPCOT/HS app-map image assets + unified route map rendering
+
+Upload these additional files to GitHub repo root:
+- magic_kingdom_app_map.webp
+- magic_kingdom_app_map.png
+- epcot_app_map.webp
+- epcot_app_map.png
+- hollywood_studios_app_map.webp
+- hollywood_studios_app_map.png
+
+
+=== UI REFRESH V1 2026-07-16 ===
+Applied a hybrid UI refresh across Home, Wait Times, and Route screens. Added bottom nav and ride search, preserved existing route logic and 4-park data.
+
+=== UI REFRESH V2 2026-07-16 ===
+Applied a blue/red/white jersey-inspired palette to RideHero UI Refresh v1. Primary actions are royal blue/navy, red is the key accent, and wait badges use green/orange/red states.
+
+=== V3 ROUTING + UI CLEANUP 2026-07-16 ===
+Combined tech cleanup and UI cleanup. Added park-specific route configs, land rules, anchors, anti-backtracking penalties, and route reasoning cards. Kept v2 blue/red/white palette.
+
+=== V4 SOLID COLORS 2026-07-16 ===
+Kept v3 routing cleanup and changed UI to flatter solid colors: royal blue primary, navy hero/text, red accents, white cards, light gray background, fewer gradients/blends.
+
+=== V4.1 PARK ISOLATION FIX 2026-07-16 ===
+Fixed likely Magic Kingdom/EPCOT blending by adding request tokens, clearing park runtime state on park changes, tying rides to activeRidePark, and replacing assignPositions with park-isolated anchors/fallbacks that preserve v3 routing anchors.
+
+=== V5 FRANCHISE HOME + INTRO 2026-07-16 ===
+Added franchise home hub with Disney consolidated into one destination section, placeholder tabs for Universal/SeaWorld/Six Flags-Cedar Fair, and a first-open rollercoaster loop intro that pulls the page away to reveal the homepage.
+
+=== V5.1 CLEAN COASTER INTRO 2026-07-16 ===
+Replaced the quirky intro with a cleaner sky/trees/coaster scene inspired by the user reference image. Added multi-car train, smoother loop, and cleaner page-pull reveal. Preserved v5 franchise hub and v4.1/v3 fixes.
+
+=== V5.2 SMOOTH COASTER MOTION 2026-07-16 ===
+Fixed the intro train motion so it follows the coaster path smoothly with requestAnimationFrame and SVG path sampling, then derails only after finishing the path and pulling the splash page away.
+
+=== V5.3 COASTER PAGE PULL 2026-07-16 ===
+Improved intro so the coaster physically hooks and pulls the splash page away. Added rope/hook visuals and JS-driven page transform synchronized with train derail motion.
+
+=== V5.4 LEFT-TO-RIGHT PULL 2026-07-16 ===
+Changed intro track to a left-to-right-only coaster path. Train rides left to right, reaches the far-right edge, hooks the page, and pulls the splash page off in tandem while continuing left to right.
+
+=== V5.5 ERGONOMIC HOME 2026-07-16 ===
+Changed homepage into a two-step flow. Destination tiles show first; choosing Disney replaces them with park options. Placeholder destinations show a coming-soon preview. Compacted Quick Route, Full Day, and Wait Times into smaller ergonomic action cards. Preserved v5.4 intro and prior fixes.
