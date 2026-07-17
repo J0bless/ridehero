@@ -1,0 +1,197 @@
+RideHero project handoff for a new ChatGPT chat
+
+Project:
+- Single-page RideHero Disney route planner app.
+- Current focus: Animal Kingdom map route visualization, speed cleanup, and runtime/UI debugging.
+- App is deployed through GitHub + Cloudflare Pages.
+- Production URL used earlier: https://ridehero-app.pages.dev
+
+Current best build:
+- ridehero_DEBUG_PATCH_2026-06-25.zip
+- Source markers to confirm deployment:
+  RideHero cleaned runtime build 2026-06-25
+  RideHero debug patch 2026-06-25: preserve source chip + fixed Select/Deselect All targeting
+
+Current behavior included:
+- Animal Kingdom illustrated map uses optimized WebP image asset.
+- Route line is lighter / less opaque.
+- Route line curves more naturally and snaps tighter to bridge/walkway centerlines.
+- Shortened start connector to avoid river/bridge clipping.
+- Automatic shortened final legs so route does not stretch deeply into labels/landmarks.
+- Pins/route numbers show stop title on hover.
+- Equal or nearly equal wait times prioritize shortest walk.
+- Preview mode for users not in the park.
+- Live location mode only if user appears inside Animal Kingdom.
+- Rides / attractions / both filtering.
+- Balanced wait + walking distance routing.
+
+Cleanup previously performed:
+- Removed large hidden Animal Kingdom proximity-pin/search overlay from the runtime.
+- Removed many hidden SVG pin groups and associated event handlers.
+- Switched Animal Kingdom map image to WebP for faster loading.
+- Kept PNG in bundle as backup asset, but the HTML references animal_kingdom_app_map.webp.
+
+Debug patch performed in this build:
+- Fixed Select all / Deselect all button targeting. The old code used document.querySelector('.sm-btn.outline'), which could hit the filter buttons instead of the footer button.
+- Added a dedicated id="toggle-all-btn" to the footer button.
+- Added updateToggleAllButton() so the footer starts as Deselect all when all visible rides are already selected, changes after individual ride toggles, and disables when no visible experiences are shown.
+- Preserved the source chip after switching Rides / Attractions / Both filters.
+- Verified embedded JS with node --check.
+- Exercised Animal Kingdom quick route and full-day route in Chromium/Playwright using mocked ThemeParks.wiki live wait-time data. No page errors observed.
+
+Upload these files to GitHub repo root:
+- index.html
+- animal_kingdom_app_map.webp
+- animal_kingdom_app_map.png
+
+Optional:
+- animal_kingdom_app_map.jpg is included only for convenience if present, but the app does not need it.
+
+If debugging in a new chat:
+- Inspect index.html for the source markers above.
+- Make sure Cloudflare deploys the latest GitHub commit.
+- View source on the deployed app and search for the debug patch marker.
+- Retest Animal Kingdom: choose AK -> See wait times -> verify footer says Deselect all initially -> tap it -> verify filter labels remain Rides / Attractions / Both.
+
+
+4-park Disney build started 2026-07-16:
+- Added original RideHero-style app-map image assets for Magic Kingdom, EPCOT, and Hollywood Studios.
+- Kept Animal Kingdom's existing calibrated WebP map asset.
+- Added PARK_MAP_ASSETS and PARK_START_POINTS config.
+- Unified route map rendering so all four parks use buildMap() and image-backed map canvases.
+- Added more MK/EPCOT/HS attraction anchors so route badges land near the correct park areas.
+- Changed quick-route calculation from greedy next-stop picking to a complete 3-stop order search over the best candidate pool.
+- Added a small backtracking penalty to reduce close -> far -> close routes unless wait savings justify it.
+- Source marker: RideHero 4-park Disney build 2026-07-16: MK/EPCOT/HS app-map image assets + unified route map rendering
+
+Upload these additional files to GitHub repo root:
+- magic_kingdom_app_map.webp
+- magic_kingdom_app_map.png
+- epcot_app_map.webp
+- epcot_app_map.png
+- hollywood_studios_app_map.webp
+- hollywood_studios_app_map.png
+
+
+=== UI REFRESH V1 2026-07-16 ===
+Applied a hybrid UI refresh across Home, Wait Times, and Route screens. Added bottom nav and ride search, preserved existing route logic and 4-park data.
+
+=== UI REFRESH V2 2026-07-16 ===
+Applied a blue/red/white jersey-inspired palette to RideHero UI Refresh v1. Primary actions are royal blue/navy, red is the key accent, and wait badges use green/orange/red states.
+
+=== V3 ROUTING + UI CLEANUP 2026-07-16 ===
+Combined tech cleanup and UI cleanup. Added park-specific route configs, land rules, anchors, anti-backtracking penalties, and route reasoning cards. Kept v2 blue/red/white palette.
+
+=== V4 SOLID COLORS 2026-07-16 ===
+Kept v3 routing cleanup and changed UI to flatter solid colors: royal blue primary, navy hero/text, red accents, white cards, light gray background, fewer gradients/blends.
+
+=== V4.1 PARK ISOLATION FIX 2026-07-16 ===
+Fixed likely Magic Kingdom/EPCOT blending by adding request tokens, clearing park runtime state on park changes, tying rides to activeRidePark, and replacing assignPositions with park-isolated anchors/fallbacks that preserve v3 routing anchors.
+
+=== V5 FRANCHISE HOME + INTRO 2026-07-16 ===
+Added franchise home hub with Disney consolidated into one destination section, placeholder tabs for Universal/SeaWorld/Six Flags-Cedar Fair, and a first-open rollercoaster loop intro that pulls the page away to reveal the homepage.
+
+=== V5.1 CLEAN COASTER INTRO 2026-07-16 ===
+Replaced the quirky intro with a cleaner sky/trees/coaster scene inspired by the user reference image. Added multi-car train, smoother loop, and cleaner page-pull reveal. Preserved v5 franchise hub and v4.1/v3 fixes.
+
+=== V5.2 SMOOTH COASTER MOTION 2026-07-16 ===
+Fixed the intro train motion so it follows the coaster path smoothly with requestAnimationFrame and SVG path sampling, then derails only after finishing the path and pulling the splash page away.
+
+=== V5.3 COASTER PAGE PULL 2026-07-16 ===
+Improved intro so the coaster physically hooks and pulls the splash page away. Added rope/hook visuals and JS-driven page transform synchronized with train derail motion.
+
+=== V5.4 LEFT-TO-RIGHT PULL 2026-07-16 ===
+Changed intro track to a left-to-right-only coaster path. Train rides left to right, reaches the far-right edge, hooks the page, and pulls the splash page off in tandem while continuing left to right.
+
+=== V5.5 ERGONOMIC HOME 2026-07-16 ===
+Changed homepage into a two-step flow. Destination tiles show first; choosing Disney replaces them with park options. Placeholder destinations show a coming-soon preview. Compacted Quick Route, Full Day, and Wait Times into smaller ergonomic action cards. Preserved v5.4 intro and prior fixes.
+
+=== V5.6 SINGLE ROW PLAN TOOLS 2026-07-16 ===
+Changed Plan Tools into a single left-to-right row on mobile. Shortened labels and tightened card sizing while preserving v5.5 ergonomic home flow and all previous fixes.
+
+=== V5.7 LOOP GRAB PULL 2026-07-16 ===
+Removed coaster intro dialog bubble. Added a single center loop. The page grab starts halfway through the loop, the page begins pulling as the loop completes, and the coaster continues riding away to the right while finishing the pull.
+
+=== V5.8 BIGGER LOOP SLOWER 2026-07-16 ===
+Made the center loop slightly larger and slowed the intro animation down a bit while preserving the mid-loop grab and page pull behavior.
+
+=== V5.9 ACTUAL LOOP 2026-07-16 ===
+Replaced the hill-like center track with a true vertical loop and slightly slowed the intro so the loop reads clearly. Kept the no-dialog, mid-loop grab, and page-pull behavior.
+
+=== V6.0 EXAGGERATED LOOP 2026-07-16 ===
+Made the intro loop substantially larger and more exaggerated, and slowed the intro slightly more so the loop reads clearly before the mid-loop grab and page pull.
+
+=== V6.1 LEFT EDGE PULL 2026-07-16 ===
+Changed intro grab/pull to start from the left-hand edge of the screen. The left edge and hook move left-to-right in the same direction as the coaster, with the rope connected from the train to the moving edge.
+
+=== V6.2 STORYBOARD APPLIED 2026-07-16 ===
+Applied the approved storyboard version of the intro: exaggerated large loop, no dialog, pull starts from the left edge, page peels during the loop, loop completes while the pull continues, and the coaster rides away to the right while continuing the pull. Rope now connects from the end of the coaster cars to the moving edge.
+
+=== V6.3 HIDDEN ROPE 2026-07-16 ===
+Kept the v6.2 storyboard intro behavior, but hid the rope visually while preserving the same pull animation.
+
+=== V6.4 STORYBOARD VISUAL CLEANUP 2026-07-16 ===
+Cleaned intro to match storyboard better: wider rounded loop, no visible rope/hook, no vertical strip artifacts, left-edge page peel starts during the loop, and full page pull happens after loop completion like panel 6.
+
+=== V6.5 STORYBOARD MATCH 2026-07-16 ===
+Matched the supplied storyboard more closely: large rounded loop, visible golden rope and hook, left-edge peel during the loop, dark blue reveal behind the page, colorful coaster train with rider dots, and page pulls away as coaster rides right.
+
+=== V6.6 REMOVE GOLD ROPE 2026-07-16 ===
+Kept the v6.5 storyboard-style intro but removed the visible gold rope while preserving the page peel, dark reveal, colorful train, and pull behavior.
+
+=== V6.7 STORYBOARD RECTIFIED 2026-07-16 ===
+Rectified the intro to match the storyboard more closely: larger rounded loop, grab begins around halfway through the loop, left-edge peel grows during the loop, and the full page only pulls away in the final ride-away phase. Kept the rope hidden per the latest request.
+
+=== V6.8 STORYBOARD FINAL PASS 2026-07-16 ===
+One more storyboard pass: bigger centered loop, clearer halfway-through grab timing, subtler peel during panels 4/5, and a cleaner final full-page pull reserved for panel 6. Gold rope remains hidden.
+
+=== V6.9 ULTRA LITERAL PASS 2026-07-16 ===
+Applied an ultra-literal storyboard pass: slower loop climb, grab shifted toward the top-right quadrant, smaller panel-4 peel, larger panel-5 peel, and faster panel-6 page rip. Gold rope remains hidden.
+
+=== V7.0 MODE CHOICE EXPERIENCE 2026-07-17 ===
+Major update package. Added post-intro split mode choice screen with squiggly divider and tap/swipe selection: Quick Route vs Maximize My Day. Same app layout remains, but mode changes currentMode, visual styling, advisor messaging, and start behavior. Added mode pill and RideHero Advisor card. Preserved v6.9 intro, Disney hub, single-row Plan Tools, routing cleanup, and park isolation.
+
+=== V7.1 MODE SWIPE FIX 2026-07-17 ===
+Fixed mode-choice swipe interaction by binding robust pointer/touch handlers to the whole card, adding horizontal swipe detection, preserving tap selection, and adding keyboard arrows for desktop testing.
+
+=== V7.2 FULLSCREEN MODE CHOICE 2026-07-17 ===
+Fixed swipe reliability and changed mode choice from a centered card to a full-screen split. Quick Route and Maximize My Day now fill the page with a full-height squiggly divider. Swipe is captured across the entire screen with pointer and touch support.
+
+=== V7.3 INTRO POLISH + RED QUICK 2026-07-17 ===
+Applied a polish pass to the opening intro and mode screen. Intro loop geometry rebuilt to read more like the storyboard with smoother timing and cleaner loop visuals. Quick Route on the full-screen mode choice screen changed to the red palette; Maximize My Day remains navy.
+
+=== V7.4 MODE REFINEMENT 2026-07-17 ===
+Refined the full-screen mode choice screen. The white divider is now a true separator strip, the Maximize text is constrained within its half, and a swipe-follow animation was added using a thumb and trailing line that follow the user's swipe origin and movement.
+
+=== V7.5 SWIPE PANEL PULL 2026-07-17 ===
+Refined the full-screen mode choice screen again: thinned the center divider, pushed copy away from the divider/footer, and added swipe-follow panel movement so the selected red or blue side moves with the finger and expands to fill the page on selection.
+
+=== V7.6 MODE SPINNER WIDGET 2026-07-17 ===
+Added bottom-right floating mode spinner widget inspired by the user's sketch. It shows Quick or Plan in the center, slowly spins, sits at 20% opacity when idle, becomes fully visible on interaction, and toggles modes on press. Quick mode hides Plan Tools and starter/suggested plan UI; Plan mode shows them again.
+
+=== V7.7 TRUE LOOP INTRO 2026-07-17 ===
+Rebuilt the opening coaster animation as a true vertical loop. The visible track art is now separated from the hidden motion path so the coaster can complete a full loop without the track visually cutting through itself. Smoothed the train movement and preserved mode-choice UI, mode spinner widget, hidden rope, and prior Disney/routing work.
+
+=== V7.8 NEAR-IMITATION LOOP 2026-07-17 ===
+Focused intro-only polish pass. Rebuilt loop to more closely imitate the supplied roller coaster loop reference: cleaner vertical loop, separated back/front track layers, hidden tangent motion path, smoother train rotation with angle normalization, and custom timing for more believable coaster movement. Preserved page peel, hidden rope, full-screen mode choice, floating mode widget, and prior app work.
+
+=== V7.9 REAL LOOP MANUAL MOTION 2026-07-17 ===
+Hid the mode spinner until after a mode choice is made. Replaced intro loop motion with manual circular geometry: entry line, true 360-degree loop, and exit curve. Visible track simplified to real circular loop + entry/exit segments.
+
+=== V8.0 HIDE PULL EFFECT 2026-07-17 ===
+Removed the visible white pull/peel artifact from the opening animation. Hid left-peel, page-hook, pull-rope, track-bridge-highlight, and disabled pull-shake while preserving the actual page pull-away. Continued from v7.9 real circular loop manual motion.
+
+=== V8.1 COASTER TRAIN PHYSICS 2026-07-17 ===
+Polished intro coaster animation with one continuous-looking track path and articulated coaster cars. Cars now follow the same continuous route with offsets and individual tangent rotation so they bend around the loop like a real coaster train. Preserved v8.0 hidden pull effect and mode spinner behavior.
+
+=== V8.2 DESTINATION FLOW 2026-07-17 ===
+Made Destinations its own page/flow. Destination page now focuses on selecting franchise and park. Quick mode immediately opens Route after park selection and builds a quick starter route. Plan/My Day mode opens a Plan page with Plan Tools, suggested morning sweep, and full-day hours. Bottom nav label changed to Destinations.
+
+=== V8.3 HIDE CONTEXT UNTIL PARK 2026-07-17 ===
+Hidden the Weather and Crowd Level context cards until a park has been selected. They are no longer shown on the initial destination chooser.
+
+=== V8.4 BOTTOM NAV CLEANUP 2026-07-17 ===
+Removed the duplicate Waits option from bottom navigation because Waits is already available inside the Plan Tools section. Bottom nav now only shows Destinations and Route.
+
+=== V8.5 REBUILT LOOP FROM ZERO 2026-07-17 ===
+Reset the opening coaster loop animation from scratch. Rebuilt the loop as one continuous SVG path; the visible track and train motion use the same geometry. Each coaster car follows the path individually with offsets to bend around the loop. Old rigid train CSS animation disabled. Intro restarts from frame zero each page load. Pull/peel/rope artifacts remain hidden.
