@@ -1,0 +1,33 @@
+# RideHero
+
+## Current baseline
+
+This repository baseline is **RideHero v9.7 (2026-07-17)**, imported from:
+
+`ridehero_V9_7_TRACK_ALIGNED_EARLY_PULL_FULL_REPLACE_2026-07-17.zip`
+
+The v9.7 baseline includes the track-aligned coaster intro with an earlier page pull while preserving the existing RideHero experience:
+
+- Single next-stop route queue
+- Proximity-based stop clearing with manual fallback
+- Draggable mode divider
+- Compact automatic wait list without horizontal scrolling
+- Destination and park selection flow
+- Quick Route and Plan My Day mode behavior
+- Image-backed maps and routing UI for all four Disney parks
+
+## App files
+
+- `index.html` contains the single-page application.
+- `*_app_map.webp` files are the runtime park-map assets.
+- PNG and JPG map files are retained as source-quality backups.
+
+## Baseline validation
+
+Run the required syntax check before proposing changes:
+
+```bash
+node --check index.html
+```
+
+Preserve this behavior unless a focused branch and pull request explicitly changes it.
