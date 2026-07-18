@@ -31,3 +31,15 @@ node --check index.html
 ```
 
 Preserve this behavior unless a focused branch and pull request explicitly changes it.
+
+## Approved ChatGPT auto-merge
+
+The `Auto-merge approved ChatGPT PRs` workflow enables squash auto-merge only when every eligibility rule is satisfied:
+
+- Only pull requests targeting `main` are eligible.
+- Only pull requests authored by `J0bless` are eligible.
+- Draft pull requests cannot merge.
+- The pull request must have the `chatgpt-approved` label.
+- GitHub waits for all required checks and branch protections.
+- Approved pull requests use squash merge.
+- Pull requests without the label must never merge automatically.
