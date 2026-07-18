@@ -4068,7 +4068,7 @@ body{
     </div>
 
     <div class="home-section-title" id="destination-section-title">Choose a destination</div>
-    <div class="destination-mode-note" id="destination-mode-note">Quick mode opens your route immediately after park selection.</div>
+    <div class="destination-mode-note" id="destination-mode-note">Quick mode opens a rides-only route immediately after park selection.</div>
     <div class="franchise-grid" id="franchise-grid">
       <button class="franchise-card" data-franchise="disney" onclick="selectFranchise('disney')">
         <span class="franchise-emoji">✨</span>
@@ -4156,7 +4156,7 @@ body{
         <div class="feature-icon">⚡</div>
         <div>
           <div class="feature-title" id="tool-primary-title">Quick</div>
-          <div class="feature-sub" id="tool-primary-sub">3 stops</div>
+          <div class="feature-sub" id="tool-primary-sub">3 rides</div>
         </div>
       </button>
       <button class="feature-card blue compact-feature" onclick="startModeAndRides('fullday')">
@@ -4812,7 +4812,7 @@ function updatePlanFlowCopy() {
   if (note) {
     note.textContent = guidanceMode === 'strategic'
       ? 'Plan mode opens planning tools after park selection.'
-      : 'Quick mode opens your route immediately after park selection.';
+      : 'Quick mode opens a rides-only route immediately after park selection.';
   }
 }
 
@@ -4830,23 +4830,22 @@ async function goQuickRouteForPark() {
 
   routeOrder = [];
   var routeBody = document.getElementById('route-body');
-  if (routeBody) routeBody.innerHTML = '<div class="loading"><div class="spinner"></div><p>Building your quickest route for ' + escHTML(meta.name) + '...</p></div>';
+  if (routeBody) routeBody.innerHTML = '<div class="loading"><div class="spinner"></div><p>Building your quickest rides-only route for ' + escHTML(meta.name) + '...</p></div>';
 
   showScreen('route');
+  var locationPromise = prepareQuickRouteStart();
   await reloadRides();
+  await locationPromise;
 
-  var pool = filteredRides().slice().sort(function(a,b){
-    return (a.wait || 999) - (b.wait || 999);
-  });
+  // Quick Mode starts from the complete operating rides pool. Attractions and
+  // stale selections are removed before any route scoring or optimization.
+  var pool = quickRideCandidates();
+  selected = new Set(pool.map(function(r){ return r.id; }));
 
-  selected = new Set(
-    pool.slice(0, Math.min(6, Math.max(3, pool.length))).map(function(r){ return r.id; })
-  );
-
-  if (selectedFilteredRides().length >= 2) {
+  if (selectedQuickRides().length >= 1) {
     optimizeRoute();
   } else {
-    if (routeBody) routeBody.innerHTML = '<div class="error-box">Not enough wait data is available to build a quick route yet. Try opening waits and selecting attractions manually.</div>';
+    if (routeBody) routeBody.innerHTML = '<div class="error-box">No operating rides are available for a Quick Mode route right now.</div>';
   }
 }
 
@@ -4923,7 +4922,7 @@ async function reloadRides() {
       if (!rides.length) throw new Error('No open rides');
       rides.sort(function(a, b) { return a.waitTime - b.waitTime; });
       if (requestToken !== rideLoadToken || parkForRequest !== currentPark) return;
-      selected = new Set(filteredRides().map(function(r) { return r.id; }));
+      selected = new Set((currentMode === 'quick' ? quickRideCandidates() : filteredRides()).map(function(r) { return r.id; }));
       assignPositions();
       lastRideSource = i === 0 ? 'themeparks.wiki' : i === 1 ? 'themeparks.wiki (proxy)' : 'queue-times.com';
       renderRides(lastRideSource);
@@ -4966,6 +4965,7 @@ function classifyExperience(ride) {
 }
 
 function experienceMatches(ride) {
+  if (currentMode === 'quick') return classifyExperience(ride) === 'ride';
   if (experienceFilter === 'both') return true;
   return classifyExperience(ride) === experienceFilter;
 }
@@ -4980,15 +4980,26 @@ function filteredRides() {
   return rides.filter(function(r){ return experienceMatches(r) && rideMatchesSearch(r); });
 }
 
+function quickRideCandidates() {
+  if (activeRidePark && activeRidePark !== currentPark) return [];
+  return rides.filter(function(r) { return classifyExperience(r) === 'ride'; });
+}
+
+function selectedQuickRides() {
+  return quickRideCandidates().filter(function(r) { return selected.has(r.id); });
+}
+
 function selectedFilteredRides() {
   return filteredRides().filter(function(r) { return selected.has(r.id); });
 }
 
 function filterLabel() {
+  if (currentMode === 'quick') return 'rides';
   return experienceFilter === 'ride' ? 'rides' : experienceFilter === 'attraction' ? 'attractions' : 'rides + attractions';
 }
 
 function setExperienceFilter(value) {
+  if (currentMode === 'quick') return;
   experienceFilter = value || 'both';
 
   // Keep selected only to visible items when switching filters so routes match the user choice.
@@ -5015,13 +5026,16 @@ function renderRides(source) {
     sourceLabel = '<span class="source-chip ' + cls + '">' + label + '</span>';
   }
 
-  html += '<div class="waits-search-wrap"><div class="search-shell"><span>🔎</span><input id="ride-search-input" type="search" placeholder="Search rides, shows, attractions..." value="' + escAttr(rideSearchQuery) + '"/></div></div>';
-  html += '<div class="waits-toolbar"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">' + sourceLabel + '<span class="waits-count">' + rides.length + ' open experiences</span></div><div class="waits-count">Showing only ' + escHTML(meta.name) + '</div></div>';
-  html += '<div class="filter-pills">' +
-    '<button class="sm-btn ' + (experienceFilter === 'ride' ? 'filled' : 'outline') + '" data-filter="ride">Rides</button>' +
-    '<button class="sm-btn ' + (experienceFilter === 'attraction' ? 'filled' : 'outline') + '" data-filter="attraction">Attractions</button>' +
-    '<button class="sm-btn ' + (experienceFilter === 'both' ? 'filled' : 'outline') + '" data-filter="both">Both</button>' +
-  '</div>';
+  var quickOnly = currentMode === 'quick';
+  html += '<div class="waits-search-wrap"><div class="search-shell"><span>🔎</span><input id="ride-search-input" type="search" placeholder="' + (quickOnly ? 'Search rides...' : 'Search rides, shows, attractions...') + '" value="' + escAttr(rideSearchQuery) + '"/></div></div>';
+  html += '<div class="waits-toolbar"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">' + sourceLabel + '<span class="waits-count">' + (quickOnly ? quickRideCandidates().length + ' open rides' : rides.length + ' open experiences') + '</span></div><div class="waits-count">Showing only ' + escHTML(meta.name) + '</div></div>';
+  html += quickOnly
+    ? '<div class="filter-pills"><span class="sm-btn filled" aria-label="Quick Mode rides only">Rides only</span></div>'
+    : '<div class="filter-pills">' +
+        '<button class="sm-btn ' + (experienceFilter === 'ride' ? 'filled' : 'outline') + '" data-filter="ride">Rides</button>' +
+        '<button class="sm-btn ' + (experienceFilter === 'attraction' ? 'filled' : 'outline') + '" data-filter="attraction">Attractions</button>' +
+        '<button class="sm-btn ' + (experienceFilter === 'both' ? 'filled' : 'outline') + '" data-filter="both">Both</button>' +
+      '</div>';
 
   html += '<div class="best-picks-card"><div class="best-picks-head"><div><div class="best-picks-title">Best low-wait picks</div><div class="best-picks-sub">Right now</div></div><button class="inline-link" type="button" onclick="toggleAll()">Select visible</button></div>';
   if (topPicks.length) {
@@ -5118,8 +5132,8 @@ function handleRidesCTA() {
   if (currentMode === 'fullday') {
     openPriorityPicker();
   } else {
-    var sel = selectedFilteredRides();
-    if (sel.length < 2) { alert('Select at least 2 ' + filterLabel() + ' to plan a route.'); return; }
+    var sel = selectedQuickRides();
+    if (sel.length < 1) { alert('Select at least 1 ride to plan a Quick Mode route.'); return; }
     optimizeRoute();
   }
 }
@@ -5263,9 +5277,10 @@ function initRollingQueue(route) {
 function renderRollingQueue() {
   var wrap = document.getElementById('rolling-route-queue');
   if (!wrap) return;
+  var quickOnly = currentMode === 'quick';
 
   if (!rollingQueue || !rollingQueue.length) {
-    wrap.innerHTML = '<div class="rolling-queue-card complete"><div class="rolling-kicker">Route queue</div><div class="rolling-title">All queued stops cleared</div><div class="rolling-sub">RideHero will add the next stop when more route options are available.</div></div>';
+    wrap.innerHTML = '<div class="rolling-queue-card complete"><div class="rolling-kicker">' + (quickOnly ? 'Ride queue' : 'Route queue') + '</div><div class="rolling-title">All queued ' + (quickOnly ? 'rides' : 'stops') + ' cleared</div><div class="rolling-sub">RideHero will add the next ' + (quickOnly ? 'ride' : 'stop') + ' when more route options are available.</div></div>';
     return;
   }
 
@@ -5285,12 +5300,12 @@ function renderRollingQueue() {
 
   wrap.innerHTML =
     '<div class="rolling-queue-card single-next-stop">' +
-      '<div class="rolling-kicker">Next stop in sequence</div>' +
-      '<div class="rolling-sequence-badge">Stop ' + sequenceNumber + '</div>' +
-      '<div class="rolling-title">' + escHTML(current.name || 'Next stop') + '</div>' +
+      '<div class="rolling-kicker">Next ' + (quickOnly ? 'ride' : 'stop') + ' in sequence</div>' +
+      '<div class="rolling-sequence-badge">' + (quickOnly ? 'Ride ' : 'Stop ') + sequenceNumber + '</div>' +
+      '<div class="rolling-title">' + escHTML(current.name || (quickOnly ? 'Next ride' : 'Next stop')) + '</div>' +
       '<div class="rolling-sub">' + escHTML(distanceText) + '</div>' +
       '<div class="rolling-actions">' +
-        '<button class="rolling-clear-btn" type="button" onclick="manualClearCurrentStop()">Clear stop</button>' +
+        '<button class="rolling-clear-btn" type="button" onclick="manualClearCurrentStop()">Clear ' + (quickOnly ? 'ride' : 'stop') + '</button>' +
       '</div>' +
     '</div>';
 }
@@ -5361,6 +5376,11 @@ function routeReasonForStop(prev, stop, idx) {
   var cfg = PARK_ROUTE_CONFIG[currentPark];
   var landLabel = cfg && cfg.lands && cfg.lands[land] ? cfg.lands[land].label : 'nearby area';
   var wait = Number(stop.waitTime) || 0;
+  if (idx === 0 && currentMode === 'quick') {
+    return routeStartMode === 'live' && routeLivePosition
+      ? 'Best first ride from your current location based on wait + walking distance.'
+      : 'Best first ride from the fallback start based on wait + walking distance.';
+  }
   if (idx === 0) return 'Best first move from the entrance based on wait + walking distance.';
   if (prev && inferRideLand(prev) === land) return 'Grouped in ' + landLabel + ' to reduce backtracking.';
   if (wait <= 20) return 'Worth crossing areas because the current wait is low.';
@@ -5391,6 +5411,13 @@ function mapWalkMins(a, b) {
 }
 
 function walkMins(a, b) {
+  if ((a && a.isLiveLocation) || (b && b.isLiveLocation)) {
+    var geoA = a && a.lat != null && a.lng != null ? {lat:Number(a.lat), lng:Number(a.lng)} : getRideCoords((a && a.name) || '');
+    var geoB = b && b.lat != null && b.lng != null ? {lat:Number(b.lat), lng:Number(b.lng)} : getRideCoords((b && b.name) || '');
+    if (geoA && geoB && isFinite(geoA.lat) && isFinite(geoA.lng) && isFinite(geoB.lat) && isFinite(geoB.lng)) {
+      return Math.round(distMetres(geoA, geoB) / 80 * 10) / 10;
+    }
+  }
   var mapMins = mapWalkMins(a, b);
   if (mapMins != null) return mapMins;
   var ca = getRideCoords(a.name);
@@ -6070,10 +6097,10 @@ function navToWaits() {
 function navToRoute() {
   if (document.getElementById('route-body') && document.getElementById('route-body').innerHTML.trim()) {
     showScreen('route');
-  } else if (selectedFilteredRides().length >= 2) {
+  } else if ((currentMode === 'quick' ? selectedQuickRides().length : selectedFilteredRides().length) >= (currentMode === 'quick' ? 1 : 2)) {
     optimizeRoute();
   } else {
-    alert('Choose a park and select at least 2 rides or attractions first.');
+    alert(currentMode === 'quick' ? 'Choose a park with at least 1 operating ride first.' : 'Choose a park and select at least 2 rides or attractions first.');
   }
 }
 
@@ -6287,16 +6314,18 @@ function computeLocalRoute(sel) {
     startNames.ak = akStartNames[routeManualStart] || 'Animal Kingdom Entrance';
   }
 
-  var start = {name:startNames[currentPark] || 'Park Entrance', waitTime:0};
+  var start = quickRouteStartPoint() || {name:startNames[currentPark] || 'Park Entrance', waitTime:0};
 
   // Keep the search fast while still checking complete 3-stop orders.
   // Low waits + nearby stops stay in the pool, instead of greedy one-step choices.
   var pool = sel.slice().sort(function(a, b) {
     var aw = walkMins(start, a), bw = walkMins(start, b);
-    return ((Number(a.waitTime)||0) + aw * 1.15) - ((Number(b.waitTime)||0) + bw * 1.15);
+    var aScore = (Number(a.waitTime)||0) + aw * 1.15;
+    var bScore = (Number(b.waitTime)||0) + bw * 1.15;
+    return Math.abs(aScore - bScore) < 0.001 ? aw - bw : aScore - bScore;
   }).slice(0, Math.min(sel.length, 28));
 
-  var best = null, bestScore = Infinity;
+  var best = null, bestScore = Infinity, bestWalk = Infinity;
 
   function routePenalty(order) {
     var penalty = 0;
@@ -6329,13 +6358,17 @@ function computeLocalRoute(sel) {
       walk += walkMins(cur, r);
       cur = r;
     });
-    return wait + walk * 1.5 + routePenalty(order);
+    return {score:wait + walk * 1.5 + routePenalty(order), walk:walk};
   }
 
   function dfs(order, remaining) {
     if (order.length === maxStops) {
-      var s = scoreOrder(order);
-      if (s < bestScore) { bestScore = s; best = order.slice(); }
+      var result = scoreOrder(order);
+      if (result.score < bestScore || (Math.abs(result.score - bestScore) < 0.001 && result.walk < bestWalk)) {
+        bestScore = result.score;
+        bestWalk = result.walk;
+        best = order.slice();
+      }
       return;
     }
     for (var i = 0; i < remaining.length; i++) {
@@ -6357,8 +6390,91 @@ var routeLivePosition = null;   // {lat,lng,accuracy}
 var routeLiveMessage = '';
 var routeManualStart = 'entrance_gate';
 
+var PARK_GEO_BOUNDS = {
+  mk:{south:28.4155,north:28.4232,west:-81.5858,east:-81.5733},
+  ep:{south:28.3680,north:28.3795,west:-81.5548,east:-81.5430},
+  hs:{south:28.3510,north:28.3605,west:-81.5660,east:-81.5560},
+  ak:{south:28.3520,north:28.3618,west:-81.5965,east:-81.5845}
+};
+
+function isLocationInPark(park, lat, lng) {
+  var bounds = PARK_GEO_BOUNDS[park];
+  return !!bounds && isFinite(lat) && isFinite(lng) &&
+    lat >= bounds.south && lat <= bounds.north && lng >= bounds.west && lng <= bounds.east;
+}
+
+function quickFallbackStartLabel() {
+  if (currentPark !== 'ak') return (PARK_META[currentPark] || PARK_META.mk).name + ' entrance';
+  var labels = {
+    entrance_gate:'Animal Kingdom entrance', entrance_path:'Animal Kingdom entrance',
+    island_center:'Discovery Island', tree_path:'Tree of Life', africa_entry:'Africa',
+    africa_bridge_land:'Africa', asia_bridge:'Asia', asia_bridge_land:'Asia',
+    pandora_bridge:'Pandora', pandora_bridge_land:'Pandora', dino_junction:'DinoLand U.S.A.'
+  };
+  return labels[routeManualStart] || 'Animal Kingdom entrance';
+}
+
+function quickRouteStartPoint() {
+  if (currentMode === 'quick' && routeStartMode === 'live' && routeLivePosition) {
+    return {
+      name:'Your current park location', waitTime:0,
+      lat:routeLivePosition.lat, lng:routeLivePosition.lng, isLiveLocation:true
+    };
+  }
+  if (currentPark === 'ak') {
+    var names = {
+      entrance_gate:'Animal Kingdom Entrance', entrance_path:'Animal Kingdom Entrance',
+      island_center:'Discovery Island', tree_path:'Tree of Life', africa_entry:'Africa',
+      africa_bridge_land:'Africa', asia_bridge:'Asia', asia_bridge_land:'Asia',
+      pandora_bridge:'Pandora', pandora_bridge_land:'Pandora', dino_junction:'DinoLand'
+    };
+    return {name:names[routeManualStart] || 'Animal Kingdom Entrance', waitTime:0};
+  }
+  return {name:(PARK_META[currentPark] || PARK_META.mk).name + ' Entrance', waitTime:0};
+}
+
+function useQuickLocationFallback(reason) {
+  routeStartMode = 'preview';
+  routeLivePosition = null;
+  currentUserLocation = null;
+  routeLiveMessage = reason + ' Using ' + quickFallbackStartLabel() + ' fallback.';
+}
+
+function prepareQuickRouteStart() {
+  routeLivePosition = null;
+  currentUserLocation = null;
+  routeLiveMessage = '';
+  if (!navigator.geolocation) {
+    useQuickLocationFallback('Live location is unavailable.');
+    return Promise.resolve(false);
+  }
+
+  routeStartMode = 'live';
+  routeLiveMessage = 'Checking your live park location...';
+  return new Promise(function(resolve) {
+    navigator.geolocation.getCurrentPosition(function(pos) {
+      var lat = Number(pos && pos.coords && pos.coords.latitude);
+      var lng = Number(pos && pos.coords && pos.coords.longitude);
+      var accuracy = Number(pos && pos.coords && pos.coords.accuracy);
+      if (!isLocationInPark(currentPark, lat, lng) || !isFinite(accuracy) || accuracy > 500) {
+        useQuickLocationFallback('A valid live location inside the selected park was not available.');
+        resolve(false);
+        return;
+      }
+      routeStartMode = 'live';
+      routeLivePosition = {lat:lat, lng:lng, accuracy:accuracy};
+      currentUserLocation = {lat:lat, lng:lng};
+      routeLiveMessage = '';
+      resolve(true);
+    }, function() {
+      useQuickLocationFallback('Live location permission or a valid position was unavailable.');
+      resolve(false);
+    }, {enableHighAccuracy:true, timeout:8000, maximumAge:15000});
+  });
+}
+
 function isAnimalKingdomGeo(lat, lng) {
-  return lat >= 28.3520 && lat <= 28.3618 && lng >= -81.5965 && lng <= -81.5845;
+  return isLocationInPark('ak', lat, lng);
 }
 
 function akMapPointFromLatLng(lat, lng) {
@@ -6398,8 +6514,9 @@ function routeStartStatusText() {
       return style + ' · using your current park location' + (routeLivePosition.accuracy ? ' (±' + Math.round(routeLivePosition.accuracy) + 'm)' : '') + '.';
     }
     if (routeLiveMessage) return style + ' · ' + routeLiveMessage;
-    return style + ' · checking whether you are inside Animal Kingdom...';
+    return style + ' · checking your live park location...';
   }
+  if (currentMode === 'quick' && routeLiveMessage) return style + ' · ' + routeLiveMessage;
   return style + ' · preview starting from ' + (startLabels[routeManualStart] || 'Entrance') + '.';
 }
 
@@ -6471,20 +6588,24 @@ function ensureRouteStartControls() {
     document.getElementById('route-preview-btn').onclick = function() {
       routeStartMode = 'preview';
       routeLivePosition = null;
-      routeLiveMessage = '';
+      if (currentMode === 'quick') currentUserLocation = null;
+      routeLiveMessage = currentMode === 'quick' ? 'Manual start selected. Using ' + quickFallbackStartLabel() + ' fallback.' : '';
       updateRouteStartControlsUI();
-      renderRouteMapSafely(routeOrder || []);
+      if (currentMode === 'quick') optimizeRoute(); else renderRouteMapSafely(routeOrder || []);
     };
 
     var liveBtn = document.getElementById('route-live-btn');
     if (liveBtn) {
       liveBtn.onclick = function() {
         if (!navigator.geolocation) {
-          routeStartMode = 'preview';
-          routeLivePosition = null;
-          routeLiveMessage = 'Location is not supported on this device. Showing preview route.';
+          if (currentMode === 'quick') useQuickLocationFallback('Location is not supported on this device.');
+          else {
+            routeStartMode = 'preview';
+            routeLivePosition = null;
+            routeLiveMessage = 'Location is not supported on this device. Showing preview route.';
+          }
           updateRouteStartControlsUI();
-          renderRouteMapSafely(routeOrder || []);
+          if (currentMode === 'quick') optimizeRoute(); else renderRouteMapSafely(routeOrder || []);
           return;
         }
 
@@ -6498,23 +6619,30 @@ function ensureRouteStartControls() {
           var acc = pos.coords.accuracy;
 
           if (!isAnimalKingdomGeo(lat, lng)) {
-            routeStartMode = 'preview';
-            routeLivePosition = null;
-            routeLiveMessage = 'You do not appear to be inside Animal Kingdom. Showing preview route instead.';
+            if (currentMode === 'quick') useQuickLocationFallback('You do not appear to be inside Animal Kingdom.');
+            else {
+              routeStartMode = 'preview';
+              routeLivePosition = null;
+              routeLiveMessage = 'You do not appear to be inside Animal Kingdom. Showing preview route instead.';
+            }
           } else {
             routeStartMode = 'live';
             routeLivePosition = {lat:lat, lng:lng, accuracy:acc};
+            if (currentMode === 'quick') currentUserLocation = {lat:lat, lng:lng};
             routeLiveMessage = '';
           }
 
           updateRouteStartControlsUI();
-          renderRouteMapSafely(routeOrder || []);
+          if (currentMode === 'quick') optimizeRoute(); else renderRouteMapSafely(routeOrder || []);
         }, function(err) {
-          routeStartMode = 'preview';
-          routeLivePosition = null;
-          routeLiveMessage = 'Could not get your location. Showing preview route instead.';
+          if (currentMode === 'quick') useQuickLocationFallback('Could not get your location.');
+          else {
+            routeStartMode = 'preview';
+            routeLivePosition = null;
+            routeLiveMessage = 'Could not get your location. Showing preview route instead.';
+          }
           updateRouteStartControlsUI();
-          renderRouteMapSafely(routeOrder || []);
+          if (currentMode === 'quick') optimizeRoute(); else renderRouteMapSafely(routeOrder || []);
         }, {enableHighAccuracy:true, timeout:8000, maximumAge:30000});
       };
     }
@@ -6527,9 +6655,10 @@ function ensureRouteStartControls() {
         routeManualStart = this.value;
         routeStartMode = 'preview';
         routeLivePosition = null;
-        routeLiveMessage = '';
+        if (currentMode === 'quick') currentUserLocation = null;
+        routeLiveMessage = currentMode === 'quick' ? 'Manual start selected. Using ' + quickFallbackStartLabel() + ' fallback.' : '';
         updateRouteStartControlsUI();
-        renderRouteMapSafely(routeOrder || []);
+        if (currentMode === 'quick') optimizeRoute(); else renderRouteMapSafely(routeOrder || []);
       };
     }
   }
@@ -6539,11 +6668,13 @@ function ensureRouteStartControls() {
 
 async function optimizeRoute() {
   try {
-    var sel = selectedFilteredRides();
-    if (sel.length < 2) { alert('Select at least 2 ' + filterLabel() + '.'); return; }
+    var sel = currentMode === 'quick' ? selectedQuickRides() : selectedFilteredRides();
+    var minimum = currentMode === 'quick' ? 1 : 2;
+    if (sel.length < minimum) { alert(currentMode === 'quick' ? 'Select at least 1 ride.' : 'Select at least 2 ' + filterLabel() + '.'); return; }
 
     var meta = PARK_META[currentPark];
     var top3 = computeLocalRoute(sel);
+    var routeStart = quickRouteStartPoint();
 
     if (!top3.length) {
       showRouteError('I could not build a route from the selected rides. Try selecting a few more rides.', 'rides');
@@ -6564,19 +6695,20 @@ async function optimizeRoute() {
     document.getElementById('route-back-btn').onclick = function() { showScreen('rides'); };
 
     var totalWait = top3.reduce(function(s,r) { return s + r.waitTime; }, 0);
-    var totalWalk = top3.reduce(function(s,r,i) { return i === 0 ? s : s + walkMins(top3[i-1], r); }, 0);
+    var totalWalk = top3.reduce(function(s,r,i) { return s + walkMins(i === 0 ? routeStart : top3[i-1], r); }, 0);
     var totalTime = totalWait + Math.round(totalWalk) + top3.length * 5;
     var heroBg = HERO_COLORS[currentPark] || '#185FA5';
 
-    var html = '<div class="route-hero" style="background:' + heroBg + '"><h2>' + meta.emoji + ' Next 3 stops</h2><p>' + escHTML(tip) + '</p></div>' +
-      '<div class="route-stats"><div class="route-stat"><div class="route-stat-v">' + top3.length + '</div><div class="route-stat-l">stops</div></div>' +
+    var rideHeading = top3.length === 1 ? 'Next ride' : 'Next ' + top3.length + ' rides';
+    var html = '<div class="route-hero" style="background:' + heroBg + '"><h2>' + meta.emoji + ' ' + rideHeading + '</h2><p>' + escHTML(tip) + '</p></div>' +
+      '<div class="route-stats"><div class="route-stat"><div class="route-stat-v">' + top3.length + '</div><div class="route-stat-l">rides</div></div>' +
       '<div class="route-stat"><div class="route-stat-v">' + Math.round(totalWait) + 'm</div><div class="route-stat-l">wait</div></div>' +
       '<div class="route-stat"><div class="route-stat-v">' + Math.round(totalTime) + 'm</div><div class="route-stat-l">total time</div></div></div>' +
       '<div class="map-section"><h3>Route map</h3><div class="map-wrap" id="map-container"></div></div>' +
-      '<div class="steps-section"><h3>Your next stops</h3>';
+      '<div class="steps-section"><h3>Your next rides</h3>';
 
     top3.forEach(function(ride, i) {
-      var prev = i === 0 ? {name:(PARK_META[currentPark].name + ' Entrance'), waitTime:0} : top3[i-1];
+      var prev = i === 0 ? routeStart : top3[i-1];
       var walk = walkMins(prev, ride);
       var land = inferRideLand(ride);
       var cfg = PARK_ROUTE_CONFIG[currentPark];
@@ -6585,7 +6717,7 @@ async function optimizeRoute() {
       html += '<div class="v3-route-stop">' +
         '<div class="v3-stop-num">' + (i+1) + '</div>' +
         '<div class="v3-stop-main"><div class="v3-stop-title">' + escHTML(ride.name) + '</div>' +
-        '<div class="v3-stop-sub">' + escHTML(landLabel) + ' · ' + Math.round(walk) + ' min walk from previous stop</div>' +
+        '<div class="v3-stop-sub">' + escHTML(landLabel) + ' · ' + Math.round(walk) + ' min walk ' + (i === 0 ? (routeStartMode === 'live' && routeLivePosition ? 'from your location' : 'from the fallback start') : 'from the previous ride') + '</div>' +
         '<div class="v3-stop-reason">' + escHTML(routeReasonForStop(i === 0 ? null : top3[i-1], ride, i)) + '</div></div>' +
         '<span class="wait-badge ' + wc(ride.waitTime) + '">' + escHTML(ride.waitTime) + 'm</span></div>' + walkNote;
     });
@@ -6593,7 +6725,7 @@ async function optimizeRoute() {
     var remaining = sel.filter(function(r) { return routeOrder.indexOf(r.id) < 0; });
     if (remaining.length) {
       html += '<div style="margin-top:16px;padding:14px 16px;background:#fff;border-radius:12px;">' +
-        '<div style="font-size:12px;font-weight:600;color:#8e8e93;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px;">Up next 3</div>';
+        '<div style="font-size:12px;font-weight:600;color:#8e8e93;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:10px;">More rides available</div>';
       remaining.forEach(function(r) {
         html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid #f3f4f6;">' +
           '<span style="font-size:14px;color:#6b7280;">' + escHTML(r.name) + '</span>' +
@@ -7054,7 +7186,7 @@ function applyGuidanceMode(mode) {
     if (advisorCopy) advisorCopy.textContent = 'We’ll keep recommendations short, direct, and easy to follow.';
     if (advisorAction) advisorAction.textContent = 'Go';
     if (toolTitle) toolTitle.textContent = 'Quick';
-    if (toolSub) toolSub.textContent = '3 stops';
+    if (toolSub) toolSub.textContent = '3 rides';
   }
 
   
