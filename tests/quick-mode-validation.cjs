@@ -88,9 +88,19 @@ assert.deepEqual(
 );
 assert.equal(run(`selectedQuickRides().some(function(ride) { return classifyExperience(ride) === 'attraction'; })`), false,
   'stale attraction selections must not enter a Quick route');
+assert.deepEqual(
+  Array.from(run('filteredRides().map(function(ride) { return ride.id; })')),
+  ['near', 'far', 'mid'],
+  'Quick selectable and recommendation lists must contain rides only'
+);
+run(`renderRides('themeparks.wiki');`);
+assert.match(element.innerHTML, /Rides only/, 'Quick Mode must show the rides-only label');
+assert.doesNotMatch(element.innerHTML, /data-filter="attraction"/, 'Quick Mode must hide attraction filters');
+assert.doesNotMatch(element.innerHTML, /Hall of Presidents/, 'Quick recommendations must exclude attractions');
 
 const nearbyRoute = Array.from(run('computeLocalRoute(selectedQuickRides()).map(function(ride) { return ride.id; })'));
 assert.equal(nearbyRoute[0], 'near', 'equal-wait rides should favor the user-nearby ride');
+assert.equal(nearbyRoute.includes('show'), false, 'Quick routes must never include an attraction');
 
 run(`
   rides = [
@@ -124,9 +134,13 @@ run(`
   ];
 `);
 assert.equal(run('filteredRides().length'), 2, 'Full Day Both filter must remain unchanged');
+assert.equal(run('quickRideCandidates().length'), 0, 'Quick-only helpers must be inert outside Quick Mode');
 run(`experienceFilter = 'attraction';`);
 assert.deepEqual(Array.from(run('filteredRides().map(function(ride) { return ride.id; })')), ['show'],
   'Full Day attraction filtering must remain unchanged');
+run(`renderRides('themeparks.wiki');`);
+assert.match(element.innerHTML, /data-filter="attraction"/, 'Full Day must retain the attraction filter');
+assert.match(element.innerHTML, /data-filter="both"/, 'Full Day must retain the Both filter');
 
 assert.equal(run(`isLocationInPark('mk', 28.4198, -81.5757)`), true, 'valid live park location should be accepted');
 assert.equal(run(`isLocationInPark('mk', 28.3558, -81.5631)`), false, 'location outside the selected park should use fallback');
