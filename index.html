@@ -2074,15 +2074,6 @@ body.mode-strategic{
   font-size:13px;
   margin:2px 0 0;
 }
-.swipe-hint{
-  font-size:11px;
-  font-weight:900;
-  color:#64748B;
-  background:#F8FAFC;
-  border:1px solid #E3E8F2;
-  border-radius:999px;
-  padding:7px 9px;
-}
 .split-mode-picker{
   position:relative;
   display:grid;
@@ -2257,10 +2248,6 @@ body.mode-quick .advisor-action{
 .mode-half{
   cursor:pointer;
 }
-.swipe-hint{
-  background:#FFFFFF;
-  color:#142A66;
-}
 
 
 /* RideHero v7.2 full-screen mode choice */
@@ -2288,8 +2275,7 @@ body.mode-quick .advisor-action{
   color:#142A66;
   pointer-events:none;
 }
-.mode-choice-header .home-brand,
-.mode-choice-header .swipe-hint{
+.mode-choice-header .home-brand{
   pointer-events:auto;
 }
 .mode-choice-header .home-brand.mini{
@@ -2310,13 +2296,6 @@ body.mode-quick .advisor-action{
   overflow:hidden;
   text-overflow:ellipsis;
 }
-.mode-choice-header .swipe-hint{
-  background:rgba(255,255,255,.9);
-  border:1px solid rgba(227,232,242,.95);
-  box-shadow:0 10px 24px rgba(20,42,102,.10);
-  backdrop-filter:blur(12px);
-}
-
 .split-mode-picker.fullscreen-split{
   flex:1;
   width:100vw;
@@ -2575,43 +2554,6 @@ body.mode-strategic{
   filter:drop-shadow(0 0 10px rgba(20,42,102,.14));
 }
 
-/* Swipe follow visual */
-.swipe-feedback{
-  position:absolute;
-  inset:0;
-  z-index:5;
-  pointer-events:none;
-}
-.swipe-trail{
-  position:absolute;
-  height:10px;
-  width:0;
-  opacity:0;
-  border-radius:999px;
-  background:linear-gradient(90deg, rgba(255,255,255,.15), rgba(255,255,255,.75));
-  box-shadow:0 0 0 1px rgba(255,255,255,.16), 0 6px 18px rgba(20,42,102,.18);
-  transform:translateY(-50%);
-  transition:opacity .14s ease, width .06s linear;
-}
-.swipe-thumb{
-  position:absolute;
-  width:30px;
-  height:30px;
-  opacity:0;
-  border-radius:50%;
-  background:rgba(255,255,255,.95);
-  box-shadow:0 0 0 4px rgba(255,255,255,.18), 0 8px 20px rgba(20,42,102,.18);
-  transform:translate(-50%, -50%) scale(.72);
-  transition:opacity .14s ease, transform .14s ease;
-}
-.swipe-thumb::after{
-  content:'';
-  position:absolute;
-  inset:8px;
-  border-radius:50%;
-  background:rgba(20,42,102,.12);
-}
-
 @media (max-width:430px){
   .fullscreen-squiggle{
     width:58px !important;
@@ -2637,36 +2579,12 @@ body.mode-strategic{
   .fullscreen-split .mode-half-strategic strong{
     max-width:calc(50vw - 70px) !important;
   }
-  .swipe-thumb{
-    width:26px;
-    height:26px;
-  }
 }
 
 
 /* RideHero v7.5 thinner divider + panel pull swipe */
 .mode-choice-header .home-brand.mini p{
   max-width:170px !important;
-}
-
-.fullscreen-split{
-  --quick-shift:0px;
-  --strategic-shift:0px;
-  --quick-fade:1;
-  --strategic-fade:1;
-}
-
-.fullscreen-split .mode-half{
-  transition:transform .18s ease, opacity .18s ease, clip-path .30s ease, width .30s ease;
-}
-
-.fullscreen-split .mode-half-quick{
-  transform:translateX(var(--quick-shift));
-  opacity:var(--quick-fade);
-}
-.fullscreen-split .mode-half-strategic{
-  transform:translateX(var(--strategic-shift));
-  opacity:var(--strategic-fade);
 }
 
 /* thinner divider used as actual separator */
@@ -2717,43 +2635,6 @@ body.mode-strategic{
 .fullscreen-split.dragging-left .mode-half-strategic{
   box-shadow:0 10px 30px rgba(20,42,102,.18);
   z-index:2;
-}
-
-/* completion: chosen side fills page */
-.mode-choice-screen.complete-quick .fullscreen-split .mode-half-quick{
-  transform:translateX(0) scaleX(2.04) !important;
-  transform-origin:left center;
-  z-index:3;
-  clip-path:inset(0 0 0 0);
-}
-.mode-choice-screen.complete-quick .fullscreen-split .mode-half-strategic{
-  opacity:0 !important;
-  transform:translateX(28px) scale(.98) !important;
-}
-.mode-choice-screen.complete-strategic .fullscreen-split .mode-half-strategic{
-  transform:translateX(0) scaleX(2.04) !important;
-  transform-origin:right center;
-  z-index:3;
-  clip-path:inset(0 0 0 0);
-}
-.mode-choice-screen.complete-strategic .fullscreen-split .mode-half-quick{
-  opacity:0 !important;
-  transform:translateX(-28px) scale(.98) !important;
-}
-.mode-choice-screen.complete-quick .fullscreen-squiggle,
-.mode-choice-screen.complete-strategic .fullscreen-squiggle{
-  opacity:0;
-  transition:opacity .18s ease;
-}
-
-/* swipe trail more subtle */
-.swipe-trail{
-  height:6px !important;
-  background:linear-gradient(90deg, rgba(255,255,255,.06), rgba(255,255,255,.72)) !important;
-}
-.swipe-thumb{
-  width:24px !important;
-  height:24px !important;
 }
 
 @media (max-width:430px){
@@ -3769,35 +3650,6 @@ body{
 }
 
 
-/* RideHero v9.4 mode-choice divider follows the drag */
-.fullscreen-squiggle{
-  --divider-shift:0px;
-  transform:translateX(calc(-50% + var(--divider-shift))) !important;
-  transition:transform .16s ease, opacity .18s ease !important;
-  will-change:transform;
-}
-.fullscreen-split.dragging-left .fullscreen-squiggle,
-.fullscreen-split.dragging-right .fullscreen-squiggle,
-.fullscreen-squiggle.divider-dragging-left,
-.fullscreen-squiggle.divider-dragging-right{
-  transition:none !important;
-}
-.fullscreen-squiggle.mode-divider-complete{
-  transition:transform .28s cubic-bezier(.2,.8,.2,1), opacity .18s ease !important;
-}
-
-/* Keep the separator visible during the drag, then let the chosen panel fill. */
-.mode-choice-screen.complete-quick .fullscreen-squiggle,
-.mode-choice-screen.complete-strategic .fullscreen-squiggle{
-  opacity:0;
-}
-
-/* Panel pull feels tied to the separator now */
-.fullscreen-split.dragging-right .mode-half-quick,
-.fullscreen-split.dragging-left .mode-half-strategic{
-  z-index:2;
-}
-
 
 /* RideHero v9.5 rolling route queue */
 .rolling-route-queue{
@@ -3919,6 +3771,69 @@ body{
   will-change:transform;
 }
 
+/* RideHero v9.8 synchronized mode boundary + centered coaster */
+@property --mode-boundary{
+  syntax:'<percentage>';
+  inherits:true;
+  initial-value:50%;
+}
+.split-mode-picker.fullscreen-split{
+  --mode-boundary:50%;
+  display:block !important;
+  position:relative;
+  transition:--mode-boundary .30s cubic-bezier(.2,.8,.2,1);
+}
+.fullscreen-split.mode-boundary-dragging{
+  transition:none;
+}
+.fullscreen-split .mode-half{
+  position:absolute;
+  top:0;
+  bottom:0;
+  min-height:100vh;
+  transition:none !important;
+  transform:none !important;
+  opacity:1 !important;
+  overflow:hidden;
+}
+.fullscreen-split .mode-half-quick{
+  left:0;
+  right:calc(100% - var(--mode-boundary));
+  width:auto;
+}
+.fullscreen-split .mode-half-strategic{
+  left:var(--mode-boundary);
+  right:0;
+  width:auto;
+}
+.mode-choice-screen.complete-quick .fullscreen-split .mode-half-quick,
+.mode-choice-screen.complete-quick .fullscreen-split .mode-half-strategic,
+.mode-choice-screen.complete-strategic .fullscreen-split .mode-half-quick,
+.mode-choice-screen.complete-strategic .fullscreen-split .mode-half-strategic{
+  transform:none !important;
+  opacity:1 !important;
+  z-index:1;
+}
+.fullscreen-squiggle{
+  left:var(--mode-boundary) !important;
+  transform:translateX(-50%) !important;
+  transition:none !important;
+}
+.mode-choice-screen.complete-quick .fullscreen-squiggle,
+.mode-choice-screen.complete-strategic .fullscreen-squiggle{
+  opacity:1;
+}
+.coaster-train.rebuilt-train .train-car,
+.coaster-train.articulated-train .train-car{
+  transform-box:border-box;
+  transform-origin:50% 50% !important;
+}
+@media (prefers-reduced-motion:reduce){
+  .split-mode-picker.fullscreen-split{
+    transition-duration:0s;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -3954,32 +3869,19 @@ body{
         <path class="support support-h" d="M506 312 L506 238"/>
         <path class="support support-i" d="M586 312 L586 230"/>
 
-        <!-- One continuous source path. The train and the visible track both use this. -->
-        <path id="coaster-motion-path" class="motion-path" d="M -84 266
-          C 34 266, 150 266, 282 266
-          C 392 266, 436 132, 360 62
-          C 302 8, 202 18, 164 104
-          C 124 196, 172 266, 282 266
-          C 384 266, 492 244, 612 226" />
+        <!-- One continuous source path. The train and every visible rail layer reference it. -->
+        <defs>
+          <path id="coaster-motion-path" d="M -84 266
+            C 34 266, 150 266, 282 266
+            C 392 266, 436 132, 360 62
+            C 302 8, 202 18, 164 104
+            C 124 196, 172 266, 282 266
+            C 384 266, 492 244, 612 226" />
+        </defs>
 
-        <path class="track-shadow rebuilt-loop-track" d="M -84 266
-          C 34 266, 150 266, 282 266
-          C 392 266, 436 132, 360 62
-          C 302 8, 202 18, 164 104
-          C 124 196, 172 266, 282 266
-          C 384 266, 492 244, 612 226" />
-        <path class="track-main rebuilt-loop-track" d="M -84 266
-          C 34 266, 150 266, 282 266
-          C 392 266, 436 132, 360 62
-          C 302 8, 202 18, 164 104
-          C 124 196, 172 266, 282 266
-          C 384 266, 492 244, 612 226" />
-        <path class="track-rail rebuilt-loop-track" d="M -84 266
-          C 34 266, 150 266, 282 266
-          C 392 266, 436 132, 360 62
-          C 302 8, 202 18, 164 104
-          C 124 196, 172 266, 282 266
-          C 384 266, 492 244, 612 226" />
+        <use href="#coaster-motion-path" class="track-shadow rebuilt-loop-track" />
+        <use href="#coaster-motion-path" class="track-main rebuilt-loop-track" />
+        <use href="#coaster-motion-path" class="track-rail rebuilt-loop-track" />
       </svg>
 
       <div class="coaster-train storyboard-train articulated-train rebuilt-train" aria-hidden="true">
@@ -4017,7 +3919,6 @@ body{
         <p>How should we guide your day?</p>
       </div>
     </div>
-    <div class="swipe-hint">Swipe or tap</div>
   </div>
 
   <div class="split-mode-picker fullscreen-split" id="split-mode-picker">
@@ -4026,7 +3927,6 @@ body{
       <strong>Quick Route</strong>
       <span>Tell me the smartest next move.</span>
       <em>Best for spontaneous park days.</em>
-      <small>Swipe right or tap</small>
     </button>
 
     <svg class="squiggle-divider fullscreen-squiggle" viewBox="0 0 34 1000" preserveAspectRatio="none" aria-hidden="true">
@@ -4038,13 +3938,7 @@ body{
       <strong>Maximize My Day</strong>
       <span>Balance must-rides, waits, walking, and timing.</span>
       <em>Best for full-day strategy.</em>
-      <small>Swipe left or tap</small>
     </button>
-  </div>
-
-  <div class="swipe-feedback" id="swipe-feedback" aria-hidden="true">
-    <div class="swipe-trail" id="swipe-trail"></div>
-    <div class="swipe-thumb" id="swipe-thumb"></div>
   </div>
 
   <div class="mode-choice-footer fullscreen-footer">
@@ -6940,6 +6834,7 @@ function animateSplashTrain() {
   if (!splash) return;
 
   var page = splash.querySelector('.splash-page');
+  var stage = splash.querySelector('.coaster-stage');
   var train = splash.querySelector('.coaster-train');
   var cars = train ? Array.prototype.slice.call(train.querySelectorAll('.train-car')) : [];
   var path = document.getElementById('coaster-motion-path');
@@ -6948,7 +6843,7 @@ function animateSplashTrain() {
   var peel = splash.querySelector('.left-peel');
   var night = splash.querySelector('.night-reveal');
 
-  if (!page || !train || !cars.length || !path || !path.getTotalLength) {
+  if (!page || !stage || !train || !cars.length || !path || !path.getTotalLength) {
     setTimeout(function(){ finishSplash(false); }, 2200);
     return;
   }
@@ -7002,13 +6897,30 @@ function animateSplashTrain() {
     d = clamp(d, 0, pathLen);
     var p = path.getPointAtLength(d);
     var p2 = path.getPointAtLength(clamp(d + 1.6, 0, pathLen));
-    var angle = Math.atan2(p2.y - p.y, p2.x - p.x) * 180 / Math.PI;
-    return {x:p.x, y:p.y, angle:angle};
+    var svg = path.ownerSVGElement;
+    var matrix = svg && svg.getScreenCTM ? svg.getScreenCTM() : null;
+    var stageRect = stage.getBoundingClientRect();
+    if (matrix && window.DOMPoint) {
+      var screenP = new DOMPoint(p.x, p.y).matrixTransform(matrix);
+      var screenP2 = new DOMPoint(p2.x, p2.y).matrixTransform(matrix);
+      return {
+        x:screenP.x - stageRect.left,
+        y:screenP.y - stageRect.top,
+        angle:Math.atan2(screenP2.y - screenP.y, screenP2.x - screenP.x) * 180 / Math.PI
+      };
+    }
+    return {
+      x:p.x,
+      y:p.y,
+      angle:Math.atan2(p2.y - p.y, p2.x - p.x) * 180 / Math.PI
+    };
   }
 
   function renderCar(car, p) {
-    // Center car exactly on the track point. The offsets match CSS car dimensions.
-    car.style.transform = 'translate(' + (p.x - 15) + 'px,' + (p.y - 11) + 'px) rotate(' + p.angle + 'deg)';
+    // Center each car's actual border box on the rendered SVG rail point.
+    var anchorX = car.offsetWidth / 2;
+    var anchorY = car.offsetHeight / 2;
+    car.style.transform = 'translate(' + (p.x - anchorX) + 'px,' + (p.y - anchorY) + 'px) rotate(' + p.angle + 'deg)';
   }
 
   function renderTrain(leadD) {
@@ -7233,21 +7145,13 @@ function chooseGuidanceMode(mode, source) {
   var gate = document.getElementById('mode-choice-screen');
   var picker = document.getElementById('split-mode-picker');
   if (gate) {
-    var divider = gate.querySelector('.fullscreen-squiggle');
-    if (divider) {
-      divider.classList.add('mode-divider-complete');
-      divider.style.setProperty('--divider-shift', mode === 'strategic' ? '-48vw' : '48vw');
-    }
     gate.classList.remove('chosen-quick','chosen-strategic');
     gate.classList.add(mode === 'strategic' ? 'chosen-strategic' : 'chosen-quick');
     gate.classList.add(mode === 'strategic' ? 'complete-strategic' : 'complete-quick');
   }
   if (picker) {
-    picker.classList.remove('dragging-left','dragging-right');
-    picker.style.removeProperty('--quick-shift');
-    picker.style.removeProperty('--strategic-shift');
-    picker.style.removeProperty('--quick-fade');
-    picker.style.removeProperty('--strategic-fade');
+    picker.classList.remove('dragging-left','dragging-right','mode-boundary-dragging');
+    picker.style.setProperty('--mode-boundary', mode === 'strategic' ? '0%' : '100%');
   }
   setTimeout(function(){
     if (gate) gate.classList.add('hide');
@@ -7256,8 +7160,13 @@ function chooseGuidanceMode(mode, source) {
 
 function showModeChoice(manual) {
   var gate = document.getElementById('mode-choice-screen');
+  var picker = document.getElementById('split-mode-picker');
   if (!gate) return;
-  gate.classList.remove('hide','chosen-quick','chosen-strategic');
+  gate.classList.remove('hide','chosen-quick','chosen-strategic','complete-quick','complete-strategic');
+  if (picker) {
+    picker.classList.remove('dragging-left','dragging-right','mode-boundary-dragging');
+    picker.style.setProperty('--mode-boundary', '50%');
+  }
   if (manual) gate.classList.add('manual');
 }
 
@@ -7272,113 +7181,35 @@ function initModeChoice() {
 
   var picker = document.getElementById('split-mode-picker');
   var gate = document.getElementById('mode-choice-screen');
-  var trail = document.getElementById('swipe-trail');
-  var thumb = document.getElementById('swipe-thumb');
   var swipeTarget = gate || picker;
-  var divider = gate ? gate.querySelector('.fullscreen-squiggle') : null;
   if (!swipeTarget || !picker) return;
 
   var startX = 0;
   var startY = 0;
-  var currentX = 0;
-  var currentY = 0;
   var startTime = 0;
   var activeSwipe = false;
-  var activeDirection = null;
 
-  function showFeedback(x, y) {
-    if (trail) {
-      trail.style.opacity = '1';
-      trail.style.left = x + 'px';
-      trail.style.top = y + 'px';
-      trail.style.width = '0px';
-      trail.style.transform = 'translateY(-50%)';
-    }
-    if (thumb) {
-      thumb.style.opacity = '1';
-      thumb.style.left = x + 'px';
-      thumb.style.top = y + 'px';
-      thumb.style.transform = 'translate(-50%, -50%) scale(1)';
-    }
-  }
-
-  function updateFeedback(x, y) {
-    currentX = x;
-    currentY = y;
-    if (trail) {
-      var left = Math.min(startX, currentX);
-      var width = Math.abs(currentX - startX);
-      trail.style.left = left + 'px';
-      trail.style.top = currentY + 'px';
-      trail.style.width = Math.max(0, width) + 'px';
-      trail.style.opacity = width > 3 ? '1' : '0';
-    }
-    if (thumb) {
-      thumb.style.left = currentX + 'px';
-      thumb.style.top = currentY + 'px';
-      thumb.style.transform = 'translate(-50%, -50%) scale(1)';
-    }
-  }
-
-  function hideFeedback() {
-    if (trail) {
-      trail.style.opacity = '0';
-      trail.style.width = '0px';
-    }
-    if (thumb) {
-      thumb.style.opacity = '0';
-      thumb.style.transform = 'translate(-50%, -50%) scale(.72)';
-    }
-  }
-
-  function resetDivider() {
-    if (!divider) return;
-    divider.style.setProperty('--divider-shift', '0px');
-    divider.classList.remove('divider-dragging-left','divider-dragging-right');
-  }
-
-  function updateDivider(dx) {
-    if (!divider) return;
-    var maxShift = window.innerWidth * 0.48;
-    var shift = Math.max(-maxShift, Math.min(maxShift, dx));
-    divider.style.setProperty('--divider-shift', shift + 'px');
-    divider.classList.toggle('divider-dragging-right', dx > 0);
-    divider.classList.toggle('divider-dragging-left', dx < 0);
+  function setBoundaryFromDrag(dx) {
+    var boundary = Math.max(0, Math.min(100, 50 + (dx / picker.clientWidth * 100)));
+    picker.style.setProperty('--mode-boundary', boundary + '%');
   }
 
   function resetPanels() {
-    resetDivider();
-    picker.classList.remove('dragging-left', 'dragging-right');
-    picker.style.removeProperty('--quick-shift');
-    picker.style.removeProperty('--strategic-shift');
-    picker.style.removeProperty('--quick-fade');
-    picker.style.removeProperty('--strategic-fade');
+    picker.classList.remove('dragging-left', 'dragging-right', 'mode-boundary-dragging');
+    picker.style.setProperty('--mode-boundary', '50%');
   }
 
   function updatePanels(dx) {
-    updateDivider(dx);
-    var absDx = Math.abs(dx);
-    var maxShift = Math.min(window.innerWidth * 0.44, absDx);
-    var fade = Math.max(0.14, 1 - (absDx / (window.innerWidth * 0.72)));
+    picker.classList.add('mode-boundary-dragging');
+    setBoundaryFromDrag(dx);
 
     if (dx > 0) {
-      activeDirection = 'quick';
       picker.classList.add('dragging-right');
       picker.classList.remove('dragging-left');
-      picker.style.setProperty('--quick-shift', maxShift + 'px');
-      picker.style.setProperty('--strategic-shift', '0px');
-      picker.style.setProperty('--strategic-fade', String(fade));
-      picker.style.setProperty('--quick-fade', '1');
     } else if (dx < 0) {
-      activeDirection = 'strategic';
       picker.classList.add('dragging-left');
       picker.classList.remove('dragging-right');
-      picker.style.setProperty('--strategic-shift', (-maxShift) + 'px');
-      picker.style.setProperty('--quick-shift', '0px');
-      picker.style.setProperty('--quick-fade', String(fade));
-      picker.style.setProperty('--strategic-fade', '1');
     } else {
-      activeDirection = null;
       resetPanels();
     }
   }
@@ -7386,20 +7217,15 @@ function initModeChoice() {
   function beginSwipe(x, y) {
     startX = x;
     startY = y;
-    currentX = x;
-    currentY = y;
     startTime = Date.now();
     activeSwipe = true;
-    activeDirection = null;
-    resetDivider();
+    resetPanels();
+    picker.classList.add('mode-boundary-dragging');
     gate.classList.remove('complete-quick','complete-strategic');
-    showFeedback(x, y);
   }
 
   function moveSwipe(x, y) {
     if (!activeSwipe) return;
-    updateFeedback(x, y);
-
     var dx = x - startX;
     var dy = y - startY;
 
@@ -7415,13 +7241,9 @@ function initModeChoice() {
   function finishSwipe(x, y) {
     if (!activeSwipe) return;
     activeSwipe = false;
-    updateFeedback(x, y);
-
     var dx = x - startX;
     var dy = y - startY;
     var elapsed = Date.now() - startTime;
-
-    setTimeout(hideFeedback, 90);
 
     if (Math.abs(dx) < 34 || Math.abs(dx) < Math.abs(dy) * 1.05 || (elapsed > 1400 && Math.abs(dx) < 100)) {
       resetPanels();
@@ -7446,7 +7268,6 @@ function initModeChoice() {
   swipeTarget.addEventListener('pointercancel', function() {
     activeSwipe = false;
     resetPanels();
-    hideFeedback();
   }, {passive:true});
 
   swipeTarget.addEventListener('touchstart', function(e) {
