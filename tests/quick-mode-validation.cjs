@@ -6,6 +6,10 @@ const vm = require('node:vm');
 const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 const scriptMatch = html.match(/<script[^>]*>([\s\S]*?)<\/script>/i);
 assert(scriptMatch, 'index.html must contain an inline script');
+assert.doesNotMatch(html, /Preview route/, 'the Preview route badge must be removed');
+assert.doesNotMatch(html, /route-start-status/, 'the old route status banner must be removed');
+assert.doesNotMatch(html, /Balanced wait \+ walking-distance route/, 'the preview description must be removed');
+assert.match(html, /mapSection\.appendChild\(panel\)/, 'manual and location controls must render below the map');
 
 const classList = { add() {}, remove() {}, toggle() {}, contains() { return false; } };
 const style = { setProperty() {}, removeProperty() {} };
