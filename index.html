@@ -6495,44 +6495,23 @@ function akMapPointFromLatLng(lat, lng) {
   };
 }
 
-function routeStartStatusText() {
-  var startLabels = {
-    entrance_gate:'Entrance',
-    entrance_path:'Entrance',
-    island_center:'Discovery Island',
-    tree_path:'Tree of Life',
-    africa_entry:'Africa',
-    africa_bridge_land:'Africa',
-    asia_bridge:'Asia',
-    asia_bridge_land:'Asia',
-    pandora_bridge:'Pandora',
-    pandora_bridge_land:'Pandora',
-    dino_junction:'DinoLand U.S.A.'
-  };
-  var style = 'Balanced wait + walking-distance route · 4-park map build';
+function routeLocationMessageText() {
+  if (!routeLiveMessage) return '';
+  if (currentMode === 'quick' || routeStartMode === 'live') return routeLiveMessage;
+  if (/location|inside animal kingdom|could not/i.test(routeLiveMessage)) return routeLiveMessage;
+  return '';
+}
 
-  if (routeStartMode === 'live') {
-    if (routeLivePosition) {
-      return style + ' · using your current park location' + (routeLivePosition.accuracy ? ' (±' + Math.round(routeLivePosition.accuracy) + 'm)' : '') + '.';
-    }
-    if (routeLiveMessage) return style + ' · ' + routeLiveMessage;
-    return style + ' · checking your live park location...';
-  }
-  if (currentMode === 'quick' && routeLiveMessage) return style + ' · ' + routeLiveMessage;
-  return style + ' · preview starting from ' + (startLabels[routeManualStart] || 'Entrance') + '.';
+function routeLocationMessageMarkup() {
+  var message = routeLocationMessageText();
+  return '<span id="route-location-message" style="display:' + (message ? 'block' : 'none') + ';margin-top:6px;font-weight:700;">' + escHTML(message) + '</span>';
 }
 
 function updateRouteStartControlsUI() {
-  var previewBtn = document.getElementById('route-preview-btn');
   var liveBtn = document.getElementById('route-live-btn');
-  var status = document.getElementById('route-start-status');
   var startSelect = document.getElementById('route-start-select');
+  var locationMessage = document.getElementById('route-location-message');
 
-  if (previewBtn) {
-    previewBtn.style.background = routeStartMode === 'preview' ? '#185FA5' : '#fff';
-    previewBtn.style.color = routeStartMode === 'preview' ? '#fff' : '#185FA5';
-    previewBtn.style.borderColor = '#185FA5';
-  }
   if (liveBtn) {
     if (routeStartMode === 'live' && routeLivePosition) {
       liveBtn.textContent = 'Using my location';
@@ -6546,7 +6525,11 @@ function updateRouteStartControlsUI() {
     liveBtn.style.borderColor = '#2b7a0b';
   }
   if (startSelect) startSelect.value = routeManualStart;
-  if (status) status.textContent = routeStartStatusText();
+  if (locationMessage) {
+    var message = routeLocationMessageText();
+    locationMessage.textContent = message;
+    locationMessage.style.display = message ? 'block' : 'none';
+  }
 }
 
 function ensureRouteStartControls() {
@@ -6554,47 +6537,49 @@ function ensureRouteStartControls() {
   var mapContainer = document.getElementById('map-container');
   if (!mapSection || !mapContainer) return;
 
+  if (currentPark !== 'ak') {
+    updateRouteStartControlsUI();
+    return;
+  }
+
   var existing = document.getElementById('route-start-controls');
   if (!existing) {
     var panel = document.createElement('div');
     panel.id = 'route-start-controls';
-    panel.style.cssText = 'display:flex;flex-direction:column;gap:10px;margin:8px 0 12px;background:#fff;border-radius:12px;padding:12px;border:1px solid #e5e7eb;';
+    panel.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;margin:8px 0 0;';
 
     panel.innerHTML =
-      '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">' +
-        '<button id="route-preview-btn" type="button" style="padding:8px 12px;border-radius:999px;border:1.5px solid #185FA5;background:#fff;color:#185FA5;font-weight:700;cursor:pointer;">Preview route</button>' +
-        (currentPark === 'ak'
-          ? '<button id="route-live-btn" type="button" style="padding:8px 12px;border-radius:999px;border:1.5px solid #2b7a0b;background:#fff;color:#2b7a0b;font-weight:700;cursor:pointer;">Check park location</button>'
-          : '') +
-      '</div>' +
-      (currentPark === 'ak'
-        ? '<div style="display:grid;grid-template-columns:1fr;gap:8px;">' +
-            '<label style="font-size:12px;color:#6b7280;font-weight:700;">Preview start area' +
-              '<select id="route-start-select" style="width:100%;margin-top:4px;padding:8px;border-radius:8px;border:1px solid #d1d5db;background:#fff;">' +
-                '<option value="entrance_gate">Entrance</option>' +
-                '<option value="island_center">Discovery Island</option>' +
-                '<option value="tree_path">Tree of Life</option>' +
-                '<option value="africa_bridge_land">Africa</option>' +
-                '<option value="asia_bridge_land">Asia</option>' +
-                '<option value="pandora_bridge_land">Pandora</option>' +
-                '<option value="dino_junction">DinoLand U.S.A.</option>' +
-              '</select>' +
-            '</label>' +
-          '</div>'
-        : '') +
-      '<div id="route-start-status" style="font-size:13px;color:#6b7280;line-height:1.35;">Preview mode: starting from the park entrance.</div>' +
-      '<div class="ak-route-disclaimer">Walking routes are approximate and based on park-map pathing. Always follow posted signs, closures, accessibility routes, and Cast Member directions.</div>';
+      '<label style="min-width:180px;flex:1;font-size:12px;color:#6b7280;font-weight:700;">Start area' +
+        '<select id="route-start-select" style="width:100%;margin-top:4px;padding:8px;border-radius:8px;border:1px solid #d1d5db;background:#fff;">' +
+          '<option value="entrance_gate">Entrance</option>' +
+          '<option value="island_center">Discovery Island</option>' +
+          '<option value="tree_path">Tree of Life</option>' +
+          '<option value="africa_bridge_land">Africa</option>' +
+          '<option value="asia_bridge_land">Asia</option>' +
+          '<option value="pandora_bridge_land">Pandora</option>' +
+          '<option value="dino_junction">DinoLand U.S.A.</option>' +
+        '</select>' +
+      '</label>' +
+      '<button id="route-manual-btn" type="button" class="sm-btn outline">Use selected start</button>' +
+      '<button id="route-live-btn" type="button" class="sm-btn outline" style="border-color:#2b7a0b;color:#2b7a0b;">Use my location</button>';
 
-    mapSection.insertBefore(panel, mapContainer);
+    mapSection.appendChild(panel);
 
-    document.getElementById('route-preview-btn').onclick = function() {
+    var disclaimer = document.createElement('div');
+    disclaimer.className = 'ak-route-disclaimer';
+    disclaimer.textContent = 'Walking routes are approximate and based on park-map pathing. Always follow posted signs, closures, accessibility routes, and Cast Member directions.';
+    mapSection.appendChild(disclaimer);
+
+    function useSelectedStart() {
       routeStartMode = 'preview';
       routeLivePosition = null;
       if (currentMode === 'quick') currentUserLocation = null;
       routeLiveMessage = currentMode === 'quick' ? 'Manual start selected. Using ' + quickFallbackStartLabel() + ' fallback.' : '';
       updateRouteStartControlsUI();
       if (currentMode === 'quick') optimizeRoute(); else renderRouteMapSafely(routeOrder || []);
-    };
+    }
+
+    document.getElementById('route-manual-btn').onclick = useSelectedStart;
 
     var liveBtn = document.getElementById('route-live-btn');
     if (liveBtn) {
@@ -6655,12 +6640,7 @@ function ensureRouteStartControls() {
       startSelect.value = routeManualStart;
       startSelect.onchange = function() {
         routeManualStart = this.value;
-        routeStartMode = 'preview';
-        routeLivePosition = null;
-        if (currentMode === 'quick') currentUserLocation = null;
-        routeLiveMessage = currentMode === 'quick' ? 'Manual start selected. Using ' + quickFallbackStartLabel() + ' fallback.' : '';
-        updateRouteStartControlsUI();
-        if (currentMode === 'quick') optimizeRoute(); else renderRouteMapSafely(routeOrder || []);
+        useSelectedStart();
       };
     }
   }
@@ -6702,7 +6682,7 @@ async function optimizeRoute() {
     var heroBg = HERO_COLORS[currentPark] || '#185FA5';
 
     var rideHeading = top3.length === 1 ? 'Next ride' : 'Next ' + top3.length + ' rides';
-    var html = '<div class="route-hero" style="background:' + heroBg + '"><h2>' + meta.emoji + ' ' + rideHeading + '</h2><p>' + escHTML(tip) + '</p></div>' +
+    var html = '<div class="route-hero" style="background:' + heroBg + '"><h2>' + meta.emoji + ' ' + rideHeading + '</h2><p>' + escHTML(tip) + routeLocationMessageMarkup() + '</p></div>' +
       '<div class="route-stats"><div class="route-stat"><div class="route-stat-v">' + top3.length + '</div><div class="route-stat-l">rides</div></div>' +
       '<div class="route-stat"><div class="route-stat-v">' + Math.round(totalWait) + 'm</div><div class="route-stat-l">wait</div></div>' +
       '<div class="route-stat"><div class="route-stat-v">' + Math.round(totalTime) + 'm</div><div class="route-stat-l">total time</div></div></div>' +
@@ -6800,6 +6780,7 @@ function renderPriorityList() {
 
 async function buildFullDayRoute() {
   try {
+    routeLiveMessage = '';
     showScreen('route');
     document.getElementById('route-back-btn').onclick = function() { showScreen('priority'); };
     document.getElementById('route-body').innerHTML =
@@ -6886,7 +6867,7 @@ async function buildFullDayRoute() {
       return fullRoute.find(function(s) { return s.ride.id === r.id; });
     }).length;
 
-    var html = '<div class="route-hero" style="background:' + heroBg + '"><h2>' + meta.emoji + ' Your full day</h2><p>' + escHTML(tip) + '</p></div>' +
+    var html = '<div class="route-hero" style="background:' + heroBg + '"><h2>' + meta.emoji + ' Your full day</h2><p>' + escHTML(tip) + routeLocationMessageMarkup() + '</p></div>' +
       '<div class="route-stats">' +
       '<div class="route-stat"><div class="route-stat-v">' + fullRoute.length + '</div><div class="route-stat-l">stops</div></div>' +
       '<div class="route-stat"><div class="route-stat-v">' + mustDone + '</div><div class="route-stat-l">must-dos</div></div>' +
