@@ -11,9 +11,16 @@ function distance(a, b) {
 
 function build(geojson, metadata) {
   if (!metadata || !metadata.parkId || !metadata.sourceUrl || metadata.dataConfidence !== 'verified') throw new Error('Verified parkId, sourceUrl, and dataConfidence are required.');
-  const nodes = {}, edges = [];
+  const nodes = {}, edges = [], entranceFeatures = [], rideEntrances = {};
+  const maxEntranceSnapMetres = Number.isFinite(Number(metadata.maxEntranceSnapMetres)) ? Number(metadata.maxEntranceSnapMetres) : 75;
+  if (maxEntranceSnapMetres <= 0 || maxEntranceSnapMetres > 100) throw new Error('maxEntranceSnapMetres must be greater than 0 and no more than 100 metres.');
   function nodeId(coordinate) { return `${coordinate[1].toFixed(7)},${coordinate[0].toFixed(7)}`; }
   for (const feature of geojson.features || []) {
+    if (feature.geometry?.type === 'Point' && feature.properties?.type === 'guest-entrance') {
+      if (!feature.properties.rideId) throw new Error('Every guest-entrance point requires a rideId.');
+      entranceFeatures.push(feature);
+      continue;
+    }
     if (!feature.geometry || feature.geometry.type !== 'LineString' || feature.properties?.pedestrian !== true) continue;
     const coordinates = feature.geometry.coordinates || [];
     coordinates.forEach((coordinate) => { const id = nodeId(coordinate); nodes[id] ||= { id, latitude: coordinate[1], longitude: coordinate[0], type: 'walkway' }; });
@@ -22,7 +29,18 @@ function build(geojson, metadata) {
       edges.push({ from, to, metres: Math.round(distance(coordinates[i - 1], coordinates[i]) * 10) / 10, accessible: feature.properties?.accessible !== false });
     }
   }
-  return { parkId: metadata.parkId, schemaVersion: 1, routingQuality: 'verified', dataConfidence: 'verified', sourceName: metadata.sourceName || null, sourceUrl: metadata.sourceUrl, lastVerified: metadata.lastVerified || null, nodes, edges };
+  for (const feature of entranceFeatures) {
+    const rideId = String(feature.properties.rideId), coordinate = feature.geometry.coordinates;
+    if (rideEntrances[rideId]) throw new Error(`Duplicate guest entrance for ${rideId}.`);
+    let nearest = null, nearestMetres = Infinity;
+    for (const node of Object.values(nodes)) {
+      const metres = distance(coordinate, [node.longitude, node.latitude]);
+      if (metres < nearestMetres) { nearest = node.id; nearestMetres = metres; }
+    }
+    if (!nearest || nearestMetres > maxEntranceSnapMetres) throw new Error(`Guest entrance ${rideId} is ${Math.round(nearestMetres)}m from the nearest walkway node.`);
+    rideEntrances[rideId] = { routingNode: nearest, snapMetres: Math.round(nearestMetres * 10) / 10, dataConfidence: 'verified' };
+  }
+  return { parkId: metadata.parkId, schemaVersion: 2, routingQuality: 'verified', dataConfidence: 'verified', sourceName: metadata.sourceName || null, sourceUrl: metadata.sourceUrl, lastVerified: metadata.lastVerified || null, nodes, edges, rideEntrances };
 }
 
 function main(argv) {

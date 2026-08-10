@@ -46,8 +46,17 @@
     return Number.isFinite(distances[toNode]) ? distances[toNode] : null;
   }
 
+  function routingNodeFor(graph, record) {
+    if (!record) return null;
+    if (record.routingNode) return record.routingNode;
+    var mapped = graph && graph.rideEntrances && graph.rideEntrances[record.id];
+    return mapped && mapped.routingNode || null;
+  }
+
   function estimate(parkId, from, to) {
-    var exact = from && to && from.routingNode && to.routingNode ? shortestMetres(parkId, from.routingNode, to.routingNode) : null;
+    var graph = graphs[parkId];
+    var fromNode = routingNodeFor(graph, from), toNode = routingNodeFor(graph, to);
+    var exact = fromNode && toNode ? shortestMetres(parkId, fromNode, toNode) : null;
     if (exact != null) return { minutes: exact / METRES_PER_MINUTE, metres: exact, routingQuality: 'verified', dataConfidence: 'verified', trustWeight: 1 };
     var a = usableLocation(from), b = usableLocation(to);
     if (a && b) {
@@ -65,9 +74,9 @@
   function graphHealth(parkId, rides) {
     var graph = graphs[parkId] || { nodes: {}, edges: [], routingQuality: 'unavailable' };
     var total = (rides || []).length;
-    var routed = (rides || []).filter(function(ride) { return ride.routingNode && graph.nodes[ride.routingNode]; }).length;
+    var routed = (rides || []).filter(function(ride) { var node = routingNodeFor(graph, ride); return node && graph.nodes[node]; }).length;
     return { routingQuality: graph.routingQuality, nodes: Object.keys(graph.nodes).length, edges: graph.edges.length, routedRides: routed, totalRides: total, completionPercent: total ? Math.round(routed / total * 100) : 0 };
   }
 
-  global.RideHeroWalkingNetwork = { estimate: estimate, shortestMetres: shortestMetres, graphHealth: graphHealth, usableLocation: usableLocation };
+  global.RideHeroWalkingNetwork = { estimate: estimate, shortestMetres: shortestMetres, graphHealth: graphHealth, usableLocation: usableLocation, routingNodeFor: routingNodeFor };
 })(window);

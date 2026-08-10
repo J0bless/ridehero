@@ -79,6 +79,8 @@ Access programs are normalized as `lightningLane`, `expressPass`, `fastLane`, `s
 
 Universal Orlando Resort and Universal Studios Hollywood height requirements are stored as structured inches and centimeters only when the operator publishes a numeric minimum. Rides with supervising-companion rules but no numeric minimum remain unverified for filtering so the optimizer never invents a restriction.
 
+Verified walking graphs keep visual maps independent from pedestrian routing. The graph importer accepts sourced pedestrian paths and separately maps canonical ride IDs to guest-entrance routing nodes. Entrances beyond the strict snap threshold fail import instead of silently attaching to an unrelated path.
+
 The walking graph importer requires verified, sourced pedestrian GeoJSON. No graph is marked verified merely because a visual park map exists.
 
 ## Known limitations

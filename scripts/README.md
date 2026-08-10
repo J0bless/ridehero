@@ -16,4 +16,4 @@ The report flags new rides, likely renames, permanently closed rides, and record
 node scripts/build-walking-graph.cjs verified-paths.geojson metadata.json
 ```
 
-Only GeoJSON `LineString` features with `properties.pedestrian: true` are imported. Metadata must identify a verified source. The script refuses approximate or unsourced input, preventing guessed paths from entering a verified graph.
+Only GeoJSON `LineString` features with `properties.pedestrian: true` are imported. A verified ride entrance can be supplied as a `Point` with `properties.type: "guest-entrance"` and a canonical `properties.rideId`. The importer snaps each entrance to its nearest walkway node and refuses points more than 75 metres away by default (configurable up to 100 metres with `maxEntranceSnapMetres`). Metadata must identify a verified source. The script refuses approximate, unsourced, duplicate, or disconnected entrance input, preventing guessed paths from entering a verified graph.
