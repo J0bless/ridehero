@@ -77,6 +77,8 @@ Lower-confidence distance contributes less to route scoring, shifting the optimi
 
 Access programs are normalized as `lightningLane`, `expressPass`, `fastLane`, `singleRider`, and `childSwap`. Height restrictions use numeric inches and centimeters plus `restrictionsVerified`; party filtering never applies an unverified restriction.
 
+Universal Orlando Resort and Universal Studios Hollywood height requirements are stored as structured inches and centimeters only when the operator publishes a numeric minimum. Rides with supervising-companion rules but no numeric minimum remain unverified for filtering so the optimizer never invents a restriction.
+
 The walking graph importer requires verified, sourced pedestrian GeoJSON. No graph is marked verified merely because a visual park map exists.
 
 ## Known limitations

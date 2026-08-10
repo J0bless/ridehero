@@ -79,6 +79,13 @@ for (const park of Object.values(catalog.parks)) {
 
 const required = ['mk','ep','hs','ak','dl','dca','usf','ioa','epic','vb','ush','usj','sfga','sfmm','sfgam'];
 required.forEach((parkId) => assert(parkIds.has(parkId), `${parkId} must load`));
+assert.equal(api.get('usf').rides.find((ride) => ride.id === 'usf-revenge-of-the-mummy').minimumHeightInches, 48);
+assert.equal(api.get('ioa').rides.find((ride) => ride.id === 'ioa-velocicoaster').minimumHeightInches, 51);
+assert.equal(api.get('epic').rides.find((ride) => ride.id === 'epic-yoshis-adventure').minimumHeightInches, 34);
+assert.equal(api.get('vb').rides.find((ride) => ride.id === 'vb-honu').minimumHeightInches, 48);
+assert.equal(api.get('ush').rides.find((ride) => ride.id === 'ush-secret-life-pets').minimumHeightInches, 34);
+assert.equal(api.get('ush').rides.find((ride) => ride.id === 'ush-studio-tour').restrictionsVerified, false);
+assert.equal(api.get('usf').rides.find((ride) => ride.id === 'usf-villain-con').minimumHeightInches, null);
 assert.equal(catalog.parks.mk.map.routingQuality, 'verified');
 assert.equal(catalog.parks.dl.map.routingQuality, 'approximate');
 assert.equal(catalog.parks.sfga.map.routingQuality, 'approximate');

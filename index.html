@@ -4848,7 +4848,7 @@ function hydratePlanningPreferences() {
   var party = preferences.partyProfile || {};
   var programs = preferences.accessPrograms || {};
   var height = document.getElementById('party-min-height');
-  if (height) height.value = Number.isFinite(Number(party.minimumRiderHeightInches)) ? party.minimumRiderHeightInches : '';
+  if (height) height.value = party.minimumRiderHeightInches != null && Number.isFinite(Number(party.minimumRiderHeightInches)) ? party.minimumRiderHeightInches : '';
   var lightning = document.getElementById('access-lightning-lane'); if (lightning) lightning.checked = programs.lightningLane === true;
   var express = document.getElementById('access-express-pass'); if (express) express.checked = programs.expressPass === true;
   var fast = document.getElementById('access-fast-lane'); if (fast) fast.checked = programs.fastLane === true;

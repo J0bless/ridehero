@@ -18,4 +18,5 @@ assert(ride.aliases.includes('Tower of Terror'));
 assert.equal(ride.guestEntranceLocation.dataConfidence, 'unknown');
 assert.equal(ride.minimumHeightInches, null);
 assert.equal(ride.accessPrograms.lightningLane, false);
+assert.equal(quality.normalizeRide({ name: 'Unknown', minimumHeightInches: null }, {}).minimumHeightInches, null, 'null restrictions must not become zero');
 console.log('Data quality validation passed.');

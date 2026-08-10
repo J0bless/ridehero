@@ -43,8 +43,8 @@
     ride.accessPrograms = Object.assign({ lightningLane: false, expressPass: false, fastLane: false, singleRider: false, childSwap: false }, ride.accessPrograms || {});
     if (ride.singleRider === true) ride.accessPrograms.singleRider = true;
     if (ride.childSwap === true) ride.accessPrograms.childSwap = true;
-    ride.minimumHeightInches = Number.isFinite(Number(ride.minimumHeightInches)) ? Number(ride.minimumHeightInches) : null;
-    ride.minimumHeightCm = Number.isFinite(Number(ride.minimumHeightCm)) ? Number(ride.minimumHeightCm) : (ride.minimumHeightInches == null ? null : Math.round(ride.minimumHeightInches * 2.54));
+    ride.minimumHeightInches = ride.minimumHeightInches != null && Number.isFinite(Number(ride.minimumHeightInches)) ? Number(ride.minimumHeightInches) : null;
+    ride.minimumHeightCm = ride.minimumHeightCm != null && Number.isFinite(Number(ride.minimumHeightCm)) ? Number(ride.minimumHeightCm) : (ride.minimumHeightInches == null ? null : Math.round(ride.minimumHeightInches * 2.54));
     ride.restrictionsVerified = ride.restrictionsVerified === true;
     return ride;
   }
