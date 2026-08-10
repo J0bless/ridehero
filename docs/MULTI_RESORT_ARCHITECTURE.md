@@ -81,6 +81,8 @@ Universal Orlando Resort and Universal Studios Hollywood height requirements are
 
 Verified walking graphs keep visual maps independent from pedestrian routing. The graph importer accepts sourced pedestrian paths and separately maps canonical ride IDs to guest-entrance routing nodes. Entrances beyond the strict snap threshold fail import instead of silently attaching to an unrelated path.
 
+Park-level access-program availability is separate from ride-level eligibility. RideHero lists Lightning Lane, Express Pass, or Fast Lane preferences only where the operator verifies that park program. Unknown park availability stays unknown, and selecting a program never creates per-ride eligibility or synthetic wait savings.
+
 The walking graph importer requires verified, sourced pedestrian GeoJSON. No graph is marked verified merely because a visual park map exists.
 
 ## Known limitations

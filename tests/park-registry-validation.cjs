@@ -43,6 +43,11 @@ for (const park of Object.values(catalog.parks)) {
   assert(['verified','provider','approximate','unknown'].includes(park.dataConfidence));
   assert(['verified','provider','approximate','unknown'].includes(park.entranceConfidence));
   assert.equal(typeof park.sourceUrl, 'string');
+  ['lightningLane','expressPass','fastLane'].forEach((program) => {
+    assert(park.accessPrograms && park.accessPrograms[program], `${park.id} is missing ${program} availability`);
+    assert([true, null].includes(park.accessPrograms[program].available), `${park.id} has an invalid ${program} availability`);
+    assert(['verified','unknown'].includes(park.accessPrograms[program].dataConfidence));
+  });
   assert(['verified', 'approximate', 'unavailable'].includes(park.map.routingQuality));
   assert(!providerIds.has(park.waitTimeProviderId), `duplicate provider park id ${park.waitTimeProviderId}`);
   providerIds.add(park.waitTimeProviderId);
@@ -86,6 +91,10 @@ assert.equal(api.get('vb').rides.find((ride) => ride.id === 'vb-honu').minimumHe
 assert.equal(api.get('ush').rides.find((ride) => ride.id === 'ush-secret-life-pets').minimumHeightInches, 34);
 assert.equal(api.get('ush').rides.find((ride) => ride.id === 'ush-studio-tour').restrictionsVerified, false);
 assert.equal(api.get('usf').rides.find((ride) => ride.id === 'usf-villain-con').minimumHeightInches, null);
+assert.equal(catalog.parks.mk.accessPrograms.lightningLane.available, true);
+assert.equal(catalog.parks.ioa.accessPrograms.expressPass.available, true);
+assert.equal(catalog.parks.sfmm.accessPrograms.fastLane.available, true);
+assert.equal(catalog.parks.epic.accessPrograms.expressPass.available, null, 'unverified program availability must remain unknown');
 assert.equal(catalog.parks.mk.map.routingQuality, 'verified');
 assert.equal(catalog.parks.dl.map.routingQuality, 'approximate');
 assert.equal(catalog.parks.sfga.map.routingQuality, 'approximate');

@@ -4170,9 +4170,9 @@ body{
         <summary>Party eligibility and access programs</summary>
         <div class="planning-preferences-body">
           <label>Shortest rider height (inches)<input id="party-min-height" type="number" min="0" max="96" step="1" placeholder="Optional"/></label>
-          <fieldset><legend>Programs your party has</legend><label><input id="access-lightning-lane" type="checkbox"/> Lightning Lane</label><label><input id="access-express-pass" type="checkbox"/> Express Pass</label><label><input id="access-fast-lane" type="checkbox"/> Fast Lane</label></fieldset>
+          <fieldset><legend>Programs your party has</legend><label data-access-program="lightningLane"><input id="access-lightning-lane" type="checkbox"/> Lightning Lane</label><label data-access-program="expressPass"><input id="access-express-pass" type="checkbox"/> Express Pass</label><label data-access-program="fastLane"><input id="access-fast-lane" type="checkbox"/> Fast Lane</label></fieldset>
           <button class="sm-btn filled" type="button" onclick="savePlanningPreferences()">Save planning preferences</button>
-          <p>Height filtering applies only to restrictions marked verified. Access programs are shown without inventing a wait-time reduction.</p>
+          <p id="planning-program-note">Height filtering applies only to restrictions marked verified. Only operator-verified programs for this park are listed, without inventing a wait-time reduction or per-ride eligibility.</p>
         </div>
       </details>
     </div>
@@ -4849,9 +4849,15 @@ function hydratePlanningPreferences() {
   var programs = preferences.accessPrograms || {};
   var height = document.getElementById('party-min-height');
   if (height) height.value = party.minimumRiderHeightInches != null && Number.isFinite(Number(party.minimumRiderHeightInches)) ? party.minimumRiderHeightInches : '';
-  var lightning = document.getElementById('access-lightning-lane'); if (lightning) lightning.checked = programs.lightningLane === true;
-  var express = document.getElementById('access-express-pass'); if (express) express.checked = programs.expressPass === true;
-  var fast = document.getElementById('access-fast-lane'); if (fast) fast.checked = programs.fastLane === true;
+  var park = window.RIDEHERO_CATALOG && window.RIDEHERO_CATALOG.parks[currentPark];
+  var supported = park && park.accessPrograms || {};
+  [['lightningLane','access-lightning-lane'],['expressPass','access-express-pass'],['fastLane','access-fast-lane']].forEach(function(entry) {
+    var input = document.getElementById(entry[1]);
+    var available = supported[entry[0]] && supported[entry[0]].available === true;
+    if (input) { input.checked = available && programs[entry[0]] === true; input.disabled = !available; }
+    var label = document.querySelector('[data-access-program="' + entry[0] + '"]');
+    if (label) label.hidden = !available;
+  });
 }
 
 function savePlanningPreferences() {

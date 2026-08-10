@@ -38,9 +38,25 @@
       bounds: { center: { latitude: latitude, longitude: longitude }, radiusKm: 5, dataConfidence: 'approximate', sourceName: 'RideHero proximity boundary', sourceUrl: null },
       operatingStatus: 'UNKNOWN', officialSource: officialSource, lastVerified: verified,
       waitTimeProviderId: providerId, waitTimeProvider: tp,
+      accessPrograms: accessProgramsFor(id),
       mapRoutingAvailable: parkMap.routingQuality === 'verified', routingQuality: parkMap.routingQuality,
       liveWaitTimesAvailable: true, map: parkMap, dataFile: dataFile
     };
+  }
+
+  function accessProgram(available, sourceName, sourceUrl) {
+    return { available: available, dataConfidence: available === true ? 'verified' : 'unknown', sourceName: sourceName || null, sourceUrl: sourceUrl || null, lastVerified: available === true ? verified : null };
+  }
+
+  function accessProgramsFor(parkId) {
+    var unknown = function() { return accessProgram(null, null, null); };
+    var programs = { lightningLane: unknown(), expressPass: unknown(), fastLane: unknown() };
+    if (['mk','ep','hs','ak'].includes(parkId)) programs.lightningLane = accessProgram(true, 'Walt Disney World Resort', 'https://disneyworld.disney.go.com/lightning-lane-passes/');
+    if (['dl','dca'].includes(parkId)) programs.lightningLane = accessProgram(true, 'Disneyland Resort', 'https://disneyland.disney.go.com/lightning-lane-passes/');
+    if (['usf','ioa'].includes(parkId)) programs.expressPass = accessProgram(true, 'Universal Orlando Resort', 'https://www.universalorlando.com/web/en/us/tickets-packages/park-tickets');
+    if (parkId === 'ush') programs.expressPass = accessProgram(true, 'Universal Studios Hollywood', 'https://www.universalstudioshollywood.com/web/en/us/faqs/rides-and-attractions');
+    if (['sfga','sfmm','sfgam'].includes(parkId)) programs.fastLane = accessProgram(true, 'Six Flags', 'https://www.sixflags.com/blog/fast-lane-updates');
+    return programs;
   }
 
   global.RIDEHERO_CATALOG = {
