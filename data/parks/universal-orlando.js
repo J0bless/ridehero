@@ -1,0 +1,21 @@
+(function(api) {
+  'use strict';
+  var verified = '2026-08-10';
+  var source = 'https://www.universalorlando.com/web/en/us/search-results/filtered?attraction_experience=rides-attractions';
+  api.register({ parks: {
+    usf: make('usf', ['Production Central','New York','San Francisco','The Wizarding World of Harry Potter – Diagon Alley','World Expo','Springfield, U.S.A.','DreamWorks Land'], [
+      ['revenge-of-the-mummy','Revenge of the Mummy','New York'],['escape-from-gringotts','Harry Potter and the Escape from Gringotts','The Wizarding World of Harry Potter – Diagon Alley'],['transformers','TRANSFORMERS: The Ride-3D','Production Central'],['et-adventure','E.T. Adventure','Production Central'],['simpsons-ride','The Simpsons Ride','Springfield, U.S.A.'],['despicable-me','Despicable Me Minion Mayhem','Production Central'],['villain-con','Illumination’s Villain-Con Minion Blast','Production Central'],['trolls-trollercoaster','Trolls Trollercoaster','DreamWorks Land']
+    ]),
+    ioa: make('ioa', ['Port of Entry','Marvel Super Hero Island','Toon Lagoon','Skull Island','Jurassic Park','The Wizarding World of Harry Potter – Hogsmeade','The Lost Continent','Seuss Landing'], [
+      ['hagrids','Hagrid’s Magical Creatures Motorbike Adventure','The Wizarding World of Harry Potter – Hogsmeade'],['velocicoaster','Jurassic World VelociCoaster','Jurassic Park'],['incredible-hulk','The Incredible Hulk Coaster','Marvel Super Hero Island'],['spider-man','The Amazing Adventures of Spider-Man','Marvel Super Hero Island'],['forbidden-journey','Harry Potter and the Forbidden Journey','The Wizarding World of Harry Potter – Hogsmeade'],['jurassic-park-river','Jurassic Park River Adventure','Jurassic Park'],['ripsaw-falls','Dudley Do-Right’s Ripsaw Falls','Toon Lagoon'],['cat-in-the-hat','The Cat in the Hat','Seuss Landing']
+    ]),
+    epic: make('epic', ['Celestial Park','SUPER NINTENDO WORLD','Dark Universe','The Wizarding World of Harry Potter – Ministry of Magic','How to Train Your Dragon – Isle of Berk'], [
+      ['stardust-racers','Stardust Racers','Celestial Park'],['constellation-carousel','Constellation Carousel','Celestial Park'],['mario-kart','Mario Kart: Bowser’s Challenge','SUPER NINTENDO WORLD'],['mine-cart-madness','Mine-Cart Madness','SUPER NINTENDO WORLD'],['yoshis-adventure','Yoshi’s Adventure','SUPER NINTENDO WORLD'],['monsters-unchained','Monsters Unchained: The Frankenstein Experiment','Dark Universe'],['curse-of-the-werewolf','Curse of the Werewolf','Dark Universe'],['ministry-of-magic','Harry Potter and the Battle at the Ministry','The Wizarding World of Harry Potter – Ministry of Magic'],['hiccups-wing-gliders','Hiccup’s Wing Gliders','How to Train Your Dragon – Isle of Berk'],['fyre-drill','Fyre Drill','How to Train Your Dragon – Isle of Berk']
+    ]),
+    vb: make('vb', ['Wave Village','River Village','Rainforest Village','The Volcano'], [
+      ['krakatau-aqua-coaster','Krakatau Aqua Coaster','The Volcano'],['honu','Honu of the Honu ika Moana','River Village'],['ika-moana','ika Moana of the Honu ika Moana','River Village'],['ko-okiri-body-plunge','Ko’okiri Body Plunge','The Volcano'],['kala-tai-nui','Kala & Tai Nui Serpentine Body Slides','The Volcano'],['kopiko-wai','Kopiko Wai Winding River','River Village'],['maku','Maku of Maku Puihi Round Raft Rides','Rainforest Village'],['puihi','Puihi of Maku Puihi Round Raft Rides','Rainforest Village']
+    ])
+  }});
+  function make(parkId, landNames, rows) { var lands=landNames.map(function(name){return{id:parkId+'-'+api.normalize(name),parkId:parkId,name:name,slug:api.normalize(name)};}); var by={};lands.forEach(function(x){by[x.name]=x.id;});return{source:source,lastVerified:verified,lands:lands,rides:rows.map(function(row){return ride(parkId,row[0],row[1],by[row[2]]);})}; }
+  function ride(parkId,id,name,landId){return{id:parkId+'-'+id,providerId:null,parkId:parkId,landId:landId,name:name,normalizedName:api.normalize(name),type:'ride',classification:'ride',operatingStatus:'UNKNOWN',latitude:null,longitude:null,minimumHeight:null,thrillCategory:null,indoorOutdoor:'unknown',singleRider:null,childSwap:null,expressEligibility:null,source:source,lastVerified:verified};}
+})(window.RideHeroParkData);
