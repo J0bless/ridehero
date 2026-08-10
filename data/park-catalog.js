@@ -55,6 +55,7 @@
     if (['dl','dca'].includes(parkId)) programs.lightningLane = accessProgram(true, 'Disneyland Resort', 'https://disneyland.disney.go.com/lightning-lane-passes/');
     if (['usf','ioa'].includes(parkId)) programs.expressPass = accessProgram(true, 'Universal Orlando Resort', 'https://www.universalorlando.com/web/en/us/tickets-packages/park-tickets');
     if (parkId === 'ush') programs.expressPass = accessProgram(true, 'Universal Studios Hollywood', 'https://www.universalstudioshollywood.com/web/en/us/faqs/rides-and-attractions');
+    if (parkId === 'usj') programs.expressPass = accessProgram(true, 'Universal Studios Japan', 'https://www.usj.co.jp/web/en/us/tickets/express-pass');
     if (['sfga','sfmm','sfgam'].includes(parkId)) programs.fastLane = accessProgram(true, 'Six Flags', 'https://www.sixflags.com/blog/fast-lane-updates');
     return programs;
   }

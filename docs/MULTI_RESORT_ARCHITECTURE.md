@@ -85,6 +85,10 @@ The selected Six Flags parks use operator-published minimums plus separate accom
 
 Universal Studios Japan restrictions retain the operator's exact centimeter values, with derived inch values for party comparison. Accompanied, unaccompanied, maximum-height, and supervision-only rules are stored separately for all curated USJ rides.
 
+Universal Studios Japan Express Pass availability is verified at the park level. Ride-level eligibility is marked only on attraction pages that explicitly say `Universal Express Pass Valid`; an unmarked ride does not inherit eligibility from the park product.
+
+Disneyland Resort ride-level Lightning Lane eligibility follows the current official Single Pass and Multi Pass lists. Rides absent from those lists remain false and do not inherit eligibility merely because Lightning Lane exists at the park.
+
 Verified walking graphs keep visual maps independent from pedestrian routing. The graph importer accepts sourced pedestrian paths and separately maps canonical ride IDs to guest-entrance routing nodes. Entrances beyond the strict snap threshold fail import instead of silently attaching to an unrelated path.
 
 Park-level access-program availability is separate from ride-level eligibility. RideHero lists Lightning Lane, Express Pass, or Fast Lane preferences only where the operator verifies that park program. Unknown park availability stays unknown, and selecting a program never creates per-ride eligibility or synthetic wait savings.
