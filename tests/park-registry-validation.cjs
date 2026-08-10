@@ -95,6 +95,12 @@ assert.equal(api.get('dl').rides.find((ride) => ride.id === 'dl-indiana-jones-ad
 assert.equal(api.get('dca').rides.find((ride) => ride.id === 'dca-incredicoaster').minimumHeightInches, 48);
 assert.equal(api.get('dl').rides.find((ride) => ride.id === 'dl-peter-pans-flight').restrictionType, 'none');
 assert.equal(api.get('dca').rides.find((ride) => ride.id === 'dca-web-slingers').restrictionsVerified, true);
+assert.equal(api.get('sfga').rides.find((ride) => ride.id === 'sfga-flash-vertical-velocity').minimumHeightUnaccompaniedInches, 56);
+assert.equal(api.get('sfga').rides.find((ride) => ride.id === 'sfga-skull-mountain').maximumHeightInches, 77);
+assert.equal(api.get('sfga').rides.find((ride) => ride.id === 'sfga-green-lantern').restrictionsVerified, false);
+assert.equal(api.get('sfmm').rides.find((ride) => ride.id === 'sfmm-ninja').minimumHeightInches, 42);
+assert.equal(api.get('sfgam').rides.find((ride) => ride.id === 'sfgam-whizzer').minimumHeightUnaccompaniedInches, 42);
+assert.equal(api.get('sfgam').rides.find((ride) => ride.id === 'sfgam-wrath-of-rakshasa').maximumHeightInches, 78);
 assert.equal(catalog.parks.mk.accessPrograms.lightningLane.available, true);
 assert.equal(catalog.parks.ioa.accessPrograms.expressPass.available, true);
 assert.equal(catalog.parks.sfmm.accessPrograms.fastLane.available, true);
