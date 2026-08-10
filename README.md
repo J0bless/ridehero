@@ -48,7 +48,7 @@ Implementation details, verified data counts, sources, and limitations are docum
 
 Every normalized park and ride now carries explicit confidence and provenance. Ride locations distinguish the attraction footprint from guest entrance, exit, and routing node. Missing coordinates remain `unknown` and are never replaced with a guessed point.
 
-Open `#/admin/data-health` to inspect missing entrances, restriction coverage, live-wait support, walking-graph completion, and audit dates. Maintenance scripts under `scripts/` compare curated rides with human-reviewed official listing snapshots and reject unsourced walking graphs.
+Open `#/admin/data-health` to inspect missing entrances, restriction coverage, verified ride-access eligibility, live-wait support, walking-graph completion, and audit dates. Maintenance scripts under `scripts/` compare curated rides with human-reviewed official listing snapshots and reject unsourced walking graphs.
 
 ## Approved ChatGPT auto-merge
 
