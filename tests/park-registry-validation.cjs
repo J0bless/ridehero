@@ -101,6 +101,10 @@ assert.equal(api.get('sfga').rides.find((ride) => ride.id === 'sfga-green-lanter
 assert.equal(api.get('sfmm').rides.find((ride) => ride.id === 'sfmm-ninja').minimumHeightInches, 42);
 assert.equal(api.get('sfgam').rides.find((ride) => ride.id === 'sfgam-whizzer').minimumHeightUnaccompaniedInches, 42);
 assert.equal(api.get('sfgam').rides.find((ride) => ride.id === 'sfgam-wrath-of-rakshasa').maximumHeightInches, 78);
+assert.equal(api.get('usj').rides.find((ride) => ride.id === 'usj-mario-kart').minimumHeightCm, 107);
+assert.equal(api.get('usj').rides.find((ride) => ride.id === 'usj-yoshis-adventure').minimumHeightUnaccompaniedCm, 122);
+assert.equal(api.get('usj').rides.find((ride) => ride.id === 'usj-flying-dinosaur').maximumHeightCm, 198);
+assert.equal(api.get('usj').rides.find((ride) => ride.id === 'usj-hello-kitty-cupcake').restrictionType, 'supervision-only');
 assert.equal(catalog.parks.mk.accessPrograms.lightningLane.available, true);
 assert.equal(catalog.parks.ioa.accessPrograms.expressPass.available, true);
 assert.equal(catalog.parks.sfmm.accessPrograms.fastLane.available, true);
