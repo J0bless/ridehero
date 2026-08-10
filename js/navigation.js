@@ -31,7 +31,12 @@
     var recent = global.RideHeroState.get().recent || {};
     var park = catalog.parks[recent.parkId];
     var continueCard = park ? '<button class="catalog-continue" type="button" data-park="' + park.id + '"><span>Continue planning</span><strong>' + esc(park.shortName) + '</strong><small>' + esc(recent.planningMode === 'strategic' ? 'Maximize My Day' : 'Quick Route') + '</small></button>' : '';
-    root.innerHTML = shell('Choose your destination', 'Plan less. Ride more.', continueCard + brandCards(), [], false);
+    root.innerHTML = shell('Choose your destination', 'Plan less. Ride more.', continueCard + brandCards() + '<button class="catalog-debug-link" type="button" data-route="#/admin/data-health">Park data health</button>', [], false);
+  }
+
+  function renderDataHealth() {
+    root.innerHTML = shell('Park data health', 'Admin / debug', '<div id="data-health-root"></div>', [{ label: 'Home', route: '#/' }, { label: 'Data health', route: '#/admin/data-health' }], true);
+    if (global.RideHeroDataHealth) global.RideHeroDataHealth.render(root.querySelector('#data-health-root'));
   }
 
   function renderBrand(brand) {
@@ -64,7 +69,8 @@
     root.classList.add('active');
     document.querySelectorAll('.screen').forEach(function(screen){ if (screen !== root) screen.classList.remove('active'); });
     var parts = currentRoute();
-    if (!parts.length || parts[0] !== 'parks') renderHome();
+    if (parts[0] === 'admin' && parts[1] === 'data-health') renderDataHealth();
+    else if (!parts.length || parts[0] !== 'parks') renderHome();
     else {
       var found = global.RideHeroParkData.findParkByRoute(parts[1], parts[2], parts[3]);
       if (!found.brand) renderHome();

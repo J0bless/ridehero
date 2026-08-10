@@ -55,15 +55,36 @@ Each park and curated ride record includes its source and verification date. Met
 - `js/wait-provider.js` normalizes external live data, short-term caching, aborts, and Walt Disney World proxy fallback.
 - `js/location-service.js` shares cached geolocation, bounds checks, distance calculation, and manual/entrance/center fallback selection.
 - `js/route-engine.js` supplies park-independent route input signatures and verified-route capability checks while the existing optimizer is generalized in place.
+- `js/data-quality.js` normalizes confidence, provenance, aliases, locations, restrictions, and access programs.
+- `js/walking-network.js` selects verified graph distance, provider GPS, land/zone proximity, or a neutral fallback and returns a trust weight with every estimate.
+- `js/data-health.js` renders the on-demand `#/admin/data-health` audit dashboard.
 - `js/storage-migration.js` migrates the old context into versioned, per-park state without clearing existing preferences.
 
 Quick Mode accepts only normalized `classification === "ride"` records that are currently open. Unmatched provider attractions for expansion parks are classified as `other`, so they cannot enter Quick routes. Full Day retains the existing rides/attractions/both behavior.
+
+## Confidence and route inputs
+
+Records use `verified`, `provider`, `approximate`, or `unknown` confidence. A park center supplied by the live provider is not treated as a guest entrance. Each ride separately stores `attractionLocation`, `guestEntranceLocation`, `exitLocation`, and `routingNode`.
+
+Distance selection is tiered:
+
+1. Verified pedestrian graph between assigned routing nodes.
+2. Provider or verified GPS coordinates, preferring the guest entrance.
+3. Same-land or cross-land proximity.
+4. Neutral distance only when no defensible spatial input exists.
+
+Lower-confidence distance contributes less to route scoring, shifting the optimizer toward real wait information. The selected distance quality is visible on route results.
+
+Access programs are normalized as `lightningLane`, `expressPass`, `fastLane`, `singleRider`, and `childSwap`. Height restrictions use numeric inches and centimeters plus `restrictionsVerified`; party filtering never applies an unverified restriction.
+
+The walking graph importer requires verified, sourced pedestrian GeoJSON. No graph is marked verified merely because a visual park map exists.
 
 ## Known limitations
 
 - Verified walkway graphs and legally reusable detailed map imagery are available only for the four existing Walt Disney World parks in this repository.
 - Expansion parks use straight-line proximity for ranking and intentionally show no walking route line.
 - Entrance coordinates were not stored unless verified, so those parks fall back to a clearly labeled approximate park-center start after any manual start.
+- A trusted-map audit did not return independently named entrance records for the requested parks. Entrances therefore remain explicitly unknown pending operator-verified or individually reviewable map records.
 - Curated files are intentionally conservative rather than exhaustive. Live provider records can supplement the Full Day experience, while Quick Mode admits only verified ride matches.
 - Live waits are best effort. Missing, malformed, partial, or unavailable responses never become zero-minute waits.
 - A future data-maintenance pass should verify entrances, ride coordinates, accessibility metadata, and walking networks directly from licensed or operator-approved sources.

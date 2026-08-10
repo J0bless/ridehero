@@ -20,8 +20,24 @@
     return !!(park && park.map && park.map.routingQuality === 'verified');
   }
 
+  function isRideEligible(ride, partyProfile) {
+    if (!ride || !partyProfile) return true;
+    var minimumPartyHeight = Number(partyProfile.minimumRiderHeightInches);
+    var requiredHeight = Number(ride.minimumHeightInches);
+    if (ride.restrictionsVerified && Number.isFinite(requiredHeight) && Number.isFinite(minimumPartyHeight) && minimumPartyHeight < requiredHeight) return false;
+    return true;
+  }
+
+  function activeAccessPrograms(ride, userPrograms) {
+    var available = ride && ride.accessPrograms || {};
+    var selected = userPrograms || {};
+    return Object.keys(available).filter(function(program) { return available[program] === true && selected[program] === true; });
+  }
+
   global.RideHeroRouteEngine = {
     inputSignature: inputSignature,
-    permitsDrawnRoute: permitsDrawnRoute
+    permitsDrawnRoute: permitsDrawnRoute,
+    isRideEligible: isRideEligible,
+    activeAccessPrograms: activeAccessPrograms
   };
 })(window);

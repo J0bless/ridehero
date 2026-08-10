@@ -27,7 +27,7 @@
     var legacyClassification = legacyWdwPark && typeof global.classifyExperience === 'function'
       ? global.classifyExperience(entity)
       : 'other';
-    return {
+    var normalized = {
       id: staticRide ? staticRide.id : entity.id,
       providerId: entity.id,
       providerNamespace: 'themeparks-wiki',
@@ -37,20 +37,29 @@
       normalizedName: global.RideHeroParkData.normalize((staticRide && staticRide.name) || entity.name),
       type: (staticRide && staticRide.type) || 'attraction',
       classification: (staticRide && staticRide.classification) || legacyClassification,
+      dataConfidence: staticRide ? staticRide.dataConfidence : 'provider',
       status: normalizeStatus(entity.status),
       operatingStatus: normalizeStatus(entity.status),
       waitMinutes: waitMinutes(entity),
       waitTime: waitMinutes(entity),
       latitude: location && Number.isFinite(Number(location.latitude)) ? Number(location.latitude) : null,
       longitude: location && Number.isFinite(Number(location.longitude)) ? Number(location.longitude) : null,
+      locationConfidence: location ? 'provider' : 'unknown',
+      attractionLocation: global.RideHeroDataQuality ? global.RideHeroDataQuality.location(location && location.latitude, location && location.longitude, location ? 'provider' : 'unknown', 'ThemeParks.wiki', 'https://api.themeparks.wiki/') : null,
+      guestEntranceLocation: staticRide ? staticRide.guestEntranceLocation : null,
+      exitLocation: staticRide ? staticRide.exitLocation : null,
+      routingNode: staticRide ? staticRide.routingNode : null,
       minimumHeight: staticRide ? staticRide.minimumHeight : null,
       singleRider: staticRide ? staticRide.singleRider : null,
       childSwap: staticRide ? staticRide.childSwap : null,
       expressEligibility: staticRide ? staticRide.expressEligibility : null,
       source: (staticRide && staticRide.source) || 'https://api.themeparks.wiki/',
+      sourceUrl: (staticRide && staticRide.sourceUrl) || 'https://api.themeparks.wiki/',
+      sourceName: (staticRide && staticRide.sourceName) || 'ThemeParks.wiki',
       lastVerified: (staticRide && staticRide.lastVerified) || global.RIDEHERO_CATALOG.lastVerified,
       lastUpdated: entity.lastUpdated || null
     };
+    return global.RideHeroDataQuality ? global.RideHeroDataQuality.normalizeRide(normalized, { sourceUrl: normalized.sourceUrl, sourceName: normalized.sourceName, lastVerified: normalized.lastVerified }) : normalized;
   }
 
   function staticInformation(dataset) {
@@ -96,8 +105,8 @@
       var livePayload = await responses[1].json();
       var childById = Object.create(null);
       (childrenPayload.children || []).forEach(function(child) { childById[child.id] = child; });
-      var staticByName = Object.create(null);
-      dataset.rides.forEach(function(ride) { staticByName[global.RideHeroParkData.normalize(ride.name)] = ride; });
+      var staticByName = global.RideHeroDataQuality ? global.RideHeroDataQuality.providerAliasMap(dataset) : Object.create(null);
+      if (!global.RideHeroDataQuality) dataset.rides.forEach(function(ride) { staticByName[global.RideHeroParkData.normalize(ride.name)] = ride; });
       var normalized = (livePayload.liveData || []).filter(function(entity) { return entity.entityType === 'ATTRACTION'; }).map(function(entity) {
         return normalizeProviderRide(entity, staticByName[global.RideHeroParkData.normalize(entity.name)] || null, childById[entity.id]);
       });
@@ -112,8 +121,8 @@
       try {
         var proxyRides = await fetchLegacyProxy(options.proxyUrl, parkId, signal);
         if (proxyRides) {
-          var staticNames = Object.create(null);
-          dataset.rides.forEach(function(ride) { staticNames[global.RideHeroParkData.normalize(ride.name)] = ride; });
+          var staticNames = global.RideHeroDataQuality ? global.RideHeroDataQuality.providerAliasMap(dataset) : Object.create(null);
+          if (!global.RideHeroDataQuality) dataset.rides.forEach(function(ride) { staticNames[global.RideHeroParkData.normalize(ride.name)] = ride; });
           var normalizedProxy = proxyRides.map(function(ride) {
             var entity = {
               id: ride.id || ride.entityId || global.RideHeroParkData.normalize(ride.name),

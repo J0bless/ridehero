@@ -36,6 +36,8 @@
 
   function validateDataset(parkId, dataset) {
     var safe = dataset || {};
+    safe.sourceUrl = safe.sourceUrl || safe.source || null;
+    safe.sourceName = safe.sourceName || (safe.sourceUrl ? 'Official operator listing' : null);
     safe.lands = Array.isArray(safe.lands) ? safe.lands : [];
     safe.rides = Array.isArray(safe.rides) ? safe.rides : [];
     var landIds = Object.create(null);
@@ -57,6 +59,7 @@
       }
       ride.normalizedName = ride.normalizedName || normalize(ride.name);
       ride.classification = ride.classification || 'other';
+      if (global.RideHeroDataQuality) global.RideHeroDataQuality.normalizeRide(ride, safe);
       rideIds[ride.id] = true;
       return true;
     });

@@ -32,10 +32,13 @@
       state: country === 'United States' ? region : null,
       prefecture: country === 'Japan' ? region : null,
       country: country, timezone: timezone, latitude: latitude, longitude: longitude,
-      entrance: null, bounds: { center: { latitude: latitude, longitude: longitude }, radiusKm: 5 },
+      dataConfidence: 'verified', sourceName: 'Official operator park page', sourceUrl: officialSource,
+      parkCenter: { latitude: latitude, longitude: longitude, dataConfidence: 'provider', sourceName: 'ThemeParks.wiki', sourceUrl: 'https://api.themeparks.wiki/' },
+      entrance: null, entranceConfidence: 'unknown',
+      bounds: { center: { latitude: latitude, longitude: longitude }, radiusKm: 5, dataConfidence: 'approximate', sourceName: 'RideHero proximity boundary', sourceUrl: null },
       operatingStatus: 'UNKNOWN', officialSource: officialSource, lastVerified: verified,
       waitTimeProviderId: providerId, waitTimeProvider: tp,
-      mapRoutingAvailable: parkMap.routingQuality === 'verified',
+      mapRoutingAvailable: parkMap.routingQuality === 'verified', routingQuality: parkMap.routingQuality,
       liveWaitTimesAvailable: true, map: parkMap, dataFile: dataFile
     };
   }

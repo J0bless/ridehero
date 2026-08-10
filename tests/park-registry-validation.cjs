@@ -13,6 +13,8 @@ function run(file) {
 
 run('data/park-catalog.js');
 context.window.RIDEHERO_CATALOG = context.window.RIDEHERO_CATALOG;
+run('data/ride-aliases.js');
+run('js/data-quality.js');
 run('js/park-catalog.js');
 
 for (const file of fs.readdirSync(path.join(root, 'data', 'parks')).filter((name) => name.endsWith('.js'))) {
@@ -38,6 +40,9 @@ for (const park of Object.values(catalog.parks)) {
   ['slug','brandId','destinationId','shortName','city','country','latitude','longitude','operatingStatus','officialSource','lastVerified','mapRoutingAvailable','liveWaitTimesAvailable'].forEach((field) => {
     assert(Object.prototype.hasOwnProperty.call(park, field), `${park.id} is missing ${field}`);
   });
+  assert(['verified','provider','approximate','unknown'].includes(park.dataConfidence));
+  assert(['verified','provider','approximate','unknown'].includes(park.entranceConfidence));
+  assert.equal(typeof park.sourceUrl, 'string');
   assert(['verified', 'approximate', 'unavailable'].includes(park.map.routingQuality));
   assert(!providerIds.has(park.waitTimeProviderId), `duplicate provider park id ${park.waitTimeProviderId}`);
   providerIds.add(park.waitTimeProviderId);
@@ -61,6 +66,14 @@ for (const park of Object.values(catalog.parks)) {
     ['name','normalizedName','type','operatingStatus','source','lastVerified'].forEach((field) => {
       assert(Object.prototype.hasOwnProperty.call(ride, field), `${ride.id} is missing ${field}`);
     });
+    assert(['verified','provider','approximate','unknown'].includes(ride.dataConfidence));
+    assert.equal(typeof ride.sourceUrl, 'string');
+    assert.equal(typeof ride.sourceName, 'string');
+    assert(ride.guestEntranceLocation && Object.prototype.hasOwnProperty.call(ride.guestEntranceLocation, 'dataConfidence'));
+    assert(ride.attractionLocation && Object.prototype.hasOwnProperty.call(ride.attractionLocation, 'dataConfidence'));
+    assert(ride.accessPrograms && typeof ride.accessPrograms === 'object');
+    assert(Object.prototype.hasOwnProperty.call(ride, 'minimumHeightInches'));
+    assert(Object.prototype.hasOwnProperty.call(ride, 'minimumHeightCm'));
   }
 }
 
