@@ -4,7 +4,8 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
-const scriptMatch = html.match(/<script[^>]*>([\s\S]*?)<\/script>/i);
+const scriptMatches = Array.from(html.matchAll(/<script([^>]*)>([\s\S]*?)<\/script>/gi));
+const scriptMatch = scriptMatches.find((match) => !/\bsrc\s*=/.test(match[1]));
 assert(scriptMatch, 'index.html must contain an inline script');
 assert.doesNotMatch(html, /Preview route/, 'the Preview route badge must be removed');
 assert.doesNotMatch(html, /route-start-status/, 'the old route status banner must be removed');
@@ -64,7 +65,7 @@ const context = vm.createContext({
 });
 context.window = context;
 
-vm.runInContext(scriptMatch[1], context, { filename: 'index.inline.js' });
+vm.runInContext(scriptMatch[2], context, { filename: 'index.inline.js' });
 const run = (source) => vm.runInContext(source, context);
 
 run(`

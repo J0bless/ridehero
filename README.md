@@ -32,6 +32,24 @@ node --check index.html
 
 Preserve this behavior unless a focused branch and pull request explicitly changes it.
 
+## Multi-resort architecture
+
+RideHero now keeps its brand, destination, and park registry in `data/park-catalog.js`. Park datasets live under `data/parks/` and are loaded only after a park is selected. The catalog-driven navigation uses reload-safe hash routes and follows this sequence:
+
+`Brand → Destination / Resort → Park → Planning Mode → Route`
+
+The normalized wait provider fetches only the active park, caches a successful response for two minutes, cancels stale requests during park switches, and preserves missing waits as unknown. Existing Walt Disney World proxy fallback behavior remains available. Static park information remains usable when live waits fail.
+
+Existing Walt Disney World maps are loaded only when their route view opens. Parks without a verified map or walking network use approximate proximity mode and do not draw invented route lines.
+
+Implementation details, verified data counts, sources, and limitations are documented in [Multi-resort architecture and data notes](docs/MULTI_RESORT_ARCHITECTURE.md).
+
+### Data quality and routing confidence
+
+Every normalized park and ride now carries explicit confidence and provenance. Ride locations distinguish the attraction footprint from guest entrance, exit, and routing node. Missing coordinates remain `unknown` and are never replaced with a guessed point.
+
+Open `#/admin/data-health` to inspect missing entrances, restriction coverage, verified ride-access eligibility, live-wait support, walking-graph completion, and audit dates. Maintenance scripts under `scripts/` compare curated rides with human-reviewed official listing snapshots and reject unsourced walking graphs.
+
 ## Approved ChatGPT auto-merge
 
 The `Auto-merge approved ChatGPT PRs` workflow enables squash auto-merge only when every eligibility rule is satisfied:

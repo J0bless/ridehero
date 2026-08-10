@@ -9,6 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
 <meta http-equiv="Pragma" content="no-cache"/>
 <meta http-equiv="Expires" content="0"/>
+<link rel="stylesheet" href="css/multi-resort.css?v=1"/>
 <title>RideHero — v9.7 Track-Aligned Early Pull</title>
 <!-- RideHero cleaned runtime build 2026-06-25 -->
 <!-- RideHero debug patch 2026-06-25: preserve source chip + fixed Select/Deselect All targeting -->
@@ -3910,7 +3911,7 @@ body{
 
 
 <!-- MODE CHOICE: revealed after coaster intro -->
-<section id="mode-choice-screen" class="mode-choice-screen fullscreen-mode-choice" aria-label="Choose RideHero guidance mode">
+<section id="mode-choice-screen" class="mode-choice-screen fullscreen-mode-choice hide" aria-label="Choose RideHero guidance mode">
   <div class="mode-choice-header">
     <div class="home-brand mini">
       <div class="home-brand-mark">✦</div>
@@ -4165,6 +4166,15 @@ body{
           <span style="font-size:15px;color:#8e8e93;margin-left:4px;">pm</span>
         </div>
       </div>
+      <details class="planning-preferences" id="planning-preferences">
+        <summary>Party eligibility and access programs</summary>
+        <div class="planning-preferences-body">
+          <label>Shortest rider height (inches)<input id="party-min-height" type="number" min="0" max="96" step="1" placeholder="Optional"/></label>
+          <fieldset><legend>Programs your party has</legend><label data-access-program="lightningLane"><input id="access-lightning-lane" type="checkbox"/> Lightning Lane</label><label data-access-program="expressPass"><input id="access-express-pass" type="checkbox"/> Express Pass</label><label data-access-program="fastLane"><input id="access-fast-lane" type="checkbox"/> Fast Lane</label></fieldset>
+          <button class="sm-btn filled" type="button" onclick="savePlanningPreferences()">Save planning preferences</button>
+          <p id="planning-program-note">Height filtering applies only to restrictions marked verified. Only operator-verified programs for this park are listed, without inventing a wait-time reduction or per-ride eligibility.</p>
+        </div>
+      </details>
     </div>
 
     <div class="compact-waits-card" id="compact-waits-card">
@@ -4235,6 +4245,16 @@ body{
   </div>
 </div>
 
+<script src="data/park-catalog.js?v=1"></script>
+<script src="data/ride-aliases.js?v=1"></script>
+<script src="js/data-quality.js?v=1"></script>
+<script src="js/park-catalog.js?v=1"></script>
+<script src="js/wait-provider.js?v=1"></script>
+<script src="js/location-service.js?v=1"></script>
+<script src="js/storage-migration.js?v=1"></script>
+<script src="js/route-engine.js?v=1"></script>
+<script src="data/walking-graphs.js?v=1"></script>
+<script src="js/walking-network.js?v=1"></script>
 <script>
 const PARK_META = {
   mk:{name:'Magic Kingdom',color:'#185FA5',emoji:'🏰',zones:[
@@ -4535,6 +4555,7 @@ var rideSearchQuery = '';
 var rideLoadToken = 0;
 var activeRidePark = null;
 var lastRideSource = null;
+var lastRouteComputation = null;
 
 // ── Screen management ────────────────────────────────────────────────────────
 
@@ -4548,10 +4569,12 @@ function showScreen(id) {
   if (pf) pf.style.display = (id === 'priority') ? 'block' : 'none';
   updateNavState(id === 'priority' ? 'route' : (id === 'plan' ? 'setup' : id));
   if (id === 'plan') startCompactWaitRefresh(); else stopCompactWaitRefresh();
+  if (window.RideHeroMultiResort) window.RideHeroMultiResort.updateChangeParkAction();
 }
 
 
 function resetParkRuntimeState() {
+  if (window.RideHeroWaitProvider) window.RideHeroWaitProvider.cancel();
   rides = [];
   selected = new Set();
   priority = {};
@@ -4617,6 +4640,7 @@ function openPlanFlow() {
   if (hs) hs.style.display = 'block';
   updateHomePreview();
   updatePlanFlowCopy();
+  hydratePlanningPreferences();
   showScreen('plan');
   renderCompactWaits();
   refreshCompactWaits();
@@ -4626,7 +4650,8 @@ function openPlanFlow() {
 var compactWaitRefreshTimer = null;
 
 function waitBadgeClass(wait) {
-  var w = Number(wait || 0);
+  if (!Number.isFinite(Number(wait))) return '';
+  var w = Number(wait);
   if (w <= 20) return 'low';
   if (w <= 45) return 'med';
   return 'high';
@@ -4648,12 +4673,12 @@ function renderCompactWaits() {
   }
 
   var rows = rides.slice().sort(function(a,b){
-    return (a.wait || 999) - (b.wait || 999);
+    return waitSortValue(a) - waitSortValue(b);
   }).map(function(r){
-    var wait = Number(r.wait || 0);
-    var label = wait > 0 ? wait + ' min' : 'No posted wait';
+    var wait = r.waitTime != null && Number.isFinite(Number(r.waitTime)) ? Number(r.waitTime) : null;
+    var label = wait == null ? 'Live waits unavailable' : wait + ' min';
     var cls = waitBadgeClass(wait);
-    var status = r.status || r.entityType || 'Attraction';
+    var status = r.status || r.operatingStatus || r.entityType || 'UNKNOWN';
     return '<div class="compact-wait-row">' +
       '<div><div class="compact-wait-name">' + escHTML(r.name || 'Attraction') + '</div>' +
       '<div class="compact-wait-sub">' + escHTML(status) + '</div></div>' +
@@ -4767,76 +4792,92 @@ async function goToRides() {
 
 // ── Rides screen ─────────────────────────────────────────────────────────────
 
-async function reloadRides() {
+async function reloadRides(options) {
+  options = options || {};
   var parkForRequest = currentPark;
   var requestToken = ++rideLoadToken;
   activeRidePark = parkForRequest;
   lastRideSource = null;
+  lastRouteComputation = null;
   rides = [];
   selected = new Set();
   ridePos = {};
   routeOrder = [];
-  document.getElementById('rides-body').innerHTML = '<div class="loading"><div class="loading-spinner"></div><p>Loading ' + escHTML(PARK_META[parkForRequest].name) + ' wait times...</p></div>';
+  document.getElementById('rides-body').innerHTML = '<div class="loading"><div class="loading-spinner"></div><p>Updating waits for ' + escHTML(PARK_META[parkForRequest].name) + '…</p></div>';
   document.getElementById('rides-footer').style.display = 'none';
-
-  var tpId = TP_IDS[parkForRequest];
-  var urls = [
-    'https://api.themeparks.wiki/v1/entity/' + tpId + '/live',
-    'https://corsproxy.io/?' + encodeURIComponent('https://api.themeparks.wiki/v1/entity/' + tpId + '/live'),
-    PROXY_URL + '/waittimes?park=' + parkForRequest + '&source=auto'
-  ];
-
-  for (var i = 0; i < urls.length; i++) {
-    try {
-      var res = await fetch(urls[i]);
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      var data = await res.json();
-      if (requestToken !== rideLoadToken || parkForRequest !== currentPark) {
-        console.warn('Ignoring stale wait-time response for ' + parkForRequest + '; current park is ' + currentPark);
-        return;
-      }
-
-      // themeparks.wiki direct or corsproxy response
-      if (data.liveData) {
-        rides = [];
-        data.liveData.forEach(function(e) {
-          if (e.entityType !== 'ATTRACTION' || e.status !== 'OPERATING') return;
-          var wait = 0;
-          if (e.queue && e.queue.STANDBY && e.queue.STANDBY.waitTime != null)
-            wait = e.queue.STANDBY.waitTime;
-          rides.push({ id: e.id, name: e.name, waitTime: wait, area: '' });
-        });
-      } else if (data.rides) {
-        // proxy response
-        rides = data.rides;
-      } else {
-        throw new Error('Unrecognised response format');
-      }
-
-      if (!rides.length) throw new Error('No open rides');
-      rides.sort(function(a, b) { return a.waitTime - b.waitTime; });
-      if (requestToken !== rideLoadToken || parkForRequest !== currentPark) return;
-      selected = new Set((currentMode === 'quick' ? quickRideCandidates() : filteredRides()).map(function(r) { return r.id; }));
+  try {
+    var staticDataset = await window.RideHeroParkData.load(parkForRequest);
+    if (requestToken !== rideLoadToken || parkForRequest !== currentPark) return;
+    if (currentMode !== 'quick' && staticDataset && staticDataset.rides && staticDataset.rides.length) {
+      rides = staticDataset.rides.map(function(ride) {
+        return Object.assign({}, ride, { status: 'UNKNOWN', waitMinutes: null, waitTime: null });
+      });
       assignPositions();
-      lastRideSource = i === 0 ? 'themeparks.wiki' : i === 1 ? 'themeparks.wiki (proxy)' : 'queue-times.com';
-      renderRides(lastRideSource);
-      document.getElementById('rides-footer').style.display = 'block';
-      updateSelInfo();
-      return;
-    } catch(e) {
-      console.warn('Source ' + i + ' failed: ' + e.message);
+      renderRides('static');
     }
+    var result = await window.RideHeroWaitProvider.getRideWaitTimes(parkForRequest, { force: options.force === true, proxyUrl: PROXY_URL });
+    if (requestToken !== rideLoadToken || parkForRequest !== currentPark) return;
+    rides = result.rides || [];
+    rides.sort(function(a, b) { return waitSortValue(a) - waitSortValue(b); });
+    selected = new Set((currentMode === 'quick' ? quickRideCandidates() : filteredRides()).filter(function(ride) {
+      return (ride.status || ride.operatingStatus) === 'OPEN';
+    }).map(function(ride) { return ride.id; }));
+    assignPositions();
+    lastRideSource = result.source;
+    renderRides(lastRideSource);
+    if (result.message) {
+      document.getElementById('rides-body').insertAdjacentHTML('afterbegin', '<div class="error-box" id="wait-provider-message" role="status"><p>' + escHTML(result.message) + '</p><button id="retry-btn">Retry</button> <button id="continue-static-btn">Continue with park information</button></div>');
+    }
+    document.getElementById('rides-footer').style.display = 'block';
+    updateSelInfo();
+    var retry = document.getElementById('retry-btn');
+    if (retry) retry.addEventListener('click', function() { reloadRides({ force: true }); });
+    var continueStatic = document.getElementById('continue-static-btn');
+    if (continueStatic) continueStatic.addEventListener('click', function() { var message = document.getElementById('wait-provider-message'); if (message) message.remove(); });
+  } catch(e) {
+    console.warn('Wait provider failed: ' + e.message);
+    document.getElementById('rides-body').innerHTML = '<div class="error-box"><p>Live wait times are temporarily unavailable.</p><button id="retry-btn">Retry</button></div>';
+    var btn = document.getElementById('retry-btn');
+    if (btn) btn.addEventListener('click', function() { reloadRides({ force: true }); });
   }
+}
 
-  document.getElementById('rides-body').innerHTML =
-    '<div class="error-box"><p>Could not load wait times. Check your connection and try again.</p>' +
-    '<button id="retry-btn">Try again</button></div>';
-  var btn = document.getElementById('retry-btn');
-  if (btn) btn.addEventListener('click', reloadRides);
+function hydratePlanningPreferences() {
+  if (!window.RideHeroState) return;
+  var preferences = window.RideHeroState.getParkPreferences(currentPark) || {};
+  var party = preferences.partyProfile || {};
+  var programs = preferences.accessPrograms || {};
+  var height = document.getElementById('party-min-height');
+  if (height) height.value = party.minimumRiderHeightInches != null && Number.isFinite(Number(party.minimumRiderHeightInches)) ? party.minimumRiderHeightInches : '';
+  var park = window.RIDEHERO_CATALOG && window.RIDEHERO_CATALOG.parks[currentPark];
+  var supported = park && park.accessPrograms || {};
+  [['lightningLane','access-lightning-lane'],['expressPass','access-express-pass'],['fastLane','access-fast-lane']].forEach(function(entry) {
+    var input = document.getElementById(entry[1]);
+    var available = supported[entry[0]] && supported[entry[0]].available === true;
+    if (input) { input.checked = available && programs[entry[0]] === true; input.disabled = !available; }
+    var label = document.querySelector('[data-access-program="' + entry[0] + '"]');
+    if (label) label.hidden = !available;
+  });
+}
+
+function savePlanningPreferences() {
+  if (!window.RideHeroState) return;
+  var heightInput = document.getElementById('party-min-height');
+  var height = heightInput && heightInput.value !== '' ? Number(heightInput.value) : null;
+  window.RideHeroState.setParkPreferences(currentPark, {
+    partyProfile: { minimumRiderHeightInches: Number.isFinite(height) ? height : null },
+    accessPrograms: {
+      lightningLane: !!(document.getElementById('access-lightning-lane') || {}).checked,
+      expressPass: !!(document.getElementById('access-express-pass') || {}).checked,
+      fastLane: !!(document.getElementById('access-fast-lane') || {}).checked
+    }
+  });
+  renderCompactWaits();
 }
 
 
 function classifyExperience(ride) {
+  if (ride && ride.classification) return ride.classification === 'ride' ? 'ride' : 'attraction';
   var name = ((ride && ride.name) || '').toLowerCase();
 
   // These are lower-movement, show, trail, exhibit, or walkthrough style experiences.
@@ -4859,6 +4900,8 @@ function classifyExperience(ride) {
 }
 
 function experienceMatches(ride) {
+  var parkPreferences = window.RideHeroState ? window.RideHeroState.getParkPreferences(currentPark) : {};
+  if (window.RideHeroRouteEngine && !window.RideHeroRouteEngine.isRideEligible(ride, parkPreferences.partyProfile)) return false;
   if (currentMode === 'quick') return classifyExperience(ride) === 'ride';
   if (experienceFilter === 'both') return true;
   return classifyExperience(ride) === experienceFilter;
@@ -4871,13 +4914,17 @@ function rideMatchesSearch(ride) {
 
 function filteredRides() {
   if (activeRidePark && activeRidePark !== currentPark) return [];
+  if (currentMode === 'quick') return quickRideCandidates().filter(rideMatchesSearch);
   return rides.filter(function(r){ return experienceMatches(r) && rideMatchesSearch(r); });
 }
 
 function quickRideCandidates() {
   if (currentMode !== 'quick') return [];
   if (activeRidePark && activeRidePark !== currentPark) return [];
-  return rides.filter(function(r) { return classifyExperience(r) === 'ride'; });
+  return rides.filter(function(r) {
+    var status = r.status || r.operatingStatus;
+    return classifyExperience(r) === 'ride' && (status == null || status === 'OPEN');
+  });
 }
 
 function selectedQuickRides() {
@@ -4885,7 +4932,10 @@ function selectedQuickRides() {
 }
 
 function selectedFilteredRides() {
-  return filteredRides().filter(function(r) { return selected.has(r.id); });
+  return filteredRides().filter(function(r) {
+    var status = r.status || r.operatingStatus;
+    return selected.has(r.id) && (status == null || status === 'OPEN' || status === 'UNKNOWN');
+  });
 }
 
 function filterLabel() {
@@ -4906,18 +4956,34 @@ function setExperienceFilter(value) {
 }
 
 
-function wc(w) { return w <= 20 ? 'wl' : w <= 45 ? 'wm' : 'wh'; }
+function waitSortValue(ride) { return ride && ride.waitTime != null && Number.isFinite(Number(ride.waitTime)) ? Number(ride.waitTime) : 9999; }
+function scoredWait(ride) { return ride && ride.waitTime != null && Number.isFinite(Number(ride.waitTime)) ? Number(ride.waitTime) : 90; }
+function waitLabel(ride, longForm) { return ride && ride.waitTime != null && Number.isFinite(Number(ride.waitTime)) ? Number(ride.waitTime) + (longForm ? ' min wait' : 'm') : 'Live waits unavailable'; }
+function wc(w) { return w == null || !Number.isFinite(Number(w)) ? '' : w <= 20 ? 'wl' : w <= 45 ? 'wm' : 'wh'; }
+function rideEligibilityMeta(ride) {
+  var parts = [];
+  if (ride && ride.restrictionsVerified && ride.minimumHeightInches != null && Number.isFinite(Number(ride.minimumHeightInches))) parts.push(ride.minimumHeightInches + ' in minimum');
+  if (window.RideHeroRouteEngine && window.RideHeroState) {
+    var preferences = window.RideHeroState.getParkPreferences(currentPark) || {};
+    var active = window.RideHeroRouteEngine.activeAccessPrograms(ride, preferences.accessPrograms);
+    var labels = { lightningLane:'Lightning Lane', expressPass:'Express Pass', fastLane:'Fast Lane', singleRider:'Single Rider', childSwap:'Child Swap' };
+    active.forEach(function(program) { parts.push(labels[program] || program); });
+  }
+  return parts.join(' · ');
+}
 
 function renderRides(source) {
   var visibleRides = filteredRides();
   var html = '';
   var meta = PARK_META[currentPark];
-  var topPicks = visibleRides.slice().sort(function(a,b){ return (a.waitTime||0) - (b.waitTime||0); }).slice(0,3);
+  var topPicks = visibleRides.slice().sort(function(a,b){ return waitSortValue(a) - waitSortValue(b); }).slice(0,3);
   var sourceLabel = '';
 
   if (source) {
-    var cls = source.includes('themeparks') ? 'sc-tp' : 'sc-qt';
-    var label = source.includes('themeparks') ? 'ThemeParks.wiki' : 'Queue-Times.com';
+    var isThemeParks = source.includes('themeparks');
+    var isStatic = source === 'static';
+    var cls = isThemeParks ? 'sc-tp' : 'sc-qt';
+    var label = isThemeParks ? 'ThemeParks.wiki' : isStatic ? 'Park information' : 'RideHero live proxy';
     sourceLabel = '<span class="source-chip ' + cls + '">' + label + '</span>';
   }
 
@@ -4938,8 +5004,9 @@ function renderRides(source) {
     topPicks.forEach(function(r){
       var kind = classifyExperience(r) === 'ride' ? 'Ride' : 'Attraction';
       var start = {name: meta.name + ' Entrance', waitTime:0};
-      var walk = Math.max(1, Math.round(walkMins(start, r)));
-      html += '<div class="best-pick-row"><div><strong>' + escHTML(r.name) + '</strong><span>' + kind + ' · about ' + walk + ' min from entrance</span></div><span class="wait-badge ' + wc(r.waitTime) + '">' + escHTML(r.waitTime) + 'm</span></div>';
+      var pickEstimate = routeDistanceQuality(start, r);
+      var pickDistance = pickEstimate.routingQuality === 'neutral' ? 'distance unavailable' : 'about ' + Math.max(1, Math.round(pickEstimate.minutes)) + ' min from start';
+      html += '<div class="best-pick-row"><div><strong>' + escHTML(r.name) + '</strong><span>' + kind + ' · ' + escHTML(pickDistance) + '</span></div><span class="wait-badge ' + wc(r.waitTime) + '">' + escHTML(waitLabel(r, false)) + '</span></div>';
     });
     html += '</div>';
   } else {
@@ -4952,13 +5019,16 @@ function renderRides(source) {
     var on = selected.has(r.id);
     var kind = classifyExperience(r) === 'ride' ? 'Ride' : 'Attraction';
     var start = {name: meta.name + ' Entrance', waitTime:0};
-    var walk = Math.max(1, Math.round(walkMins(start, r)));
+    var distanceEstimate = routeDistanceQuality(start, r);
+    var walk = Math.max(1, Math.round(distanceEstimate.minutes));
+    var distanceText = distanceEstimate.routingQuality === 'neutral' ? 'Distance unavailable' : '~' + walk + ' min from start · ' + distanceEstimate.routingQuality;
+    var eligibility = rideEligibilityMeta(r);
     html += '<div class="ride-card' + (on ? ' on' : '') + '" data-id="' + r.id + '">' +
       '<div class="ride-check"><span class="ride-check-mark">✓</span></div>' +
       '<div class="ride-info"><div class="ride-name">' + escHTML(r.name) + '</div>' +
       '<div class="ride-area">' + kind + '</div>' +
-      '<div class="ride-meta-row"><span class="ride-meta-pill">' + kind + '</span><span class="ride-meta-note">~' + walk + ' min walk from entrance</span>' + (on ? '<span class="ride-meta-pill" style="background:#ecfdf3;color:#15803d;">Selected</span>' : '') + '</div></div>' +
-      '<span class="wait-badge ' + wc(r.waitTime) + '">' + escHTML(r.waitTime) + 'm</span></div>';
+      '<div class="ride-meta-row"><span class="ride-meta-pill">' + kind + '</span><span class="ride-meta-note">' + escHTML(distanceText) + '</span>' + (eligibility ? '<span class="ride-meta-pill">' + escHTML(eligibility) + '</span>' : '') + (on ? '<span class="ride-meta-pill" style="background:#ecfdf3;color:#15803d;">Selected</span>' : '') + '</div></div>' +
+      '<span class="wait-badge ' + wc(r.waitTime) + '">' + escHTML(waitLabel(r, false)) + '</span></div>';
   });
   html += '</div>';
 
@@ -5270,7 +5340,7 @@ function routeReasonForStop(prev, stop, idx) {
   var land = inferRideLand(stop);
   var cfg = PARK_ROUTE_CONFIG[currentPark];
   var landLabel = cfg && cfg.lands && cfg.lands[land] ? cfg.lands[land].label : 'nearby area';
-  var wait = Number(stop.waitTime) || 0;
+  var wait = scoredWait(stop);
   if (idx === 0 && currentMode === 'quick') {
     return routeStartMode === 'live' && routeLivePosition
       ? 'Best first ride from your current location based on wait + walking distance.'
@@ -5306,12 +5376,20 @@ function mapWalkMins(a, b) {
 }
 
 function walkMins(a, b) {
+  var directA = a && a.latitude != null && a.longitude != null ? {lat:Number(a.latitude), lng:Number(a.longitude)} : a && a.lat != null && a.lng != null ? {lat:Number(a.lat), lng:Number(a.lng)} : null;
+  var directB = b && b.latitude != null && b.longitude != null ? {lat:Number(b.latitude), lng:Number(b.longitude)} : b && b.lat != null && b.lng != null ? {lat:Number(b.lat), lng:Number(b.lng)} : null;
+  if (directA && directB && isFinite(directA.lat) && isFinite(directA.lng) && isFinite(directB.lat) && isFinite(directB.lng)) return Math.round(distMetres(directA, directB) / 80 * 10) / 10;
   if ((a && a.isLiveLocation) || (b && b.isLiveLocation)) {
     var geoA = a && a.lat != null && a.lng != null ? {lat:Number(a.lat), lng:Number(a.lng)} : getRideCoords((a && a.name) || '');
     var geoB = b && b.lat != null && b.lng != null ? {lat:Number(b.lat), lng:Number(b.lng)} : getRideCoords((b && b.name) || '');
     if (geoA && geoB && isFinite(geoA.lat) && isFinite(geoA.lng) && isFinite(geoB.lat) && isFinite(geoB.lng)) {
       return Math.round(distMetres(geoA, geoB) / 80 * 10) / 10;
     }
+  }
+  var catalogPark = window.RIDEHERO_CATALOG && window.RIDEHERO_CATALOG.parks[currentPark];
+  if (catalogPark && catalogPark.map && catalogPark.map.routingQuality !== 'verified') {
+    var tiered = window.RideHeroWalkingNetwork && window.RideHeroWalkingNetwork.estimate(currentPark, a, b);
+    return tiered ? Math.round(tiered.minutes * 10) / 10 : 8;
   }
   var mapMins = mapWalkMins(a, b);
   if (mapMins != null) return mapMins;
@@ -5320,9 +5398,22 @@ function walkMins(a, b) {
   if (!ca || !cb) return 8;
   return Math.round(distMetres(ca, cb) / 80 * 10) / 10;
 }
+function routeDistanceQuality(a, b) {
+  var catalogPark = window.RIDEHERO_CATALOG && window.RIDEHERO_CATALOG.parks[currentPark];
+  if (catalogPark && catalogPark.map && catalogPark.map.routingQuality !== 'verified' && window.RideHeroWalkingNetwork) return window.RideHeroWalkingNetwork.estimate(currentPark, a, b);
+  return { minutes: walkMins(a, b), routingQuality: 'map-calibrated', dataConfidence: 'verified', trustWeight: 1 };
+}
+function walkingScore(a, b, multiplier) {
+  var estimate = routeDistanceQuality(a, b);
+  return estimate.minutes * (multiplier == null ? 1 : multiplier) * estimate.trustWeight;
+}
+function routingQualityMarkup(a, b) {
+  var estimate = routeDistanceQuality(a, b);
+  var labels = { verified:'Verified walking network', 'provider-gps':'Provider GPS proximity', 'land-zone':'Land/zone proximity', neutral:'Wait-time-heavy fallback', 'map-calibrated':'Verified map routing' };
+  return '<span class="route-quality-label">Distance quality: ' + escHTML(labels[estimate.routingQuality] || estimate.routingQuality) + '</span>';
+}
 function rideScore(current, candidate, isMust) {
-  var walk = walkMins(current, candidate);
-  return (isMust ? 0 : 20) + candidate.waitTime + walk * 1.5;
+  return (isMust ? 0 : 20) + scoredWait(candidate) + walkingScore(current, candidate, 1.5);
 }
 
 // ── Map position helpers ──────────────────────────────────────────────────────
@@ -5377,6 +5468,8 @@ function akGeoAnchorForRide(ride) {
 
 function assignPositions() {
   ridePos = {};
+  var catalogPark = window.RIDEHERO_CATALOG && window.RIDEHERO_CATALOG.parks[currentPark];
+  if (catalogPark && catalogPark.map && catalogPark.map.routingQuality !== 'verified') return;
   var cfg = PARK_ROUTE_CONFIG[currentPark] || PARK_ROUTE_CONFIG.mk;
   var W = (PARK_MAP_ASSETS[currentPark] && PARK_MAP_ASSETS[currentPark].width) || 900;
   var H = (PARK_MAP_ASSETS[currentPark] && PARK_MAP_ASSETS[currentPark].height) || 680;
@@ -6151,9 +6244,16 @@ function renderRouteMapSafely(order) {
   container.setAttribute('data-park', currentPark);
 
   ensureRouteStartControls();
+  var catalogPark = window.RIDEHERO_CATALOG && window.RIDEHERO_CATALOG.parks[currentPark];
+  if (catalogPark && !(window.RideHeroRouteEngine ? window.RideHeroRouteEngine.permitsDrawnRoute(catalogPark) : catalogPark.map && catalogPark.map.routingQuality === 'verified')) {
+    container.innerHTML = '<div class="approximate-map-card"><div><strong>Approximate proximity mode</strong><span>No verified walking network is available for ' + escHTML(catalogPark.shortName) + ' yet, so RideHero will not draw a walking route.</span></div></div>';
+    updateRouteStartControlsUI();
+    return;
+  }
   container.innerHTML = '<div class="loading" style="padding:24px"><div class="loading-spinner"></div><p>Loading map...</p></div>';
 
-  setTimeout(function() {
+  var mapReady = window.lazyLoadParkMap ? window.lazyLoadParkMap(currentPark) : Promise.resolve();
+  mapReady.then(function() {
     try {
       var svg = buildMap(order || []);
 
@@ -6168,7 +6268,10 @@ function renderRouteMapSafely(order) {
         '</p></div>';
       updateRouteStartControlsUI();
     }
-  }, 30);
+  }).catch(function(err) {
+    console.error('Route map asset failed:', err);
+    container.innerHTML = '<div class="error-box" style="margin:0"><p>The route is ready, but this park map is temporarily unavailable.</p></div>';
+  });
 }
 
 function showRouteError(message, backTarget) {
@@ -6183,6 +6286,17 @@ function showRouteError(message, backTarget) {
 
 function computeLocalRoute(sel) {
   if (!sel.length) return [];
+
+  var routeInputs = {
+    parkId: currentPark,
+    mode: currentMode,
+    routeStyle: typeof routeStyleMode === 'undefined' ? null : routeStyleMode,
+    manualStart: routeManualStart,
+    livePosition: routeLivePosition,
+    rides: sel
+  };
+  var cacheKey = window.RideHeroRouteEngine ? window.RideHeroRouteEngine.inputSignature(routeInputs) : JSON.stringify(routeInputs);
+  if (lastRouteComputation && lastRouteComputation.key === cacheKey) return lastRouteComputation.value.slice();
 
   var maxStops = Math.min(3, sel.length);
   var startNames = {
@@ -6215,8 +6329,8 @@ function computeLocalRoute(sel) {
   // Low waits + nearby stops stay in the pool, instead of greedy one-step choices.
   var pool = sel.slice().sort(function(a, b) {
     var aw = walkMins(start, a), bw = walkMins(start, b);
-    var aScore = (Number(a.waitTime)||0) + aw * 1.15;
-    var bScore = (Number(b.waitTime)||0) + bw * 1.15;
+    var aScore = scoredWait(a) + walkingScore(start, a, 1.15);
+    var bScore = scoredWait(b) + walkingScore(start, b, 1.15);
     return Math.abs(aScore - bScore) < 0.001 ? aw - bw : aScore - bScore;
   }).slice(0, Math.min(sel.length, 28));
 
@@ -6249,8 +6363,8 @@ function computeLocalRoute(sel) {
   function scoreOrder(order) {
     var wait = 0, walk = 0, cur = start;
     order.forEach(function(r) {
-      wait += Number(r.waitTime) || 0;
-      walk += walkMins(cur, r);
+      wait += scoredWait(r);
+      walk += walkingScore(cur, r, 1);
       cur = r;
     });
     return {score:wait + walk * 1.5 + routePenalty(order), walk:walk};
@@ -6276,7 +6390,8 @@ function computeLocalRoute(sel) {
   }
 
   dfs([], pool);
-  return best || [];
+  lastRouteComputation = { key: cacheKey, value: (best || []).slice() };
+  return lastRouteComputation.value.slice();
 }
 
 
@@ -6294,11 +6409,14 @@ var PARK_GEO_BOUNDS = {
 
 function isLocationInPark(park, lat, lng) {
   var bounds = PARK_GEO_BOUNDS[park];
-  return !!bounds && isFinite(lat) && isFinite(lng) &&
-    lat >= bounds.south && lat <= bounds.north && lng >= bounds.west && lng <= bounds.east;
+  if (bounds) return isFinite(lat) && isFinite(lng) && lat >= bounds.south && lat <= bounds.north && lng >= bounds.west && lng <= bounds.east;
+  if (window.RideHeroLocationService) return window.RideHeroLocationService.isInsideParkBounds({latitude:Number(lat), longitude:Number(lng), accuracy:0}, park) === true;
+  return false;
 }
 
 function quickFallbackStartLabel() {
+  var catalogPark = window.RIDEHERO_CATALOG && window.RIDEHERO_CATALOG.parks[currentPark];
+  if (catalogPark && catalogPark.map.routingQuality !== 'verified') return catalogPark.shortName + ' approximate park start';
   if (currentPark !== 'ak') return (PARK_META[currentPark] || PARK_META.mk).name + ' entrance';
   var labels = {
     entrance_gate:'Animal Kingdom entrance', entrance_path:'Animal Kingdom entrance',
@@ -6325,6 +6443,10 @@ function quickRouteStartPoint() {
     };
     return {name:names[routeManualStart] || 'Animal Kingdom Entrance', waitTime:0};
   }
+  var catalogPark = window.RIDEHERO_CATALOG && window.RIDEHERO_CATALOG.parks[currentPark];
+  if (catalogPark && catalogPark.map.routingQuality !== 'verified') {
+    return {name:'Approximate park start', waitTime:0, latitude:catalogPark.latitude, longitude:catalogPark.longitude};
+  }
   return {name:(PARK_META[currentPark] || PARK_META.mk).name + ' Entrance', waitTime:0};
 }
 
@@ -6347,6 +6469,23 @@ function prepareQuickRouteStart() {
 
   routeStartMode = 'live';
   routeLiveMessage = 'Checking your live park location...';
+  if (window.RideHeroLocationService) {
+    window.RideHeroLocationService.setSelectedPark(currentPark);
+    return window.RideHeroLocationService.getCurrentPosition().then(function(position) {
+      if (window.RideHeroLocationService.isInsideParkBounds(position, currentPark) !== true || !isFinite(position.accuracy) || position.accuracy > 500) {
+        useQuickLocationFallback("We can't confirm that you're inside this park yet.");
+        return false;
+      }
+      routeStartMode = 'live';
+      routeLivePosition = {lat:position.latitude, lng:position.longitude, accuracy:position.accuracy};
+      currentUserLocation = {lat:position.latitude, lng:position.longitude};
+      routeLiveMessage = 'Using your location';
+      return true;
+    }).catch(function() {
+      useQuickLocationFallback('Live location permission or a valid position was unavailable.');
+      return false;
+    });
+  }
   return new Promise(function(resolve) {
     navigator.geolocation.getCurrentPosition(function(pos) {
       var lat = Number(pos && pos.coords && pos.coords.latitude);
@@ -6570,13 +6709,13 @@ async function optimizeRoute() {
     showScreen('route');
     document.getElementById('route-back-btn').onclick = function() { showScreen('rides'); };
 
-    var totalWait = top3.reduce(function(s,r) { return s + r.waitTime; }, 0);
+    var totalWait = top3.reduce(function(s,r) { return s + scoredWait(r); }, 0);
     var totalWalk = top3.reduce(function(s,r,i) { return s + walkMins(i === 0 ? routeStart : top3[i-1], r); }, 0);
     var totalTime = totalWait + Math.round(totalWalk) + top3.length * 5;
     var heroBg = HERO_COLORS[currentPark] || '#185FA5';
 
     var rideHeading = top3.length === 1 ? 'Next ride' : 'Next ' + top3.length + ' rides';
-    var html = '<div class="route-hero" style="background:' + heroBg + '"><h2>' + meta.emoji + ' ' + rideHeading + '</h2><p>' + escHTML(tip) + routeLocationMessageMarkup() + '</p></div>' +
+    var html = '<div class="route-hero" style="background:' + heroBg + '"><h2>' + meta.emoji + ' ' + rideHeading + '</h2><p>' + escHTML(tip) + routeLocationMessageMarkup() + routingQualityMarkup(routeStart, top3[0]) + '</p></div>' +
       '<div class="route-stats"><div class="route-stat"><div class="route-stat-v">' + top3.length + '</div><div class="route-stat-l">rides</div></div>' +
       '<div class="route-stat"><div class="route-stat-v">' + Math.round(totalWait) + 'm</div><div class="route-stat-l">wait</div></div>' +
       '<div class="route-stat"><div class="route-stat-v">' + Math.round(totalTime) + 'm</div><div class="route-stat-l">total time</div></div></div>' +
@@ -6595,7 +6734,7 @@ async function optimizeRoute() {
         '<div class="v3-stop-main"><div class="v3-stop-title">' + escHTML(ride.name) + '</div>' +
         '<div class="v3-stop-sub">' + escHTML(landLabel) + ' · ' + Math.round(walk) + ' min walk ' + (i === 0 ? (routeStartMode === 'live' && routeLivePosition ? 'from your location' : 'from the fallback start') : 'from the previous ride') + '</div>' +
         '<div class="v3-stop-reason">' + escHTML(routeReasonForStop(i === 0 ? null : top3[i-1], ride, i)) + '</div></div>' +
-        '<span class="wait-badge ' + wc(ride.waitTime) + '">' + escHTML(ride.waitTime) + 'm</span></div>' + walkNote;
+        '<span class="wait-badge ' + wc(ride.waitTime) + '">' + escHTML(waitLabel(ride, false)) + '</span></div>' + walkNote;
     });
 
     var remaining = sel.filter(function(r) { return routeOrder.indexOf(r.id) < 0; });
@@ -6605,7 +6744,7 @@ async function optimizeRoute() {
       remaining.forEach(function(r) {
         html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid #f3f4f6;">' +
           '<span style="font-size:14px;color:#6b7280;">' + escHTML(r.name) + '</span>' +
-          '<span class="wait-badge ' + wc(r.waitTime) + '">' + escHTML(r.waitTime) + 'm</span></div>';
+          '<span class="wait-badge ' + wc(r.waitTime) + '">' + escHTML(waitLabel(r, false)) + '</span></div>';
       });
       html += '</div>';
     }
@@ -6659,8 +6798,8 @@ function renderPriorityList() {
     div.className = 'priority-card' + (p === 'must' ? ' must' : p === 'want' ? ' want' : '');
     div.innerHTML = '<div class="priority-dot">' + (icons[p] || '') + '</div>' +
       '<div style="flex:1"><div class="priority-name">' + escHTML(r.name) + '</div>' +
-      '<div class="priority-area">' + kind + ' · ' + escHTML(r.waitTime) + ' min wait</div></div>' +
-      '<span class="wait-badge ' + wc(r.waitTime) + '">' + escHTML(r.waitTime) + 'm</span>';
+      '<div class="priority-area">' + kind + ' · ' + escHTML(waitLabel(r, true)) + '</div></div>' +
+      '<span class="wait-badge ' + wc(r.waitTime) + '">' + escHTML(waitLabel(r, false)) + '</span>';
     div.addEventListener('click', function() {
       var cur = priority[r.id] || 'skip';
       priority[r.id] = cur === 'skip' ? 'must' : cur === 'must' ? 'want' : 'skip';
@@ -6706,8 +6845,8 @@ async function buildFullDayRoute() {
 
       pool.forEach(function(r) {
         var walk = walkMins(current, r);
-        var s = (priority[r.id] === 'must' ? 0 : 20) + r.waitTime + walk * 1.5;
-        var wait = Number(r.waitTime) || 0;
+        var wait = scoredWait(r);
+        var s = (priority[r.id] === 'must' ? 0 : 20) + wait + walkingScore(current, r, 1.5);
         var waitTie = best && Math.abs(wait - bestWait) <= 1;
         var scoreTie = Math.abs(s - bestScore) < 0.001;
 
@@ -6727,7 +6866,7 @@ async function buildFullDayRoute() {
       if (!best) break;
 
       var walk = current.name === 'entrance' ? 5 : walkMins(current, best);
-      var rideCost = best.waitTime + walk + 5;
+      var rideCost = scoredWait(best) + walk + 5;
       if (elapsed + rideCost > budgetMins) break;
 
       fullRoute.push({ride:best, walkFromPrev:Math.round(walk), startMin:Math.round(elapsed + walk)});
@@ -6756,12 +6895,12 @@ async function buildFullDayRoute() {
       return disp + ':' + (m < 10 ? '0' : '') + m + ampm;
     }
 
-    var totalWait = fullRoute.reduce(function(s,r) { return s + r.ride.waitTime; }, 0);
+    var totalWait = fullRoute.reduce(function(s,r) { return s + scoredWait(r.ride); }, 0);
     var mustDone = mustRides.filter(function(r) {
       return fullRoute.find(function(s) { return s.ride.id === r.id; });
     }).length;
 
-    var html = '<div class="route-hero" style="background:' + heroBg + '"><h2>' + meta.emoji + ' Your full day</h2><p>' + escHTML(tip) + routeLocationMessageMarkup() + '</p></div>' +
+    var html = '<div class="route-hero" style="background:' + heroBg + '"><h2>' + meta.emoji + ' Your full day</h2><p>' + escHTML(tip) + routeLocationMessageMarkup() + routingQualityMarkup({ name:'entrance', landId:null }, fullRoute[0].ride) + '</p></div>' +
       '<div class="route-stats">' +
       '<div class="route-stat"><div class="route-stat-v">' + fullRoute.length + '</div><div class="route-stat-l">stops</div></div>' +
       '<div class="route-stat"><div class="route-stat-v">' + mustDone + '</div><div class="route-stat-l">must-dos</div></div>' +
@@ -6786,7 +6925,7 @@ async function buildFullDayRoute() {
           '<div class="seg-time">' + escHTML(minToTime(s.startMin)) + '</div>' +
           '<div class="seg-icon">' + (isMust ? '&#9733;' : '·') + '</div>' +
           '<div class="seg-detail"><div class="seg-name">' + escHTML(s.ride.name) + '</div>' +
-          '<div class="seg-sub">' + escHTML(s.ride.waitTime) + ' min wait' + escHTML(walkNote) + '</div></div>' +
+          '<div class="seg-sub">' + escHTML(waitLabel(s.ride, true)) + escHTML(walkNote) + '</div></div>' +
           '<div>' + (isMust ? '<span class="must-tag">MUST</span>' : '') + '</div></div>';
       });
       html += '</div></div>';
@@ -6799,8 +6938,8 @@ async function buildFullDayRoute() {
           '<div class="seg-time" style="color:#c7c7cc;">—</div>' +
           '<div class="seg-icon" style="opacity:0.4">·</div>' +
           '<div class="seg-detail"><div class="seg-name" style="color:#8e8e93;">' + escHTML(r.name) + '</div>' +
-          '<div class="seg-sub">' + escHTML(r.waitTime) + ' min wait</div></div>' +
-          '<span class="wait-badge ' + wc(r.waitTime) + '">' + escHTML(r.waitTime) + 'm</span></div>';
+          '<div class="seg-sub">' + escHTML(waitLabel(r, true)) + '</div></div>' +
+          '<span class="wait-badge ' + wc(r.waitTime) + '">' + escHTML(waitLabel(r, false)) + '</span></div>';
       });
       html += '</div></div>';
     }
@@ -7155,6 +7294,11 @@ function chooseGuidanceMode(mode, source) {
   }
   setTimeout(function(){
     if (gate) gate.classList.add('hide');
+    if (window.RideHeroPendingModePark) {
+      window.RideHeroState.rememberContext({ parkId: window.RideHeroPendingModePark, planningMode: mode });
+      window.RideHeroPendingModePark = null;
+      if (mode === 'strategic') openPlanFlow(); else goQuickRouteForPark();
+    }
   }, 360);
 }
 
@@ -7328,5 +7472,7 @@ updateNavState('setup');
   </div>
 </button>
 
+<script src="js/data-health.js?v=1"></script>
+<script src="js/navigation.js?v=1"></script>
 </body>
 </html>
