@@ -23,8 +23,8 @@
   function isRideEligible(ride, partyProfile) {
     if (!ride || !partyProfile) return true;
     var minimumPartyHeight = Number(partyProfile.minimumRiderHeightInches);
-    var requiredHeight = Number(ride.minimumHeightInches);
-    if (ride.restrictionsVerified && Number.isFinite(requiredHeight) && Number.isFinite(minimumPartyHeight) && minimumPartyHeight < requiredHeight) return false;
+    var requiredHeight = ride.minimumHeightInches != null ? Number(ride.minimumHeightInches) : null;
+    if (ride.restrictionsVerified && requiredHeight != null && Number.isFinite(requiredHeight) && Number.isFinite(minimumPartyHeight) && minimumPartyHeight < requiredHeight) return false;
     return true;
   }
 

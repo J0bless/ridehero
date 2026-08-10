@@ -4962,7 +4962,7 @@ function waitLabel(ride, longForm) { return ride && ride.waitTime != null && Num
 function wc(w) { return w == null || !Number.isFinite(Number(w)) ? '' : w <= 20 ? 'wl' : w <= 45 ? 'wm' : 'wh'; }
 function rideEligibilityMeta(ride) {
   var parts = [];
-  if (ride && ride.restrictionsVerified && Number.isFinite(Number(ride.minimumHeightInches))) parts.push(ride.minimumHeightInches + ' in minimum');
+  if (ride && ride.restrictionsVerified && ride.minimumHeightInches != null && Number.isFinite(Number(ride.minimumHeightInches))) parts.push(ride.minimumHeightInches + ' in minimum');
   if (window.RideHeroRouteEngine && window.RideHeroState) {
     var preferences = window.RideHeroState.getParkPreferences(currentPark) || {};
     var active = window.RideHeroRouteEngine.activeAccessPrograms(ride, preferences.accessPrograms);

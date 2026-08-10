@@ -8,6 +8,7 @@ context.window.window = context.window;
 function run(file) { vm.runInContext(fs.readFileSync(path.join(__dirname, '..', file), 'utf8'), context, { filename: file }); }
 run('data/ride-aliases.js');
 run('js/data-quality.js');
+run('js/route-engine.js');
 const quality = context.window.RideHeroDataQuality;
 
 assert.deepEqual(Array.from(quality.levels), ['verified','provider','approximate','unknown']);
@@ -19,4 +20,6 @@ assert.equal(ride.guestEntranceLocation.dataConfidence, 'unknown');
 assert.equal(ride.minimumHeightInches, null);
 assert.equal(ride.accessPrograms.lightningLane, false);
 assert.equal(quality.normalizeRide({ name: 'Unknown', minimumHeightInches: null }, {}).minimumHeightInches, null, 'null restrictions must not become zero');
+assert.equal(context.window.RideHeroRouteEngine.isRideEligible({ restrictionsVerified:true, minimumHeightInches:null }, { minimumRiderHeightInches:1 }), true, 'verified no-minimum rides must remain eligible');
+assert.equal(context.window.RideHeroRouteEngine.isRideEligible({ restrictionsVerified:true, minimumHeightInches:40 }, { minimumRiderHeightInches:39 }), false, 'verified numeric minimums must filter shorter riders');
 console.log('Data quality validation passed.');

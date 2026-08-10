@@ -91,6 +91,10 @@ assert.equal(api.get('vb').rides.find((ride) => ride.id === 'vb-honu').minimumHe
 assert.equal(api.get('ush').rides.find((ride) => ride.id === 'ush-secret-life-pets').minimumHeightInches, 34);
 assert.equal(api.get('ush').rides.find((ride) => ride.id === 'ush-studio-tour').restrictionsVerified, false);
 assert.equal(api.get('usf').rides.find((ride) => ride.id === 'usf-villain-con').minimumHeightInches, null);
+assert.equal(api.get('dl').rides.find((ride) => ride.id === 'dl-indiana-jones-adventure').minimumHeightInches, 46);
+assert.equal(api.get('dca').rides.find((ride) => ride.id === 'dca-incredicoaster').minimumHeightInches, 48);
+assert.equal(api.get('dl').rides.find((ride) => ride.id === 'dl-peter-pans-flight').restrictionType, 'none');
+assert.equal(api.get('dca').rides.find((ride) => ride.id === 'dca-web-slingers').restrictionsVerified, true);
 assert.equal(catalog.parks.mk.accessPrograms.lightningLane.available, true);
 assert.equal(catalog.parks.ioa.accessPrograms.expressPass.available, true);
 assert.equal(catalog.parks.sfmm.accessPrograms.fastLane.available, true);
