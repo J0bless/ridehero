@@ -89,6 +89,8 @@ Universal Studios Japan Express Pass availability is verified at the park level.
 
 Disneyland Resort ride-level Lightning Lane eligibility follows the current official Single Pass and Multi Pass lists. Rides absent from those lists remain false and do not inherit eligibility merely because Lightning Lane exists at the park.
 
+Every ride access-program value now has its own confidence. `false` with `unknown` means unverified, while `false` with `verified` means the ride is absent from an operator's complete eligibility list. Universal Studios Hollywood's current policy verifies Express for every ride; Six Flags Great America follows its published Fast Lane attraction list.
+
 Verified walking graphs keep visual maps independent from pedestrian routing. The graph importer accepts sourced pedestrian paths and separately maps canonical ride IDs to guest-entrance routing nodes. Entrances beyond the strict snap threshold fail import instead of silently attaching to an unrelated path.
 
 Park-level access-program availability is separate from ride-level eligibility. RideHero lists Lightning Lane, Express Pass, or Fast Lane preferences only where the operator verifies that park program. Unknown park availability stays unknown, and selecting a program never creates per-ride eligibility or synthetic wait savings.

@@ -19,6 +19,8 @@ assert(ride.aliases.includes('Tower of Terror'));
 assert.equal(ride.guestEntranceLocation.dataConfidence, 'unknown');
 assert.equal(ride.minimumHeightInches, null);
 assert.equal(ride.accessPrograms.lightningLane, false);
+assert.equal(ride.accessProgramConfidence.lightningLane, 'unknown');
+assert.equal(quality.normalizeRide({ name:'Verified Access', accessPrograms:{expressPass:true} }, {}).accessProgramConfidence.expressPass, 'verified');
 assert.equal(quality.normalizeRide({ name: 'Unknown', minimumHeightInches: null }, {}).minimumHeightInches, null, 'null restrictions must not become zero');
 assert.equal(context.window.RideHeroRouteEngine.isRideEligible({ restrictionsVerified:true, minimumHeightInches:null }, { minimumRiderHeightInches:1 }), true, 'verified no-minimum rides must remain eligible');
 assert.equal(context.window.RideHeroRouteEngine.isRideEligible({ restrictionsVerified:true, minimumHeightInches:40 }, { minimumRiderHeightInches:39 }), false, 'verified numeric minimums must filter shorter riders');

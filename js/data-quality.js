@@ -41,8 +41,10 @@
     ride.routingNode = ride.routingNode || null;
     ride.routingQuality = confidence(ride.routingQuality, ride.routingNode ? 'verified' : 'unknown');
     ride.accessPrograms = Object.assign({ lightningLane: false, expressPass: false, fastLane: false, singleRider: false, childSwap: false }, ride.accessPrograms || {});
+    ride.accessProgramConfidence = Object.assign({ lightningLane: 'unknown', expressPass: 'unknown', fastLane: 'unknown', singleRider: 'unknown', childSwap: 'unknown' }, ride.accessProgramConfidence || {});
     if (ride.singleRider === true) ride.accessPrograms.singleRider = true;
     if (ride.childSwap === true) ride.accessPrograms.childSwap = true;
+    Object.keys(ride.accessPrograms).forEach(function(program) { if (ride.accessPrograms[program] === true && ride.accessProgramConfidence[program] === 'unknown') ride.accessProgramConfidence[program] = 'verified'; });
     ride.minimumHeightInches = ride.minimumHeightInches != null && Number.isFinite(Number(ride.minimumHeightInches)) ? Number(ride.minimumHeightInches) : null;
     ride.minimumHeightCm = ride.minimumHeightCm != null && Number.isFinite(Number(ride.minimumHeightCm)) ? Number(ride.minimumHeightCm) : (ride.minimumHeightInches == null ? null : Math.round(ride.minimumHeightInches * 2.54));
     ride.restrictionsVerified = ride.restrictionsVerified === true;

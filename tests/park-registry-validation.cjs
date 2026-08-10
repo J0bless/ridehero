@@ -77,6 +77,7 @@ for (const park of Object.values(catalog.parks)) {
     assert(ride.guestEntranceLocation && Object.prototype.hasOwnProperty.call(ride.guestEntranceLocation, 'dataConfidence'));
     assert(ride.attractionLocation && Object.prototype.hasOwnProperty.call(ride.attractionLocation, 'dataConfidence'));
     assert(ride.accessPrograms && typeof ride.accessPrograms === 'object');
+    assert(ride.accessProgramConfidence && typeof ride.accessProgramConfidence === 'object');
     assert(Object.prototype.hasOwnProperty.call(ride, 'minimumHeightInches'));
     assert(Object.prototype.hasOwnProperty.call(ride, 'minimumHeightCm'));
   }
@@ -116,6 +117,10 @@ assert.equal(catalog.parks.epic.accessPrograms.expressPass.available, null, 'unv
 assert.equal(catalog.parks.usj.accessPrograms.expressPass.available, true);
 assert.equal(api.get('usj').rides.find((ride) => ride.id === 'usj-mario-kart').accessPrograms.expressPass, true);
 assert.equal(api.get('usj').rides.find((ride) => ride.id === 'usj-freeze-ray-sliders').accessPrograms.expressPass, false);
+assert(api.get('ush').rides.every((ride) => ride.accessPrograms.expressPass === true && ride.accessProgramConfidence.expressPass === 'verified'));
+assert.equal(api.get('sfgam').rides.find((ride) => ride.id === 'sfgam-maxx-force').accessPrograms.fastLane, true);
+assert.equal(api.get('sfgam').rides.find((ride) => ride.id === 'sfgam-american-eagle').accessPrograms.fastLane, false);
+assert.equal(api.get('sfgam').rides.find((ride) => ride.id === 'sfgam-american-eagle').accessProgramConfidence.fastLane, 'verified');
 assert.equal(catalog.parks.mk.map.routingQuality, 'verified');
 assert.equal(catalog.parks.dl.map.routingQuality, 'approximate');
 assert.equal(catalog.parks.sfga.map.routingQuality, 'approximate');
