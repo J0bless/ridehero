@@ -34,7 +34,8 @@
   function shell(title, eyebrow, body, backRoute, crumbs, options) {
     options = options || {};
     var modeAction = appState.planningMode && !options.hideModeAction ? '<button class="catalog-mode-action" type="button" data-route="#/mode"><span>' + esc(modeName()) + '</span><strong>Change Mode</strong></button>' : '<span></span>';
-    return '<div class="catalog-page' + (options.modePage ? ' mode-catalog-page' : '') + '" data-catalog-page>' +
+    var viewClass = options.view ? ' catalog-view-' + String(options.view).replace(/[^a-z0-9-]/gi, '') : '';
+    return '<div class="catalog-page' + (options.modePage ? ' mode-catalog-page' : '') + viewClass + '" data-catalog-page>' +
       '<header class="catalog-header"><div class="catalog-nav-row">' +
       (backRoute ? '<button class="catalog-icon-btn" type="button" data-action="back" data-fallback-route="' + esc(backRoute) + '" aria-label="Go back">&lsaquo;</button>' : '<span></span>') +
       '<button class="catalog-wordmark" type="button" data-action="home" aria-label="RideHero home"><span class="catalog-wordmark-mark" aria-hidden="true">RH</span><span>RideHero</span></button>' +
@@ -70,21 +71,33 @@
   }
 
   function brandMarker(brand) { return brand.id === 'six-flags' ? '6' : brand.name.charAt(0).toUpperCase(); }
+  function brandVisual(brand) {
+    return '<span class="brand-card-visual brand-card-visual-' + esc(brand.id) + '" aria-hidden="true"><span class="catalog-card-icon">' + esc(brandMarker(brand)) + '</span><span class="brand-card-spark">&#10022;</span><span class="brand-card-landmark"><i></i><i></i><i></i></span></span>';
+  }
   function brandCards() {
     return '<div class="catalog-card-grid brand-card-grid">' + values(catalog.brands).map(function(brand) {
-      return '<button class="catalog-card brand-card" type="button" data-brand="' + brand.id + '" style="--catalog-accent:' + brand.accent + '"><span class="catalog-card-icon" aria-hidden="true">' + esc(brandMarker(brand)) + '</span><span class="catalog-card-copy"><strong>' + esc(brand.name) + '</strong><small>Choose a destination</small></span><span class="catalog-card-arrow" aria-hidden="true">&rsaquo;</span></button>';
+      return '<button class="catalog-card brand-card brand-card-' + esc(brand.id) + '" type="button" data-brand="' + brand.id + '" style="--catalog-accent:' + brand.accent + '">' + brandVisual(brand) + '<span class="catalog-card-copy"><strong>' + esc(brand.name) + '</strong><small>Choose a destination</small></span><span class="catalog-card-arrow" aria-hidden="true">&rsaquo;</span></button>';
     }).join('') + '</div>';
   }
 
   function recentCard() {
     var park = catalog.parks[recent.parkId];
-    if (!park) return '';
-    return '<section class="catalog-recent-group" aria-labelledby="recent-park-title"><div class="catalog-section-label" id="recent-park-title">Recent park</div><button class="catalog-continue" type="button" data-recent-park="' + park.id + '"><span>Continue with ' + esc(modeName()) + '</span><strong>' + esc(park.shortName) + '</strong><small>' + esc(catalog.destinations[park.destinationId].name) + '</small><b aria-hidden="true">&rsaquo;</b></button></section>';
+    var modeTag = appState.planningMode === 'full' ? 'Full-day plan' : 'Rides only';
+    var modeIcon = appState.planningMode === 'full' ? 'M' : 'Q';
+    var modeHeader = '<div class="journey-hero-mode"><span class="journey-hero-icon" aria-hidden="true">' + modeIcon + '</span><span><small>Planning with</small><strong>' + esc(modeName()) + '</strong></span><em>' + esc(modeTag) + '</em></div>';
+    if (!park) {
+      return '<section class="journey-hero-card is-new" aria-label="Current planning mode">' + modeHeader + '<div class="journey-hero-next"><span class="journey-hero-pin" aria-hidden="true">&#9678;</span><span><small>Next step</small><strong>Choose a destination</strong><span>Pick a park family to continue.</span></span></div></section>';
+    }
+    return '<section class="journey-hero-card" aria-labelledby="recent-park-title">' + modeHeader + '<button class="journey-resume" type="button" data-recent-park="' + park.id + '"><span class="journey-hero-pin" aria-hidden="true">&#9678;</span><span><small id="recent-park-title">Continue your plan</small><strong>' + esc(park.shortName) + '</strong><span>' + esc(catalog.destinations[park.destinationId].name) + '</span></span><b aria-hidden="true">&rsaquo;</b></button></section>';
+  }
+
+  function healthCard() {
+    return '<button class="catalog-health-card" type="button" data-route="#/admin/data-health"><span class="catalog-health-icon" aria-hidden="true">&#10003;</span><span><strong>Park data health</strong><small>Review verified coverage and missing data</small></span><b aria-hidden="true">&rsaquo;</b></button>';
   }
 
   function renderBrands() {
-    var body = '<section class="mode-context-card"><span class="mode-context-icon" aria-hidden="true">' + (appState.planningMode === 'full' ? 'M' : 'Q') + '</span><span><small>Planning with</small><strong>' + esc(modeName()) + '</strong><em>' + esc(modeSummary()) + '</em></span></section>' + recentCard() + '<div class="catalog-section-label destination-section-label">Destinations</div>' + brandCards() + '<button class="catalog-debug-link" type="button" data-route="#/admin/data-health">Park data health</button>';
-    root.innerHTML = shell('Where are you going?', modeSummary(), body, routeFor(['mode']), [{ label: 'Mode', route: routeFor(['mode']) }, { label: 'Destinations', route: routeFor(['brands']) }], { description: 'Choose where you want to explore.' });
+    var body = '<div class="catalog-dashboard">' + recentCard() + '<section class="destination-deck" aria-labelledby="destination-deck-title"><div class="catalog-section-heading"><div class="catalog-section-label destination-section-label" id="destination-deck-title"><span aria-hidden="true">&#9679;</span> Destinations</div><small>Choose a park family</small></div>' + brandCards() + '</section>' + healthCard() + '</div>';
+    root.innerHTML = shell('Where are you going?', modeSummary(), body, routeFor(['mode']), [{ label: 'Mode', route: routeFor(['mode']) }, { label: 'Destinations', route: routeFor(['brands']) }], { description: 'Choose where you want to explore.', view: 'brands' });
   }
 
   function renderBrand(brand) {
@@ -92,9 +105,9 @@
     var destinations = values(catalog.destinations).filter(function(item){ return item.brandId === brand.id; });
     var cards = '<div class="catalog-card-grid">' + destinations.map(function(destination) {
       var count = destination.parkIds.length;
-      return '<button class="catalog-card destination-card" type="button" data-destination="' + destination.id + '"><span class="catalog-card-copy"><strong>' + esc(destination.name) + '</strong><small>' + esc(destination.location) + '</small><em>' + count + ' supported park' + (count === 1 ? '' : 's') + '</em></span><span class="catalog-card-arrow" aria-hidden="true">&rsaquo;</span></button>';
+      return '<button class="catalog-card destination-card" type="button" data-destination="' + destination.id + '" style="--catalog-accent:' + brand.accent + '"><span class="destination-card-symbol" aria-hidden="true">' + esc(brandMarker(brand)) + '</span><span class="catalog-card-copy"><strong>' + esc(destination.name) + '</strong><small>' + esc(destination.location) + '</small><em>' + count + ' supported park' + (count === 1 ? '' : 's') + '</em></span><span class="catalog-card-arrow" aria-hidden="true">&rsaquo;</span></button>';
     }).join('') + '</div>';
-    root.innerHTML = shell('Choose a ' + brand.name + ' destination', modeName(), cards, routeFor(['brands']), [{ label: 'Mode', route: routeFor(['mode']) }, { label: 'Destinations', route: routeFor(['brands']) }, { label: brand.name, route: routeFor(['parks', brand.slug]) }], { description: 'Select a resort or destination.' });
+    root.innerHTML = shell('Choose a ' + brand.name + ' destination', modeName(), '<section class="selection-panel">' + cards + '</section>', routeFor(['brands']), [{ label: 'Mode', route: routeFor(['mode']) }, { label: 'Destinations', route: routeFor(['brands']) }, { label: brand.name, route: routeFor(['parks', brand.slug]) }], { description: 'Select a resort or destination.', view: 'destinations' });
   }
 
   function parkStatus(park) {
@@ -108,9 +121,9 @@
     appState.destinationId = destination.id;
     var cards = '<div class="catalog-card-grid park-catalog-grid">' + destination.parkIds.map(function(parkId) {
       var park = catalog.parks[parkId];
-      return '<button class="catalog-card park-catalog-card" type="button" data-park="' + park.id + '"><span class="park-catalog-dot" style="--catalog-accent:' + brand.accent + '"></span><span class="catalog-card-copy"><strong>' + esc(park.shortName) + '</strong><small>' + esc(destination.name) + '</small><em class="park-card-status">' + parkStatus(park) + '</em></span><span class="catalog-card-arrow" aria-hidden="true">&rsaquo;</span></button>';
+      return '<button class="catalog-card park-catalog-card" type="button" data-park="' + park.id + '" style="--catalog-accent:' + brand.accent + '"><span class="park-card-symbol" aria-hidden="true">' + esc(park.shortName.charAt(0)) + '</span><span class="catalog-card-copy"><strong>' + esc(park.shortName) + '</strong><small>' + esc(destination.name) + '</small><em class="park-card-status">' + parkStatus(park) + '</em></span><span class="catalog-card-arrow" aria-hidden="true">&rsaquo;</span></button>';
     }).join('') + '</div>';
-    root.innerHTML = shell('Choose your park', destination.name, cards, routeFor(['parks', brand.slug]), [{ label: 'Mode', route: routeFor(['mode']) }, { label: 'Destinations', route: routeFor(['brands']) }, { label: brand.name, route: routeFor(['parks', brand.slug]) }, { label: destination.name, route: routeFor(['parks', brand.slug, destination.slug]) }], { description: 'RideHero will load only the selected park.' });
+    root.innerHTML = shell('Choose your park', destination.name, '<section class="selection-panel">' + cards + '</section>', routeFor(['parks', brand.slug]), [{ label: 'Mode', route: routeFor(['mode']) }, { label: 'Destinations', route: routeFor(['brands']) }, { label: brand.name, route: routeFor(['parks', brand.slug]) }, { label: destination.name, route: routeFor(['parks', brand.slug, destination.slug]) }], { description: 'RideHero will load only the selected park.', view: 'parks' });
   }
 
   function renderPark(brand, destination, park) {
@@ -118,12 +131,12 @@
     appState.destinationId = destination.id;
     appState.parkId = park.id;
     var action = appState.planningMode === 'full' ? 'Opening Maximize My Day' : 'Finding nearby rides';
-    var body = '<section class="park-ready-card" aria-live="polite"><div class="park-ready-top"><span class="park-catalog-dot" style="--catalog-accent:' + brand.accent + '"></span><div><small>' + esc(destination.name) + '</small><strong>' + esc(park.officialName) + '</strong></div></div><div class="park-capabilities">' + parkStatus(park) + '</div><div class="catalog-inline-loading" data-loading-park><span class="catalog-loading-spinner" aria-hidden="true"></span><span><strong>' + esc(action) + '&hellip;</strong><small>Loading park information and current planning context.</small></span></div></section>';
-    root.innerHTML = shell(park.shortName, modeName(), body, routeFor(['parks', brand.slug, destination.slug]), [{ label: 'Mode', route: routeFor(['mode']) }, { label: brand.name, route: routeFor(['parks', brand.slug]) }, { label: destination.name, route: routeFor(['parks', brand.slug, destination.slug]) }, { label: park.shortName, route: routeFor(['parks', brand.slug, destination.slug, park.slug]) }], { description: action + '.' });
+    var body = '<section class="park-ready-card" aria-live="polite"><div class="park-ready-kicker"><span>' + esc(modeName()) + '</span><em>Preparing plan</em></div><div class="park-ready-top"><span class="park-card-symbol" style="--catalog-accent:' + brand.accent + '" aria-hidden="true">' + esc(park.shortName.charAt(0)) + '</span><div><small>' + esc(destination.name) + '</small><strong>' + esc(park.officialName) + '</strong></div></div><div class="park-capabilities">' + parkStatus(park) + '</div><div class="catalog-inline-loading" data-loading-park><span class="catalog-loading-spinner" aria-hidden="true"></span><span><strong>' + esc(action) + '&hellip;</strong><small>Loading park information and current planning context.</small></span></div></section>';
+    root.innerHTML = shell(park.shortName, modeName(), body, routeFor(['parks', brand.slug, destination.slug]), [{ label: 'Mode', route: routeFor(['mode']) }, { label: brand.name, route: routeFor(['parks', brand.slug]) }, { label: destination.name, route: routeFor(['parks', brand.slug, destination.slug]) }, { label: park.shortName, route: routeFor(['parks', brand.slug, destination.slug, park.slug]) }], { description: action + '.', view: 'loading' });
   }
 
   function renderDataHealth() {
-    root.innerHTML = shell('Park data health', 'Admin / debug', '<div id="data-health-root"></div>', routeFor(['brands']), [{ label: 'Destinations', route: routeFor(['brands']) }, { label: 'Data health', route: '#/admin/data-health' }], { hideModeAction: false });
+    root.innerHTML = shell('Park data health', 'Admin / debug', '<div id="data-health-root"></div>', routeFor(['brands']), [{ label: 'Destinations', route: routeFor(['brands']) }, { label: 'Data health', route: '#/admin/data-health' }], { hideModeAction: false, view: 'health' });
     if (global.RideHeroDataHealth) global.RideHeroDataHealth.render(root.querySelector('#data-health-root'));
   }
 
