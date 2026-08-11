@@ -110,7 +110,7 @@
   }
 
   function renderBrands() {
-    var body = '<div class="catalog-dashboard">' + recentCard() + '<section class="destination-deck" aria-labelledby="destination-deck-title"><div class="catalog-section-heading"><div class="catalog-section-label destination-section-label" id="destination-deck-title"><span aria-hidden="true">&#9679;</span> Destinations</div><small>Choose a park family</small></div>' + brandCards() + '</section>' + healthCard() + '</div>';
+    var body = '<div class="catalog-dashboard"><section class="destination-deck" aria-labelledby="destination-deck-title"><div class="catalog-section-heading"><div class="catalog-section-label destination-section-label" id="destination-deck-title"><span aria-hidden="true">&#9679;</span> Destinations</div><small>Choose a park family</small></div>' + brandCards() + '</section>' + recentCard() + healthCard() + '</div>';
     root.innerHTML = shell('Where are you going?', modeSummary(), body, routeFor(['mode']), [{ label: 'Mode', route: routeFor(['mode']) }, { label: 'Destinations', route: routeFor(['brands']) }], { description: 'Choose where you want to explore.', view: 'brands', step: 1 });
   }
 

@@ -103,6 +103,8 @@ assert.match(root.innerHTML, /journey-hero-card/, 'the selected planning mode mu
 assert.match(root.innerHTML, /<small>Next step<\/small><strong>Choose a destination<\/strong>/, 'a new journey card must show the real next step without fake progress');
 assert.match(root.innerHTML, /catalog-health-card/, 'park data health must remain available as a real dashboard action');
 assert.match(root.innerHTML, /catalog-health-grid/, 'the dashboard must summarize real catalog coverage by operator');
+assert.ok(root.innerHTML.indexOf('destination-deck') < root.innerHTML.indexOf('journey-hero-card'), 'Destinations must appear before the recent park and planning card');
+assert.ok(root.innerHTML.indexOf('journey-hero-card') < root.innerHTML.indexOf('catalog-health-overview'), 'the recent park and planning card must remain above Park Data Health');
 assert.match(root.innerHTML, /Reviewed Aug 10/, 'catalog health must use the real reviewed date');
 assert.match(root.innerHTML, /1\/1 live waits/, 'catalog health must report objective live-wait capability counts');
 assert.match(root.innerHTML, /1\/1 detailed routes/, 'catalog health must report objective detailed-route counts');
