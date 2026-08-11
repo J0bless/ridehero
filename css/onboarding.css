@@ -193,6 +193,76 @@ body.mode-screen-active .app-nav{display:none!important}
 .catalog-change-mode{left:14px}
 .catalog-change-park{right:14px}
 
+/* Quick Route carries its red identity through onboarding and the route app. */
+body.mode-quick{
+  --rh-navy:#8f1725;
+  --rh-blue:#e5394a;
+  --rh-bg:#fff7f8;
+  --rh-surface-muted:#fff1f2;
+  --rh-text:#7f1825;
+  --rh-text-muted:#78545a;
+  --rh-line:#f0d6da;
+  --rh-shadow-sm:0 8px 22px rgba(159,29,44,.08);
+  --rh-shadow-md:0 18px 42px rgba(159,29,44,.14);
+  --brand:#e5394a;
+  --brand-dark:#8f1725;
+  --brand-blue:#e5394a;
+  --text:#7f1825;
+  --muted:#78545a;
+  --line:#f0d6da;
+  --bg:#fff7f8;
+}
+body.mode-quick,
+body.mode-quick .catalog-page{background:#fff7f8!important;color:var(--rh-text)}
+body.mode-quick .catalog-page{background:linear-gradient(180deg,#fff0f2 0,#fff8f9 240px,#fff7f8 100%)!important}
+body.mode-quick .catalog-wordmark-mark{background:linear-gradient(145deg,var(--rh-red),#9f1d2c);box-shadow:0 7px 14px rgba(159,29,44,.2)}
+body.mode-quick .catalog-heading>span,
+body.mode-quick .catalog-section-label,
+body.mode-quick .catalog-mode-action,
+body.mode-quick .catalog-debug-link{color:var(--rh-red)}
+body.mode-quick .catalog-heading h1,
+body.mode-quick .catalog-wordmark,
+body.mode-quick .catalog-card strong,
+body.mode-quick .mode-context-card strong{color:#7f1825}
+body.mode-quick .catalog-card-icon,
+body.mode-quick .mode-context-icon{background:#fff1f2;color:var(--rh-red)}
+body.mode-quick .park-catalog-dot{background:var(--rh-red)!important}
+body.mode-quick .catalog-continue{background:linear-gradient(135deg,#9f1d2c,var(--rh-red));box-shadow:0 12px 26px rgba(159,29,44,.18)}
+body.mode-quick .catalog-primary,
+body.mode-quick .big-btn,
+body.mode-quick .sm-btn.filled,
+body.mode-quick .filter-pills .sm-btn.filled{background:var(--rh-red)!important;color:#fff!important}
+body.mode-quick .sm-btn.outline,
+body.mode-quick .back-btn,
+body.mode-quick .refresh-btn,
+body.mode-quick .icon-ghost{border-color:var(--rh-red)!important;color:var(--rh-red)!important}
+body.mode-quick .app-nav-btn.active{background:#fff1f2!important;border-color:var(--rh-red)!important;color:#9f1d2c!important}
+body.mode-quick .app-nav-btn.active span:first-child{color:var(--rh-red)!important}
+body.mode-quick .home-brand-mark,
+body.mode-quick .mini-stop-num,
+body.mode-quick .v3-stop-num,
+body.mode-quick .ride-card.on .ride-check{background:var(--rh-red)!important}
+body.mode-quick .ride-card.on,
+body.mode-quick .park-card.active{background:#fff1f2!important;border-color:var(--rh-red)!important}
+body.mode-quick .route-hero{background:#8f1725!important}
+body.mode-quick .route-hero p:after{background:#fff!important}
+body.mode-quick .feature-card.green,
+body.mode-quick .feature-card.blue,
+body.mode-quick .feature-card.purple{border-left-color:var(--rh-red)!important}
+body.mode-quick .feature-icon,
+body.mode-quick .feature-card.blue .feature-icon,
+body.mode-quick .feature-card.purple .feature-icon,
+body.mode-quick .upcoming-kicker,
+body.mode-quick .inline-link,
+body.mode-quick .best-picks-title{color:var(--rh-red)!important}
+body.mode-quick .loading-spinner{border-top-color:var(--rh-red)}
+
+.pwa-install-button{position:fixed;z-index:1100;right:14px;bottom:calc(86px + env(safe-area-inset-bottom));min-height:46px;border:0;border-radius:16px;padding:0 16px;background:var(--rh-navy);color:#fff;font-size:13px;font-weight:950;box-shadow:var(--rh-shadow-md);cursor:pointer}
+.pwa-install-button[hidden],body.mode-screen-active .pwa-install-button{display:none!important}
+.pwa-install-button:focus-visible{outline:3px solid color-mix(in srgb,var(--rh-blue) 30%,transparent);outline-offset:3px}
+.pwa-install-status{position:fixed;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+@media (display-mode:standalone){.pwa-install-button{display:none!important}}
+
 @keyframes rhPageIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 @keyframes rhSpin{to{transform:rotate(360deg)}}
 

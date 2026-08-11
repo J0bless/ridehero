@@ -133,6 +133,11 @@
     root.classList.add('active');
     document.querySelectorAll('.screen').forEach(function(screen){ if (screen !== root) screen.classList.remove('active'); });
     var parts = currentRoute();
+    if (!parts.length || parts[0] === 'mode') {
+      document.body.classList.remove('mode-quick', 'mode-strategic');
+    } else if (appState.planningMode && typeof applyGuidanceMode === 'function') {
+      applyGuidanceMode(legacyGuidanceMode());
+    }
     var parkToActivate = null;
     if (parts[0] === 'admin' && parts[1] === 'data-health') renderDataHealth();
     else if (!parts.length || parts[0] === 'mode') renderMode();

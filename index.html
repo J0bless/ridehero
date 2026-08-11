@@ -6,9 +6,14 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="RideHero"/>
+<meta name="theme-color" content="#E5394A"/>
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
 <meta http-equiv="Pragma" content="no-cache"/>
 <meta http-equiv="Expires" content="0"/>
+<link rel="manifest" href="manifest.webmanifest"/>
+<link rel="apple-touch-icon" href="icons/ridehero-192.png"/>
 <link rel="stylesheet" href="css/multi-resort.css?v=1"/>
 <title>RideHero — Plan less. Ride more.</title>
 <!-- RideHero cleaned runtime build 2026-06-25 -->
@@ -6042,7 +6047,7 @@ function animateSplashTrain() {
   var night = splash.querySelector('.night-reveal');
 
   if (!page || !stage || !train || !cars.length || !path || !path.getTotalLength) {
-    setTimeout(function(){ finishSplash(false); }, 2000);
+    setTimeout(function(){ finishSplash(false); }, 2500);
     return;
   }
 
@@ -6050,8 +6055,8 @@ function animateSplashTrain() {
   // Important: the train sits inside the same moving page as the track.
   // So while the page pulls, the train should NOT receive an extra page offset.
   var pathLen = path.getTotalLength();
-  var rideDuration = 1585;
-  var pullAwayDuration = 415;
+  var rideDuration = 1981;
+  var pullAwayDuration = 519;
   var totalDuration = rideDuration + pullAwayDuration;
   var carGap = 32;
   var startTs = null;
@@ -6204,6 +6209,8 @@ function applyGuidanceMode(mode) {
 
   document.body.classList.toggle('mode-strategic', guidanceMode === 'strategic');
   document.body.classList.toggle('mode-quick', guidanceMode !== 'strategic');
+  var themeColor = document.querySelector('meta[name="theme-color"]');
+  if (themeColor) themeColor.setAttribute('content', guidanceMode === 'strategic' ? '#2F56B3' : '#E5394A');
 
   var pill = document.getElementById('mode-pill');
   if (pill) pill.textContent = guidanceMode === 'strategic' ? 'Mode: Maximize' : 'Mode: Quick';
@@ -6272,6 +6279,8 @@ updateParkContextVisibility();
 updatePlanFlowCopy();
 updateNavState('setup');
 </script>
+<button class="pwa-install-button" id="pwa-install-button" type="button" hidden>Install RideHero</button>
+<div class="pwa-install-status" id="pwa-install-status" aria-live="polite"></div>
 <nav class="app-nav" id="app-nav">
   <button class="app-nav-btn active" data-nav="setup" onclick="window.RideHeroMultiResort ? window.RideHeroMultiResort.goHome() : showScreen('setup')"><span aria-hidden="true">⌂</span><span>Home</span></button>
   <button class="app-nav-btn" data-nav="route" onclick="navToRoute()"><span>⌖</span><span>Route</span></button>
@@ -6279,5 +6288,6 @@ updateNavState('setup');
 
 <script src="js/data-health.js?v=1"></script>
 <script src="js/navigation.js?v=1"></script>
+<script src="js/pwa-install.js?v=1"></script>
 </body>
 </html>

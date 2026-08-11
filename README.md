@@ -32,6 +32,12 @@ node --check index.html
 
 Preserve this behavior unless a focused branch and pull request explicitly changes it.
 
+## Installable app
+
+RideHero includes a web app manifest, 192 px and 512 px app icons, and a service worker so supported browsers can install it as a standalone app. When the browser exposes an install prompt, RideHero shows an **Install RideHero** action. On iPhone and iPad, use the Share menu and choose **Add to Home Screen**.
+
+The service worker caches the core application shell and static assets used during a visit. Live wait times remain network-driven and continue using the existing graceful fallback when a provider or connection is unavailable.
+
 ## Multi-resort architecture
 
 RideHero now keeps its brand, destination, and park registry in `data/park-catalog.js`. Park datasets live under `data/parks/` and are loaded only after a park is selected. The catalog-driven navigation uses reload-safe hash routes and follows this sequence:
