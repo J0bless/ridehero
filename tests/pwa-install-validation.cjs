@@ -10,6 +10,7 @@ const install = fs.readFileSync(path.join(root, 'js', 'pwa-install.js'), 'utf8')
 const css = fs.readFileSync(path.join(root, 'css', 'onboarding.css'), 'utf8');
 
 assert.match(html, /rel="manifest" href="manifest\.webmanifest"/);
+assert.match(html, /rel="apple-touch-icon" sizes="180x180" href="icons\/ridehero-180\.png"/);
 assert.match(html, /name="theme-color" content="#E5394A"/);
 assert.match(html, /id="pwa-install-button"[^>]*hidden/);
 assert.match(html, /src="js\/pwa-install\.js\?v=1"/);
@@ -26,7 +27,11 @@ manifest.icons.forEach(function(icon) {
   assert.equal(png.readUInt32BE(16), size, 'incorrect icon width for ' + icon.src);
   assert.equal(png.readUInt32BE(20), size, 'incorrect icon height for ' + icon.src);
 });
-assert.match(worker, /const CACHE_NAME = 'ridehero-shell-v1'/);
+const appleTouchIcon = fs.readFileSync(path.join(root, 'icons', 'ridehero-180.png'));
+assert.equal(appleTouchIcon.readUInt32BE(16), 180, 'incorrect Apple touch icon width');
+assert.equal(appleTouchIcon.readUInt32BE(20), 180, 'incorrect Apple touch icon height');
+assert.match(worker, /const CACHE_NAME = 'ridehero-shell-v2'/);
+assert.match(worker, /\.\/icons\/ridehero-180\.png/);
 assert.match(worker, /request\.mode === 'navigate'[\s\S]*networkFirst/);
 assert.match(worker, /css\|js\|webmanifest[\s\S]*networkFirst/, 'version-sensitive app code must update from the network before using cache');
 assert.match(worker, /\/api\/[\s\S]*\/waittimes/, 'live operational endpoints must bypass the static cache');
