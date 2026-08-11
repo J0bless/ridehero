@@ -3188,158 +3188,7 @@ body{
 
 
 <!-- SCREEN 1: Destinations -->
-<div class="screen active destinations-page" id="screen-setup">
-  <div class="home-dashboard">
-    <div class="home-header">
-      <div class="home-brand">
-        <div class="home-brand-mark">✦</div>
-        <div>
-          <h1>RideHero</h1>
-          <p>Smarter Disney routing, wait times, and planning</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="home-section-title" id="destination-section-title">Choose a destination</div>
-    <div class="destination-mode-note" id="destination-mode-note">Quick mode opens a rides-only route immediately after park selection.</div>
-    <div class="franchise-grid" id="franchise-grid">
-      <button class="franchise-card" data-franchise="disney" onclick="selectFranchise('disney')">
-        <span class="franchise-emoji">✨</span>
-        <div class="franchise-name">Disney Parks</div>
-        <div class="franchise-sub">Live now · Walt Disney World</div>
-      </button>
-      <button class="franchise-card placeholder" data-franchise="universal" onclick="selectFranchise('universal')">
-        <span class="franchise-emoji">🌎</span>
-        <div class="franchise-name">Universal</div>
-        <div class="franchise-sub">Placeholder · coming soon</div>
-      </button>
-      <button class="franchise-card placeholder" data-franchise="seaworld" onclick="selectFranchise('seaworld')">
-        <span class="franchise-emoji">🌊</span>
-        <div class="franchise-name">SeaWorld</div>
-        <div class="franchise-sub">Placeholder · coming soon</div>
-      </button>
-      <button class="franchise-card placeholder" data-franchise="sixflags" onclick="selectFranchise('sixflags')">
-        <span class="franchise-emoji">🎡</span>
-        <div class="franchise-name">Six Flags / Cedar Fair</div>
-        <div class="franchise-sub">Placeholder · future thrill parks</div>
-      </button>
-    </div>
-
-    <div class="destination-panel active" id="destination-disney" style="display:none;">
-      <div class="destination-header ergonomic-destination-header">
-        <button class="back-destination-btn" type="button" onclick="showDestinations()">‹ Destinations</button>
-        <div>
-          <div class="home-section-title" style="margin-bottom:4px;">Disney Parks</div>
-          <div class="destination-sub">Pick one Walt Disney World park to load maps, waits, and routing.</div>
-        </div>
-        <span class="live-pill">Live</span>
-      </div>
-
-      <div class="park-grid app-park-grid">
-        <button class="park-card active" data-park="mk" onclick="selectPark(this)">
-          <span class="park-emoji">🏰</span>
-          <div class="park-name">Magic Kingdom</div>
-          <div class="park-sub">Classic Disney</div>
-        </button>
-        <button class="park-card" data-park="ep" onclick="selectPark(this)">
-          <span class="park-emoji">🌐</span>
-          <div class="park-name">EPCOT</div>
-          <div class="park-sub">World showcase</div>
-        </button>
-        <button class="park-card" data-park="hs" onclick="selectPark(this)">
-          <span class="park-emoji">🎬</span>
-          <div class="park-name">Hollywood Studios</div>
-          <div class="park-sub">Movies & thrills</div>
-        </button>
-        <button class="park-card" data-park="ak" onclick="selectPark(this)">
-          <span class="park-emoji">🌳</span>
-          <div class="park-name">Animal Kingdom</div>
-          <div class="park-sub">Nature & Pandora</div>
-        </button>
-      </div>
-    </div>
-
-    <div class="destination-panel placeholder-panel" id="destination-placeholder" style="display:none;">
-      <div class="placeholder-hero">
-        <div class="placeholder-icon" id="placeholder-icon">🌎</div>
-        <div>
-          <div class="placeholder-title" id="placeholder-title">Coming soon</div>
-          <div class="placeholder-copy" id="placeholder-copy">This franchise tab is ready for future park data, maps, wait APIs, and routing rules.</div>
-        </div>
-      </div>
-      <button class="big-btn secondary" type="button" onclick="showDestinations()">Back to destinations</button>
-    </div>
-
-    <div class="home-insight-row" id="park-context-row">
-      <div class="insight-card">
-        <div class="insight-label">Weather</div>
-        <div class="insight-value">78°</div>
-        <div class="insight-sub">Partly cloudy · great park weather</div>
-      </div>
-      <div class="insight-card">
-        <div class="insight-label">Crowd level</div>
-        <div class="insight-value ok">Moderate</div>
-        <div class="insight-sub">Best before noon · busiest 1–4 PM</div>
-      </div>
-    </div>
-
-    <div class="home-section-title compact-action-heading">Plan tools</div>
-    <div class="home-actions compact-actions">
-      <button class="feature-card green compact-feature" onclick="startGuidance()">
-        <div class="feature-icon">⚡</div>
-        <div>
-          <div class="feature-title" id="tool-primary-title">Quick</div>
-          <div class="feature-sub" id="tool-primary-sub">3 rides</div>
-        </div>
-      </button>
-      <button class="feature-card blue compact-feature" onclick="startModeAndRides('fullday')">
-        <div class="feature-icon">📅</div>
-        <div>
-          <div class="feature-title">Full</div>
-          <div class="feature-sub">Day plan</div>
-        </div>
-      </button>
-      <button class="feature-card purple compact-feature" onclick="goToRides()">
-        <div class="feature-icon">📊</div>
-        <div>
-          <div class="feature-title">Waits</div>
-          <div class="feature-sub">Live times</div>
-        </div>
-      </button>
-    </div>
-
-    <div class="upcoming-card">
-      <div class="upcoming-top">
-        <div>
-          <div class="upcoming-kicker" id="home-upcoming-kicker">Today · Magic Kingdom</div>
-          <div class="upcoming-title" id="home-upcoming-title">Suggested starter plan</div>
-        </div>
-        <button class="inline-link" type="button" onclick="goToRides()">View waits</button>
-      </div>
-      <div class="mini-route-list" id="home-mini-route-list">
-        <div class="mini-route-stop"><span class="mini-stop-num">1</span><div><strong>Big Thunder Mountain</strong><span>Low wait frontier thrill</span></div></div>
-        <div class="mini-route-stop"><span class="mini-stop-num">2</span><div><strong>Pirates of the Caribbean</strong><span>Close by and easy to chain next</span></div></div>
-        <div class="mini-route-stop"><span class="mini-stop-num">3</span><div><strong>Haunted Mansion</strong><span>Good follow-up with short walk</span></div></div>
-      </div>
-    </div>
-
-    <div id="hours-section" style="display:none">
-      <div class="home-section-title">Full day hours</div>
-      <div class="inset-group elegant-group">
-        <div class="inset-row">
-          <label>Opens at</label>
-          <input type="number" id="open-hour" value="9" min="7" max="12"/>
-          <span style="font-size:15px;color:#8e8e93;margin-left:4px;">am</span>
-        </div>
-        <div class="inset-row">
-          <label>Closes at</label>
-          <input type="number" id="close-hour" value="10" min="6" max="12"/>
-          <span style="font-size:15px;color:#8e8e93;margin-left:4px;">pm</span>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+<div class="screen active destinations-page" id="screen-setup" aria-live="polite"></div>
 
 
 <!-- SCREEN 1a: Plan tools after destination -->
@@ -3834,43 +3683,12 @@ function resetParkRuntimeState() {
 
 // ── Setup screen ─────────────────────────────────────────────────────────────
 
-function selectMode(btn) {
-  document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('active'));
-  btn.classList.add('active');
-  currentMode = btn.dataset.mode;
-  document.getElementById('hours-section').style.display = currentMode === 'fullday' ? 'block' : 'none';
-}
-
 function startModeAndRides(mode) {
   currentMode = mode || 'quick';
   var hs = document.getElementById('hours-section');
   if (hs) hs.style.display = currentMode === 'fullday' ? 'block' : 'none';
   goToRides();
 }
-
-function selectPark(btn) {
-  document.querySelectorAll('.park-card').forEach(c => c.classList.remove('active'));
-  btn.classList.add('active');
-  var nextPark = btn.dataset.park;
-  var changed = nextPark && nextPark !== currentPark;
-  currentPark = nextPark;
-  parkHasBeenSelected = true;
-  if (changed) resetParkRuntimeState();
-  updateHomePreview();
-  updateParkContextVisibility();
-
-  // v8.2 destination flow:
-  // Quick Route: pick destination + park, then go straight to route.
-  // Plan/My Day: pick destination + park, then open plan tools and suggested morning sweep.
-  if (guidanceMode === 'strategic' || currentMode === 'fullday') {
-    currentMode = 'fullday';
-    openPlanFlow();
-  } else {
-    currentMode = 'quick';
-    goQuickRouteForPark();
-  }
-}
-
 
 function openPlanFlow() {
   currentMode = 'fullday';
@@ -5860,7 +5678,7 @@ function ensureRouteStartControls() {
           else {
             routeStartMode = 'preview';
             routeLivePosition = null;
-            routeLiveMessage = 'Location is not supported on this device. Showing preview route.';
+            routeLiveMessage = 'Location is not supported on this device. Using your selected start or park entrance fallback.';
           }
           updateRouteStartControlsUI();
           if (currentMode === 'quick') optimizeRoute(); else renderRouteMapSafely(routeOrder || []);
@@ -5881,7 +5699,7 @@ function ensureRouteStartControls() {
             else {
               routeStartMode = 'preview';
               routeLivePosition = null;
-              routeLiveMessage = 'You do not appear to be inside Animal Kingdom. Showing preview route instead.';
+              routeLiveMessage = 'You do not appear to be inside Animal Kingdom. Using the selected start fallback instead.';
             }
           } else {
             routeStartMode = 'live';
@@ -5897,7 +5715,7 @@ function ensureRouteStartControls() {
           else {
             routeStartMode = 'preview';
             routeLivePosition = null;
-            routeLiveMessage = 'Could not get your location. Showing preview route instead.';
+            routeLiveMessage = 'Could not get your location. Using the selected start fallback instead.';
           }
           updateRouteStartControlsUI();
           if (currentMode === 'quick') optimizeRoute(); else renderRouteMapSafely(routeOrder || []);
@@ -6379,62 +6197,6 @@ function initSplash() {
   if (reduced) { finishSplash(false); return; }
   window.requestAnimationFrame(animateSplashTrain);
 }
-
-function showDestinations() {
-  var grid = document.getElementById('franchise-grid');
-  var disney = document.getElementById('destination-disney');
-  var placeholder = document.getElementById('destination-placeholder');
-  var sectionTitle = document.getElementById('destination-section-title');
-
-  if (grid) grid.style.display = 'grid';
-  if (disney) disney.style.display = 'none';
-  if (placeholder) placeholder.style.display = 'none';
-  if (sectionTitle) sectionTitle.textContent = 'Choose a destination';
-  parkHasBeenSelected = false;
-  updateParkContextVisibility();
-
-  document.querySelectorAll('.franchise-card').forEach(function(card) {
-    card.classList.remove('active');
-  });
-}
-
-function selectFranchise(franchise) {
-  var grid = document.getElementById('franchise-grid');
-  var disney = document.getElementById('destination-disney');
-  var placeholder = document.getElementById('destination-placeholder');
-  var sectionTitle = document.getElementById('destination-section-title');
-
-  document.querySelectorAll('.franchise-card').forEach(function(card) {
-    card.classList.toggle('active', card.dataset.franchise === franchise);
-  });
-
-  if (grid) grid.style.display = 'none';
-
-  if (franchise === 'disney') {
-    if (sectionTitle) sectionTitle.textContent = 'Choose a Disney park';
-    if (disney) disney.style.display = 'block';
-    if (placeholder) placeholder.style.display = 'none';
-    return;
-  }
-
-  if (sectionTitle) sectionTitle.textContent = 'Destination preview';
-  if (disney) disney.style.display = 'none';
-  if (placeholder) placeholder.style.display = 'block';
-
-  var data = {
-    universal:{icon:'🌎', title:'Universal is queued up', copy:'Placeholder for Universal Orlando / Hollywood maps, waits, and routing rules.'},
-    seaworld:{icon:'🌊', title:'SeaWorld is in the splash zone', copy:'Placeholder for SeaWorld, Busch Gardens, and aquatic/coaster park data.'},
-    sixflags:{icon:'🎡', title:'Thrill parks are on deck', copy:'Placeholder for Six Flags, Cedar Fair, and other coaster-heavy park franchises.'}
-  };
-  var item = data[franchise] || {icon:'🎢', title:'Coming soon', copy:'This destination is ready for future maps and park logic.'};
-  var icon = document.getElementById('placeholder-icon');
-  var title = document.getElementById('placeholder-title');
-  var copy = document.getElementById('placeholder-copy');
-  if (icon) icon.textContent = item.icon;
-  if (title) title.textContent = item.title;
-  if (copy) copy.textContent = item.copy;
-}
-
 
 function applyGuidanceMode(mode) {
   guidanceMode = mode === 'strategic' ? 'strategic' : 'quick';

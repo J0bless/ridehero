@@ -44,11 +44,11 @@
 
   function modeCards() {
     var lastMode = normalizePlanningMode(recent.planningMode);
-    return '<div class="mode-card-grid" role="list">' +
-      '<button class="mode-card mode-card-quick' + (lastMode === 'quick' ? ' was-recent' : '') + '" type="button" data-planning-mode="quick" role="listitem">' +
+    return '<div class="mode-card-grid">' +
+      '<button class="mode-card mode-card-quick' + (lastMode === 'quick' ? ' was-recent' : '') + '" type="button" data-planning-mode="quick">' +
         '<span class="mode-card-icon" aria-hidden="true">Q</span><span class="mode-card-copy"><span class="mode-card-kicker">Fast &amp; simple</span><strong>Quick Route</strong><span>Find the smartest nearby rides based on your location, current waits, and walking distance.</span></span><span class="mode-card-cta">Plan a Quick Route <b aria-hidden="true">&rsaquo;</b></span>' +
       '</button>' +
-      '<button class="mode-card mode-card-full' + (lastMode === 'full' ? ' was-recent' : '') + '" type="button" data-planning-mode="full" role="listitem">' +
+      '<button class="mode-card mode-card-full' + (lastMode === 'full' ? ' was-recent' : '') + '" type="button" data-planning-mode="full">' +
         '<span class="mode-card-icon" aria-hidden="true">M</span><span class="mode-card-copy"><span class="mode-card-kicker">Intentional &amp; optimized</span><strong>Maximize My Day</strong><span>Build a full-day strategy balancing priority experiences, waits, walking, and timing.</span></span><span class="mode-card-cta">Maximize My Day <b aria-hidden="true">&rsaquo;</b></span>' +
       '</button></div>';
   }
