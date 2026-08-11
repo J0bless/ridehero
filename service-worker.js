@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ridehero-shell-v13';
+const CACHE_NAME = 'ridehero-shell-v14';
 const APP_SHELL = [
   './',
   './index.html',
@@ -16,7 +16,7 @@ const APP_SHELL = [
   './js/route-engine.js?v=1',
   './js/walking-network.js?v=1',
   './js/data-health.js?v=1',
-  './js/navigation.js?v=5',
+  './js/navigation.js?v=6',
   './js/pwa-install.js?v=1',
   './icons/ridehero-180.png',
   './icons/ridehero-192.png',
