@@ -2672,101 +2672,160 @@ body.mode-strategic{
 }
 
 
-/* RideHero v7.6 floating mode spinner widget */
-.mode-spinner-widget{
+/* Edge-mounted mode drawer */
+.mode-drawer{
   position:fixed;
-  right:16px;
-  bottom:calc(env(safe-area-inset-bottom, 0px) + 16px);
-  width:82px;
-  height:82px;
-  border:0;
-  background:transparent;
-  padding:0;
+  top:clamp(104px,22vh,210px);
+  right:0;
+  width:min(304px,calc(100vw - 58px));
   z-index:9400;
-  opacity:.2;
-  transition:opacity .18s ease, transform .18s ease, filter .18s ease;
+  transform:translateX(100%);
+  transition:transform .28s cubic-bezier(.2,.72,.2,1);
+  touch-action:pan-y;
 }
-.mode-spinner-widget:hover,
-.mode-spinner-widget:focus-visible,
-.mode-spinner-widget:active{
-  opacity:1;
-  transform:scale(1.04);
-}
-.mode-spinner-widget.mode-spin-pop{
-  opacity:1;
-  animation:modeWidgetPop .52s ease;
-}
-.mode-spinner-ring{
-  position:relative;
-  width:100%;
-  height:100%;
-  border-radius:50%;
-  background:rgba(255,255,255,.96);
-  border:2px solid rgba(20,42,102,.18);
-  box-shadow:0 14px 34px rgba(20,42,102,.18);
-  overflow:hidden;
-  backdrop-filter:blur(10px);
-}
-.mode-spinner-svg{
+.mode-drawer.is-open{ transform:translateX(0); }
+.mode-drawer-tab{
   position:absolute;
-  inset:0;
-  width:100%;
-  height:100%;
-  animation:modeSpin 8s linear infinite;
-}
-.mode-spinner-outline{
-  fill:none;
-  stroke:#142A66;
-  stroke-width:2.6;
-}
-.mode-spinner-arrow{
-  fill:none;
-  stroke:#142A66;
-  stroke-width:4;
-  stroke-linecap:round;
-  stroke-linejoin:round;
-}
-.mode-spinner-center{
-  position:absolute;
-  inset:0;
+  top:22px;
+  left:-58px;
+  width:58px;
+  min-height:92px;
+  border:1px solid rgba(20,42,102,.18);
+  border-right:0;
+  border-radius:18px 0 0 18px;
+  background:rgba(255,255,255,.97);
+  box-shadow:-8px 10px 28px rgba(20,42,102,.16);
+  color:#142A66;
   display:flex;
   flex-direction:column;
   align-items:center;
   justify-content:center;
-  text-align:center;
-  pointer-events:none;
+  gap:4px;
+  padding:10px 5px;
+  backdrop-filter:blur(12px);
 }
-.mode-spinner-label{
-  font-size:10px;
-  line-height:1;
+.mode-drawer-tab-label{
   color:#64748B;
-  font-weight:800;
-  text-transform:lowercase;
+  font-size:9px;
+  font-weight:850;
+  letter-spacing:.08em;
+  text-transform:uppercase;
 }
-#mode-spinner-text{
-  margin-top:3px;
-  font-size:13px;
-  line-height:1;
-  color:#142A66;
+#mode-drawer-current{
+  font-size:12px;
+  line-height:1.1;
   font-weight:950;
 }
-body.mode-quick #mode-spinner-text,
-body.mode-quick .mode-spinner-arrow{
-  color:#E5394A;
-  stroke:#E5394A;
+.mode-drawer-chevron{
+  font-size:20px;
+  line-height:.8;
+  transition:transform .28s cubic-bezier(.2,.72,.2,1);
 }
-body.mode-quick .mode-spinner-outline{
-  stroke:#E5394A;
+.mode-drawer.is-open .mode-drawer-chevron{ transform:rotate(180deg); }
+body.mode-quick #mode-drawer-current{ color:#E5394A; }
+.mode-drawer-panel{
+  background:rgba(255,255,255,.98);
+  border:1px solid rgba(20,42,102,.16);
+  border-right:0;
+  border-radius:22px 0 0 22px;
+  box-shadow:-16px 18px 44px rgba(20,42,102,.2);
+  padding:18px;
+  backdrop-filter:blur(16px);
 }
-body.mode-strategic #mode-spinner-text,
-body.mode-strategic .mode-spinner-arrow,
-body.mode-strategic .mode-spinner-outline{
+.mode-drawer-header{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:14px;
+}
+.mode-drawer-kicker{
+  display:block;
+  color:#64748B;
+  font-size:10px;
+  font-weight:850;
+  letter-spacing:.09em;
+  text-transform:uppercase;
+}
+.mode-drawer-header strong{
+  display:block;
+  margin-top:3px;
   color:#142A66;
-  stroke:#142A66;
+  font-size:18px;
 }
-.mode-spinner-widget:active .mode-spinner-svg,
-.mode-spinner-widget.mode-spin-pop .mode-spinner-svg{
-  animation-duration:1s;
+.mode-drawer-close{
+  width:36px;
+  height:36px;
+  flex:0 0 36px;
+  border:0;
+  border-radius:50%;
+  background:#EEF3F8;
+  color:#142A66;
+  font-size:22px;
+  line-height:1;
+}
+.mode-drawer-options{
+  display:grid;
+  gap:10px;
+}
+.mode-drawer-option{
+  width:100%;
+  border:1px solid #DCE6F0;
+  border-radius:16px;
+  background:#F8FAFC;
+  color:#142A66;
+  padding:14px;
+  text-align:left;
+  display:grid;
+  grid-template-columns:38px 1fr;
+  gap:11px;
+  align-items:center;
+}
+.mode-drawer-option[aria-pressed="true"]{
+  border-color:#142A66;
+  background:#EEF3F8;
+  box-shadow:inset 4px 0 0 #142A66;
+}
+body.mode-quick .mode-drawer-option[data-mode="quick"][aria-pressed="true"]{
+  border-color:#E5394A;
+  box-shadow:inset 4px 0 0 #E5394A;
+}
+.mode-drawer-option-icon{
+  width:38px;
+  height:38px;
+  border-radius:12px;
+  background:#fff;
+  display:grid;
+  place-items:center;
+  font-size:19px;
+}
+.mode-drawer-option strong{ display:block; font-size:14px; }
+.mode-drawer-option small{ display:block; margin-top:3px; color:#64748B; font-size:11px; line-height:1.3; }
+.mode-drawer-hint{
+  margin:12px 2px 0;
+  color:#64748B;
+  font-size:10px;
+  text-align:center;
+}
+.mode-drawer-backdrop{
+  position:fixed;
+  inset:0;
+  z-index:9390;
+  border:0;
+  background:rgba(15,23,42,.18);
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .28s ease;
+}
+body.mode-drawer-open .mode-drawer-backdrop{
+  opacity:1;
+  pointer-events:auto;
+}
+.mode-drawer-tab:focus-visible,
+.mode-drawer-close:focus-visible,
+.mode-drawer-option:focus-visible{
+  outline:3px solid rgba(229,57,74,.35);
+  outline-offset:3px;
 }
 
 /* Quick mode removes planning-heavy UI */
@@ -2784,26 +2843,14 @@ body.hide-planning-ui .suggested-plan-section{
   display:none !important;
 }
 
-@keyframes modeSpin{
-  from{ transform:rotate(0deg); }
-  to{ transform:rotate(360deg); }
-}
-@keyframes modeWidgetPop{
-  0%{ transform:scale(1); }
-  36%{ transform:scale(1.12); }
-  100%{ transform:scale(1.04); }
-}
-
 @media (max-width:430px){
-  .mode-spinner-widget{
-    width:74px;
-    height:74px;
-    right:12px;
-    bottom:calc(env(safe-area-inset-bottom, 0px) + 12px);
-  }
-  #mode-spinner-text{
-    font-size:12px;
-  }
+  .mode-drawer{ top:clamp(88px,18vh,150px); }
+  .mode-drawer-panel{ padding:16px 14px; }
+}
+@media (prefers-reduced-motion:reduce){
+  .mode-drawer,
+  .mode-drawer-chevron,
+  .mode-drawer-backdrop{ transition:none !important; }
 }
 
 
@@ -2916,7 +2963,7 @@ body.hide-planning-ui .suggested-plan-section{
 }
 
 
-/* RideHero v7.9 real circular loop + hide mode widget until choice */
+/* RideHero v7.9 real circular loop + hide mode control until choice */
 .coaster-stage{
   transform:translate(-50%,-34%) !important;
   width:min(560px,118vw) !important;
@@ -2967,11 +3014,15 @@ body.hide-planning-ui .suggested-plan-section{
   will-change:transform;
 }
 
-/* Keep the floating mode widget hidden until the user makes the first mode choice. */
-.mode-spinner-widget{
+/* Keep the mode drawer hidden until the user makes the first mode choice. */
+.mode-drawer,
+.mode-drawer-backdrop{
   display:none !important;
 }
-body.mode-choice-made .mode-spinner-widget{
+body.mode-choice-made .mode-drawer{
+  display:block !important;
+}
+body.mode-choice-made .mode-drawer-backdrop{
   display:block !important;
 }
 
@@ -7224,8 +7275,11 @@ function applyGuidanceMode(mode) {
   }
 
   
-  var spinnerText = document.getElementById('mode-spinner-text');
-  if (spinnerText) spinnerText.textContent = guidanceMode === 'strategic' ? 'Plan' : 'Quick';
+  var drawerText = document.getElementById('mode-drawer-current');
+  if (drawerText) drawerText.textContent = guidanceMode === 'strategic' ? 'Plan' : 'Quick';
+  document.querySelectorAll('.mode-drawer-option[data-mode]').forEach(function(option) {
+    option.setAttribute('aria-pressed', option.getAttribute('data-mode') === guidanceMode ? 'true' : 'false');
+  });
 
   updateModeVisibility();
 
@@ -7236,13 +7290,16 @@ function applyGuidanceMode(mode) {
 function toggleGuidanceMode() {
   var wasStrategic = guidanceMode === 'strategic';
   var nextMode = wasStrategic ? 'quick' : 'strategic';
-  applyGuidanceMode(nextMode);
+  selectGuidanceMode(nextMode);
+}
 
-  var widget = document.getElementById('mode-spinner-widget');
-  if (widget) {
-    widget.classList.add('mode-spin-pop');
-    setTimeout(function(){ widget.classList.remove('mode-spin-pop'); }, 520);
-  }
+function selectGuidanceMode(nextMode) {
+  nextMode = nextMode === 'strategic' ? 'strategic' : 'quick';
+  var changed = nextMode !== guidanceMode;
+  applyGuidanceMode(nextMode);
+  setModeDrawerOpen(false);
+
+  if (!changed) return;
 
   // v9.2: mode switching should move the user into the correct flow.
   // Plan -> Quick: immediately produce the optimized quick route for the selected park.
@@ -7253,6 +7310,72 @@ function toggleGuidanceMode() {
   } else if (nextMode === 'strategic' && currentScreen !== 'setup') {
     openPlanFlow();
   }
+}
+
+function setModeDrawerOpen(open, focusPanel) {
+  var drawer = document.getElementById('mode-drawer');
+  var tab = document.getElementById('mode-drawer-tab');
+  var panel = document.getElementById('mode-drawer-panel');
+  if (!drawer || !tab || !panel) return;
+  drawer.classList.toggle('is-open', !!open);
+  document.body.classList.toggle('mode-drawer-open', !!open);
+  tab.setAttribute('aria-expanded', open ? 'true' : 'false');
+  panel.setAttribute('aria-hidden', open ? 'false' : 'true');
+  panel.inert = !open;
+  if (open && focusPanel) {
+    var activeOption = panel.querySelector('.mode-drawer-option[aria-pressed="true"]') || panel.querySelector('.mode-drawer-option');
+    if (activeOption) activeOption.focus();
+  } else if (!open && focusPanel) {
+    tab.focus();
+  }
+}
+
+function toggleModeDrawer() {
+  var drawer = document.getElementById('mode-drawer');
+  if (!drawer) return;
+  setModeDrawerOpen(!drawer.classList.contains('is-open'), true);
+}
+
+function initModeDrawer() {
+  var drawer = document.getElementById('mode-drawer');
+  if (!drawer || drawer.dataset.ready === 'true') return;
+  drawer.dataset.ready = 'true';
+  var startX = 0;
+  var startY = 0;
+  var tracking = false;
+  var openedAtStart = false;
+
+  function isOpen() { return drawer.classList.contains('is-open'); }
+
+  document.addEventListener('pointerdown', function(event) {
+    var fromEdge = !isOpen() && event.clientX >= window.innerWidth - 26;
+    var fromDrawer = drawer.contains(event.target);
+    if (!fromEdge && !fromDrawer) return;
+    tracking = true;
+    openedAtStart = isOpen();
+    startX = event.clientX;
+    startY = event.clientY;
+  });
+
+  document.addEventListener('pointerup', function(event) {
+    if (!tracking) return;
+    tracking = false;
+    var dx = event.clientX - startX;
+    var dy = event.clientY - startY;
+    if (Math.abs(dx) < 48 || Math.abs(dx) <= Math.abs(dy) * 1.2) return;
+    if (!openedAtStart && dx < 0) setModeDrawerOpen(true, false);
+    if (openedAtStart && dx > 0) setModeDrawerOpen(false, false);
+  });
+
+  document.addEventListener('pointercancel', function() { tracking = false; });
+  document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape' && isOpen()) {
+      event.preventDefault();
+      setModeDrawerOpen(false, true);
+    }
+  });
+  window.addEventListener('resize', function() { setModeDrawerOpen(false, false); });
+  applyGuidanceMode(guidanceMode);
 }
 
 
@@ -7458,19 +7581,33 @@ updateNavState('setup');
 </nav>
 
 
-<button id="mode-spinner-widget" class="mode-spinner-widget" type="button" onclick="toggleGuidanceMode()" aria-label="Change RideHero mode">
-  <div class="mode-spinner-ring">
-    <svg viewBox="0 0 100 100" class="mode-spinner-svg" aria-hidden="true">
-      <circle cx="50" cy="50" r="43" class="mode-spinner-outline"></circle>
-      <path class="mode-spinner-arrow top-arrow" d="M32 34 C40 22, 59 22, 69 35 M61 29 L70 35 L63 44"></path>
-      <path class="mode-spinner-arrow bottom-arrow" d="M68 66 C60 78, 41 78, 31 65 M39 71 L30 65 L37 56"></path>
-    </svg>
-    <div class="mode-spinner-center">
-      <span class="mode-spinner-label">mode</span>
-      <strong id="mode-spinner-text">Quick</strong>
+<button class="mode-drawer-backdrop" type="button" aria-label="Close mode menu" onclick="setModeDrawerOpen(false, true)"></button>
+<div id="mode-drawer" class="mode-drawer" aria-label="RideHero mode menu">
+  <button id="mode-drawer-tab" class="mode-drawer-tab" type="button" aria-controls="mode-drawer-panel" aria-expanded="false" onclick="toggleModeDrawer()">
+    <span class="mode-drawer-tab-label">Mode</span>
+    <strong id="mode-drawer-current">Quick</strong>
+    <span class="mode-drawer-chevron" aria-hidden="true">&lsaquo;</span>
+  </button>
+  <aside id="mode-drawer-panel" class="mode-drawer-panel" aria-hidden="true" aria-label="Choose your RideHero mode" inert>
+    <div class="mode-drawer-header">
+      <div><span class="mode-drawer-kicker">RideHero mode</span><strong>How do you want to plan?</strong></div>
+      <button class="mode-drawer-close" type="button" aria-label="Close mode menu" onclick="setModeDrawerOpen(false, true)">&times;</button>
     </div>
-  </div>
-</button>
+    <div class="mode-drawer-options">
+      <button class="mode-drawer-option" type="button" data-mode="quick" aria-pressed="true" onclick="selectGuidanceMode('quick')">
+        <span class="mode-drawer-option-icon" aria-hidden="true">Q</span>
+        <span><strong>Quick Route</strong><small>Get the next best rides fast.</small></span>
+      </button>
+      <button class="mode-drawer-option" type="button" data-mode="strategic" aria-pressed="false" onclick="selectGuidanceMode('strategic')">
+        <span class="mode-drawer-option-icon" aria-hidden="true">P</span>
+        <span><strong>Plan My Day</strong><small>Build a more strategic park plan.</small></span>
+      </button>
+    </div>
+    <p class="mode-drawer-hint">Swipe right to close</p>
+  </aside>
+</div>
+
+<script>initModeDrawer();</script>
 
 <script src="js/data-health.js?v=1"></script>
 <script src="js/navigation.js?v=1"></script>
