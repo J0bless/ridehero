@@ -3087,7 +3087,7 @@ body{
 }
 
 </style>
-<link rel="stylesheet" href="css/onboarding.css?v=5"/>
+<link rel="stylesheet" href="css/onboarding.css?v=6"/>
 </head>
 <body>
 
@@ -5119,7 +5119,10 @@ function updateHomePreview() {
 
 function updateNavState(screenId) {
   document.querySelectorAll('.app-nav-btn').forEach(function(btn){
-    btn.classList.toggle('active', btn.dataset.nav === screenId);
+    var isActive = btn.dataset.nav === screenId;
+    btn.classList.toggle('active', isActive);
+    if (isActive) btn.setAttribute('aria-current', 'page');
+    else btn.removeAttribute('aria-current');
   });
 }
 function navToWaits() {
@@ -6247,12 +6250,12 @@ updateNavState('setup');
 <button class="pwa-install-button" id="pwa-install-button" type="button" hidden>Install RideHero</button>
 <div class="pwa-install-status" id="pwa-install-status" aria-live="polite"></div>
 <nav class="app-nav" id="app-nav">
-  <button class="app-nav-btn active" data-nav="setup" onclick="window.RideHeroMultiResort ? window.RideHeroMultiResort.goHome() : showScreen('setup')"><span aria-hidden="true">⌂</span><span>Home</span></button>
-  <button class="app-nav-btn" data-nav="route" onclick="navToRoute()"><span>⌖</span><span>Route</span></button>
+  <button class="app-nav-btn active" data-nav="setup" onclick="window.RideHeroMultiResort ? window.RideHeroMultiResort.goHome() : showScreen('setup')"><span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"></path><path d="M5.5 10.5V20h13v-9.5"></path><path d="M9.5 20v-6h5v6"></path></svg></span><span>Home</span></button>
+  <button class="app-nav-btn" data-nav="route" onclick="navToRoute()"><span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="6" cy="17" r="2.5"></circle><circle cx="18" cy="7" r="2.5"></circle><path d="M8.5 17c4.5 0 3-10 7-10"></path><path d="M4 4v6"></path><path d="M4 4h6l-2 2 2 2H4"></path></svg></span><span>Route</span></button>
 </nav>
 
 <script src="js/data-health.js?v=1"></script>
-<script src="js/navigation.js?v=3"></script>
+<script src="js/navigation.js?v=4"></script>
 <script src="js/pwa-install.js?v=1"></script>
 </body>
 </html>
