@@ -50,15 +50,15 @@
       '<button class="mode-card mode-card-quick' + (lastMode === 'quick' ? ' was-recent' : '') + '" type="button" data-planning-mode="quick">' +
         '<span class="mode-card-top"><span class="mode-card-icon" aria-hidden="true">Q</span><span class="mode-card-badge">Rides only</span></span>' +
         '<span class="mode-card-copy"><span class="mode-card-kicker">Fast &amp; simple</span><strong>Quick Route</strong><span>Find the smartest nearby rides based on your location, current waits, and walking distance.</span></span>' +
-        '<span class="mode-card-preview" aria-hidden="true"><span><b>Nearby</b><small>location-aware</small></span><span><b>Live</b><small>wait-aware</small></span></span>' +
+        '<span class="mode-card-pull-cue" aria-hidden="true"><b>Pull right to select</b><span>&rarr;</span></span>' +
         '<span class="mode-card-cta">Plan a Quick Route <b aria-hidden="true">&rsaquo;</b></span>' +
       '</button>' +
       '<button class="mode-card mode-card-full' + (lastMode === 'full' ? ' was-recent' : '') + '" type="button" data-planning-mode="full">' +
         '<span class="mode-card-top"><span class="mode-card-icon" aria-hidden="true">M</span><span class="mode-card-badge">Full-day plan</span></span>' +
         '<span class="mode-card-copy"><span class="mode-card-kicker">Intentional &amp; optimized</span><strong>Maximize My Day</strong><span>Build a full-day strategy balancing priority experiences, waits, walking, and timing.</span></span>' +
-        '<span class="mode-card-preview" aria-hidden="true"><span><b>Priority</b><small>experience-led</small></span><span><b>Balanced</b><small>walk + waits</small></span></span>' +
+        '<span class="mode-card-pull-cue" aria-hidden="true"><span>&larr;</span><b>Pull left to select</b></span>' +
         '<span class="mode-card-cta">Maximize My Day <b aria-hidden="true">&rsaquo;</b></span>' +
-      '</button></div><div class="mode-screen-divider" aria-hidden="true"><svg viewBox="0 0 40 600" preserveAspectRatio="none"><path d="M20 0 C6 55 34 105 18 160 C4 215 36 270 20 326 C5 382 34 438 18 494 C9 535 28 570 20 600"/></svg><span class="mode-screen-cart"><i></i><i></i></span></div></div>';
+      '</button></div></div>';
   }
 
   function renderMode() {
@@ -154,6 +154,7 @@
   }
 
   function clearModeWorkflow() {
+    document.body.classList.remove('mode-screen-active');
     if (global.clearTimeout) modeWorkflowTimers.forEach(function(timer){ global.clearTimeout(timer); });
     modeWorkflowTimers = [];
     if (modePullCleanup) modePullCleanup();
@@ -168,6 +169,7 @@
     var options = page.querySelector('.catalog-content');
     var stage = page.querySelector('[data-mode-pull]');
     var reduced = global.matchMedia && global.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    document.body.classList.add('mode-screen-active');
     page.classList.add('is-opening');
     options.setAttribute('tabindex', '-1');
     options.setAttribute('aria-hidden', 'true');
@@ -196,17 +198,28 @@
     var dragging = false;
     var moved = false;
     var suppressClick = false;
+    var activeCard = null;
+    var otherCard = null;
+    var activeMode = null;
+    var pullDirection = 0;
 
-    function clearInlineMotion() {
-      page.style.removeProperty('transition');
-      page.style.removeProperty('transform');
+    function clearCardMotion() {
       page.style.removeProperty('opacity');
+      stage.querySelectorAll('[data-planning-mode]').forEach(function(card) {
+        card.style.removeProperty('transition');
+        card.style.removeProperty('transform');
+        card.style.removeProperty('opacity');
+        card.style.removeProperty('z-index');
+        card.classList.remove('is-dragging');
+      });
     }
-    function returnToCenter() {
-      page.style.transition = 'transform .2s cubic-bezier(.22,.7,.25,1),opacity .16s linear';
-      page.style.transform = 'translate3d(0,0,0)';
+    function returnCard() {
+      if (!activeCard) return;
+      activeCard.style.transition = 'transform .2s cubic-bezier(.22,.7,.25,1)';
+      activeCard.style.transform = 'translate3d(0,0,0)';
+      if (otherCard) { otherCard.style.transition = 'opacity .16s linear'; otherCard.style.opacity = '1'; }
       page.style.opacity = '1';
-      modeWorkflowTimers.push(global.setTimeout(clearInlineMotion, 210));
+      modeWorkflowTimers.push(global.setTimeout(clearCardMotion, 210));
     }
     function finishPull(event, cancelled) {
       if (!dragging || event.pointerId !== stage.__modePointerId) return;
@@ -214,25 +227,31 @@
       stage.classList.remove('is-pulling');
       if (stage.hasPointerCapture && stage.hasPointerCapture(event.pointerId)) stage.releasePointerCapture(event.pointerId);
       var width = Math.max(stage.clientWidth, 1);
-      var dx = event.clientX - startX;
-      var commit = !cancelled && (Math.abs(dx) >= width * 0.2 || Math.abs(velocity) > 0.45);
+      var rawDx = event.clientX - startX;
+      var allowedDistance = Math.max(0, rawDx * pullDirection);
+      var commit = !cancelled && (allowedDistance >= width * 0.28 || velocity * pullDirection > 0.45);
       if (!commit) {
         suppressClick = moved;
-        returnToCenter();
+        returnCard();
         modeWorkflowTimers.push(global.setTimeout(function(){ suppressClick = false; moved = false; }, 260));
         return;
       }
       suppressClick = true;
-      var mode = dx < 0 ? 'quick' : 'full';
-      var button = stage.querySelector('[data-planning-mode="' + mode + '"]');
-      page.style.transition = 'transform .24s cubic-bezier(.22,.7,.25,1),opacity .18s linear';
-      page.style.transform = 'translate3d(' + (mode === 'quick' ? '-100vw' : '100vw') + ',0,0)';
+      activeCard.style.transition = 'transform .24s cubic-bezier(.22,.7,.25,1)';
+      activeCard.style.transform = 'translate3d(' + (pullDirection * width * 0.56).toFixed(2) + 'px,0,0)';
+      if (otherCard) { otherCard.style.transition = 'opacity .16s linear'; otherCard.style.opacity = '0'; }
       page.style.opacity = '0';
-      selectPlanningMode(mode, button, true);
+      selectPlanningMode(activeMode, activeCard, true);
     }
     function onPointerDown(event) {
       if (event.button != null && event.button !== 0) return;
-      clearInlineMotion();
+      var card = event.target.closest ? event.target.closest('[data-planning-mode]') : null;
+      if (!card) return;
+      clearCardMotion();
+      activeCard = card;
+      activeMode = card.dataset.planningMode;
+      pullDirection = activeMode === 'quick' ? 1 : -1;
+      otherCard = stage.querySelector('[data-planning-mode="' + (activeMode === 'quick' ? 'full' : 'quick') + '"]');
       dragging = true;
       moved = false;
       startX = lastX = event.clientX;
@@ -241,23 +260,29 @@
       stage.__modePointerId = event.pointerId;
       stage.setPointerCapture(event.pointerId);
       stage.classList.add('is-pulling');
+      activeCard.classList.add('is-dragging');
+      activeCard.style.zIndex = '5';
     }
     function onPointerMove(event) {
       if (!dragging || event.pointerId !== stage.__modePointerId) return;
       var width = Math.max(stage.clientWidth, 1);
-      var dx = Math.max(-width, Math.min(width, event.clientX - startX));
+      var rawDx = event.clientX - startX;
+      var allowedDistance = Math.min(width * 0.65, Math.max(0, rawDx * pullDirection));
+      var dx = allowedDistance * pullDirection;
       var now = event.timeStamp || global.performance.now();
       var elapsed = Math.max(now - lastTime, 1);
       velocity = (event.clientX - lastX) / elapsed;
       lastX = event.clientX;
       lastTime = now;
-      moved = moved || Math.abs(dx) > 4;
-      page.style.transform = 'translate3d(' + dx.toFixed(2) + 'px,0,0)';
-      page.style.opacity = (1 - (Math.abs(dx) / width) * 0.72).toFixed(3);
+      moved = moved || Math.abs(rawDx) > 4;
+      var progress = Math.min(1, allowedDistance / (width * 0.42));
+      activeCard.style.transform = 'translate3d(' + dx.toFixed(2) + 'px,0,0)';
+      if (otherCard) otherCard.style.opacity = (1 - progress * 0.52).toFixed(3);
+      page.style.opacity = (1 - progress * 0.24).toFixed(3);
       if (moved) event.preventDefault();
     }
     function onClickCapture(event) {
-      if (!suppressClick && !moved) { clearInlineMotion(); return; }
+      if (!suppressClick && !moved) { clearCardMotion(); return; }
       event.preventDefault();
       event.stopImmediatePropagation();
       suppressClick = false;
