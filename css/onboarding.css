@@ -39,6 +39,37 @@ button:disabled{cursor:wait;opacity:.72}
 .splash-skip{min-width:64px;min-height:44px;padding:10px 16px!important}
 .left-pull-edge,.left-peel,.pull-rope,.page-hook,.night-reveal{display:none!important}
 
+/* Slim, rounded coaster artwork with compositor-only per-car movement. */
+.coaster-stage .track-shadow{stroke-width:18!important;stroke:#e2e8f0!important}
+.coaster-stage .track-main{stroke-width:9!important}
+.coaster-stage .track-rail{stroke-width:3.5!important}
+.coaster-train.rebuilt-train .train-car,
+.coaster-train.articulated-train .train-car{
+  width:26px!important;
+  height:16px!important;
+  border:1.5px solid rgba(255,255,255,.96)!important;
+  border-radius:12px 13px 8px 8px!important;
+  box-shadow:0 3px 7px rgba(20,42,102,.2)!important;
+  transform-origin:50% 50%!important;
+  backface-visibility:hidden;
+  contain:layout paint style;
+  will-change:transform;
+}
+.coaster-train.rebuilt-train .train-car:before,
+.coaster-train.articulated-train .train-car:before{inset:3px 5px auto!important;height:3px!important;border-radius:999px!important}
+.coaster-train.rebuilt-train .train-car b,
+.coaster-train.rebuilt-train .train-car em,
+.coaster-train.articulated-train .train-car b,
+.coaster-train.articulated-train .train-car em{display:none!important}
+.coaster-train.rebuilt-train .train-car span,
+.coaster-train.articulated-train .train-car span{top:-6px!important;left:9px!important;width:6px!important;height:6px!important;border-width:1px!important}
+.coaster-train.rebuilt-train .train-car i,
+.coaster-train.articulated-train .train-car i{bottom:-4px!important;width:5px!important;height:5px!important}
+.coaster-train.rebuilt-train .train-car i:first-of-type,
+.coaster-train.articulated-train .train-car i:first-of-type{left:4px!important}
+.coaster-train.rebuilt-train .train-car i:last-of-type,
+.coaster-train.articulated-train .train-car i:last-of-type{right:4px!important}
+
 /* Planning-first catalog shell */
 .catalog-page{
   min-height:100dvh;

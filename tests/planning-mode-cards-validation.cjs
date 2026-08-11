@@ -12,9 +12,9 @@ assert.match(navigation, /Pull right to select[\s\S]*Pull left to select/, 'each
 assert.doesNotMatch(navigation, /mode-card-preview/, 'the old Nearby, Live, Priority, and Balanced detail blocks must remain removed');
 assert.doesNotMatch(navigation, /mode-screen-divider|mode-screen-cart/, 'the squiggly divider and decorative cart must remain removed');
 assert.doesNotMatch(navigation, /data-mode-swipe|modeTextOpacities|ResizeObserver/, 'the width-compressing carousel must remain removed');
-assert.match(navigation, /sessionStorage\.getItem\('rideheroModeQuestionShown'\)[\s\S]*sessionStorage\.setItem\('rideheroModeQuestionShown', '1'\)/, 'the planning question timing must distinguish the first session view from later returns');
-assert.match(navigation, /questionHoldDuration = firstQuestionThisSession \? 3000 : 1000/, 'the first planning question must last three seconds and later views one second');
-assert.match(navigation, /setTimeout\(revealOptions, questionHoldDuration \+ 380\)/, 'both question timings must retain the existing 380ms fade');
+assert.doesNotMatch(navigation, /rideheroModeQuestionShown|firstQuestionThisSession/, 'question timing must not vary between visits');
+assert.match(navigation, /questionHoldDuration = 2000/, 'every planning question view must remain readable for two seconds');
+assert.match(navigation, /setTimeout\(revealOptions, questionHoldDuration \+ 380\)/, 'every question view must retain the existing 380ms fade');
 assert.match(navigation, /options\.inert = true[\s\S]*options\.inert = false/, 'hidden options must remain inaccessible until revealed');
 assert.match(navigation, /pointerdown[\s\S]*pointermove[\s\S]*pointerup[\s\S]*pointercancel/, 'the planning cards must support a complete reversible pull gesture');
 assert.match(navigation, /pullDirection = activeMode === 'quick' \? 1 : -1/, 'Quick must pull right and Maximize My Day must pull left');

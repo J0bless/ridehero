@@ -6058,7 +6058,7 @@ function animateSplashTrain() {
   var rideDuration = 1981;
   var pullAwayDuration = 519;
   var totalDuration = rideDuration + pullAwayDuration;
-  var carGap = 32;
+  var carGap = 27;
   var startTs = null;
 
   // Start the page pull earlier while cars remain rail-locked.
@@ -6066,70 +6066,52 @@ function animateSplashTrain() {
   var maxPrePull = Math.min(92, window.innerWidth * 0.22);
 
   function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
-  function mix(a,b,t){ return a + (b-a)*t; }
   function easeInOutSine(t){ return -(Math.cos(Math.PI * t) - 1) / 2; }
   function easeOutCubic(t){ return 1 - Math.pow(1 - t, 3); }
   function easeOutQuart(t){ return 1 - Math.pow(1 - t, 4); }
 
   function progressProfile(t) {
-    t = clamp(t,0,1);
-
-    // Approach
-    if (t < 0.16) {
-      return mix(0, 0.23, easeInOutSine(t / 0.16));
-    }
-
-    // Loop climb / top arc
-    if (t < 0.57) {
-      var u1 = (t - 0.16) / 0.41;
-      return mix(0.23, 0.64, easeInOutSine(u1));
-    }
-
-    // Exit arc
-    if (t < 0.80) {
-      var u2 = (t - 0.57) / 0.23;
-      return mix(0.64, 0.82, easeOutCubic(u2));
-    }
-
-    // Final rail run, ending exactly on the track path.
-    var u3 = (t - 0.80) / 0.20;
-    return mix(0.82, 1, easeInOutSine(u3));
+    // One continuous velocity curve avoids acceleration jumps between path sections.
+    return easeInOutSine(clamp(t,0,1));
   }
+
+  // Resolve the SVG's default xMidYMid meet transform once. Both the SVG and
+  // cars live inside the same stage, so page movement does not invalidate it.
+  var svg = path.ownerSVGElement;
+  var viewBox = svg && svg.viewBox ? svg.viewBox.baseVal : null;
+  var stageWidth = stage.clientWidth;
+  var stageHeight = stage.clientHeight;
+  var viewWidth = viewBox && viewBox.width ? viewBox.width : stageWidth;
+  var viewHeight = viewBox && viewBox.height ? viewBox.height : stageHeight;
+  var viewX = viewBox ? viewBox.x : 0;
+  var viewY = viewBox ? viewBox.y : 0;
+  var svgScale = Math.min(stageWidth / viewWidth, stageHeight / viewHeight);
+  var svgOffsetX = (stageWidth - viewWidth * svgScale) / 2 - viewX * svgScale;
+  var svgOffsetY = (stageHeight - viewHeight * svgScale) / 2 - viewY * svgScale;
+  var carAnchors = cars.map(function(car) {
+    return { x: car.offsetWidth / 2, y: car.offsetHeight / 2 };
+  });
 
   function pointAtDistance(d) {
     d = clamp(d, 0, pathLen);
     var p = path.getPointAtLength(d);
-    var p2 = path.getPointAtLength(clamp(d + 1.6, 0, pathLen));
-    var svg = path.ownerSVGElement;
-    var matrix = svg && svg.getScreenCTM ? svg.getScreenCTM() : null;
-    var stageRect = stage.getBoundingClientRect();
-    if (matrix && window.DOMPoint) {
-      var screenP = new DOMPoint(p.x, p.y).matrixTransform(matrix);
-      var screenP2 = new DOMPoint(p2.x, p2.y).matrixTransform(matrix);
-      return {
-        x:screenP.x - stageRect.left,
-        y:screenP.y - stageRect.top,
-        angle:Math.atan2(screenP2.y - screenP.y, screenP2.x - screenP.x) * 180 / Math.PI
-      };
-    }
+    var tangentStart = path.getPointAtLength(clamp(d - 2.5, 0, pathLen));
+    var tangentEnd = path.getPointAtLength(clamp(d + 2.5, 0, pathLen));
     return {
-      x:p.x,
-      y:p.y,
-      angle:Math.atan2(p2.y - p.y, p2.x - p.x) * 180 / Math.PI
+      x:svgOffsetX + p.x * svgScale,
+      y:svgOffsetY + p.y * svgScale,
+      angle:Math.atan2(tangentEnd.y - tangentStart.y, tangentEnd.x - tangentStart.x) * 180 / Math.PI
     };
   }
 
-  function renderCar(car, p) {
-    // Center each car's actual border box on the rendered SVG rail point.
-    var anchorX = car.offsetWidth / 2;
-    var anchorY = car.offsetHeight / 2;
-    car.style.transform = 'translate(' + (p.x - anchorX) + 'px,' + (p.y - anchorY) + 'px) rotate(' + p.angle + 'deg)';
+  function renderCar(car, p, anchor) {
+    car.style.transform = 'translate3d(' + (p.x - anchor.x) + 'px,' + (p.y - anchor.y) + 'px,0) rotate(' + p.angle + 'deg)';
   }
 
   function renderTrain(leadD) {
     cars.forEach(function(car, i){
       var p = pointAtDistance(leadD - i * carGap);
-      renderCar(car, p);
+      renderCar(car, p, carAnchors[i]);
     });
   }
 
@@ -6177,7 +6159,7 @@ function animateSplashTrain() {
           x: p.x,
           y: p.y,
           angle: p.angle
-        });
+        }, carAnchors[i]);
       });
       hidePullArtifacts();
     } else {
