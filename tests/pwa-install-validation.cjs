@@ -8,6 +8,8 @@ const manifest = JSON.parse(fs.readFileSync(path.join(root, 'manifest.webmanifes
 const worker = fs.readFileSync(path.join(root, 'service-worker.js'), 'utf8');
 const install = fs.readFileSync(path.join(root, 'js', 'pwa-install.js'), 'utf8');
 const css = fs.readFileSync(path.join(root, 'css', 'onboarding.css'), 'utf8');
+const multiResortCss = fs.readFileSync(path.join(root, 'css', 'multi-resort.css'), 'utf8');
+const appThemeSource = html + css + multiResortCss;
 
 assert.match(html, /rel="manifest" href="manifest\.webmanifest"/);
 assert.match(html, /rel="apple-touch-icon" sizes="180x180" href="icons\/ridehero-180\.png"/);
@@ -32,7 +34,7 @@ manifest.icons.forEach(function(icon) {
 const appleTouchIcon = fs.readFileSync(path.join(root, 'icons', 'ridehero-180.png'));
 assert.equal(appleTouchIcon.readUInt32BE(16), 180, 'incorrect Apple touch icon width');
 assert.equal(appleTouchIcon.readUInt32BE(20), 180, 'incorrect Apple touch icon height');
-assert.match(worker, /const CACHE_NAME = 'ridehero-shell-v3'/);
+assert.match(worker, /const CACHE_NAME = 'ridehero-shell-v4'/);
 assert.match(worker, /\.\/icons\/ridehero-180\.png/);
 assert.match(worker, /request\.mode === 'navigate'[\s\S]*networkFirst/);
 assert.match(worker, /css\|js\|webmanifest[\s\S]*networkFirst/, 'version-sensitive app code must update from the network before using cache');
@@ -43,6 +45,9 @@ assert.match(install, /appinstalled/);
 assert.match(install, /Add to Home Screen/);
 ['#DDDCE7', '#1C203B', '#40466B', '#9F364C', '#C3755D', '#5B7B62', '#5F709A'].forEach(function(color) {
   assert.ok(css.includes(color), 'missing shared RideHero palette color ' + color);
+});
+['#185FA5', '#14517A', '#245DF5', '#0B3D91', '#0B7AD1', '#D8242A', '#FF3B30'].forEach(function(color) {
+  assert.ok(!appThemeSource.toUpperCase().includes(color), 'legacy bright red/blue color remains ' + color);
 });
 assert.match(css, /body\.mode-quick,body\.mode-strategic\{[\s\S]*--mode-primary:var\(--rh-vintage-blue\)!important/, 'both planning modes must inherit one shared visual palette');
 assert.doesNotMatch(css, /body\.mode-quick \.route-hero/, 'Quick Route must not remap the route UI to a separate red theme');

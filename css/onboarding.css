@@ -141,9 +141,9 @@ button:disabled{cursor:wait;opacity:.72}
 .catalog-card strong,.catalog-card small,.catalog-card em{display:block;overflow-wrap:normal;word-break:normal}
 .catalog-card strong{font-size:clamp(17px,2.8vw,20px);line-height:1.18;letter-spacing:-.02em}
 .catalog-card small{margin-top:6px;color:var(--rh-text-muted);font-size:13px;line-height:1.38}
-.catalog-card em{margin-top:7px;color:#49678f;font-size:11px;font-style:normal;font-weight:800;line-height:1.4}
+.catalog-card em{margin-top:7px;color:#5F709A;font-size:11px;font-style:normal;font-weight:800;line-height:1.4}
 .catalog-card-icon{width:52px;height:52px;flex:0 0 52px;border-radius:18px;display:grid;place-items:center;background:color-mix(in srgb,var(--catalog-accent) 13%,white);color:var(--catalog-accent);font-size:21px;font-weight:950}
-.catalog-card-arrow{flex:none;color:#8090aa;font-size:28px;line-height:1}
+.catalog-card-arrow{flex:none;color:#5F709A;font-size:28px;line-height:1}
 .park-catalog-dot{width:11px;height:64px;flex:0 0 11px;border-radius:99px;background:var(--catalog-accent)}
 .park-card-status{display:flex!important;flex-wrap:wrap;gap:5px 10px}
 .park-card-status span{position:relative;padding-left:10px;color:var(--rh-text-muted)}
@@ -225,7 +225,7 @@ body.mode-choice-made.mode-choice-full .mode-catalog-page{opacity:0;transform:tr
 .catalog-loading-spinner{width:28px;height:28px;flex:0 0 28px;border:3px solid #dce5f3;border-top-color:var(--rh-blue);border-radius:50%;animation:rhSpin .7s linear infinite}
 .catalog-primary{width:100%;min-height:52px;border:0;border-radius:var(--rh-radius-md);background:var(--rh-navy);color:#fff;font-size:15px;font-weight:950;cursor:pointer}
 .catalog-error{border:1px solid #f3b7bd;border-radius:var(--rh-radius-md);background:#F2E7EA;color:#9f1d2c;padding:14px;margin-bottom:14px}
-.catalog-debug-link{display:block;min-height:44px;margin:24px auto 0;border:0;background:transparent;color:#52709f;font-weight:850;cursor:pointer}
+.catalog-debug-link{display:block;min-height:44px;margin:24px auto 0;border:0;background:transparent;color:#5F709A;font-weight:850;cursor:pointer}
 
 /* Existing app shell, polished without adding empty navigation destinations. */
 .app-nav{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;padding:8px 14px calc(8px + env(safe-area-inset-bottom))!important;background:rgba(255,255,255,.96)!important;border-top:1px solid rgba(217,225,237,.9)!important;box-shadow:0 -10px 28px rgba(28,32,59,.08)!important;backdrop-filter:blur(18px)}
