@@ -22,5 +22,7 @@ assert.match(onboardingCss, /min-height:52px/, 'primary onboarding CTAs must rem
 assert.match(onboardingCss, /overflow-wrap:normal/, 'stable text must retain normal word wrapping');
 assert.match(onboardingCss, /overflow-x:hidden/, 'the refreshed shell must prevent horizontal overflow');
 assert.match(onboardingCss, /@media \(prefers-reduced-motion:reduce\)/, 'onboarding motion must respect reduced-motion preferences');
+assert.match(onboardingCss, /\.brand-card-grid\{grid-template-columns:1fr;max-width:720px/, 'destination choices must use a clean single-column card list');
+assert.match(onboardingCss, /\.brand-card \.catalog-card-icon\{width:54px;height:54px;flex-basis:54px;border-radius:18px/, 'destination letter tiles must use consistent clean geometry');
 
 console.log('Responsive contract validation passed for 320/360/390/430px, tablet, and desktop CSS breakpoints.');
