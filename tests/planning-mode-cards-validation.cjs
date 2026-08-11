@@ -12,8 +12,9 @@ assert.match(navigation, /Pull right to select[\s\S]*Pull left to select/, 'each
 assert.doesNotMatch(navigation, /mode-card-preview/, 'the old Nearby, Live, Priority, and Balanced detail blocks must remain removed');
 assert.doesNotMatch(navigation, /mode-screen-divider|mode-screen-cart/, 'the squiggly divider and decorative cart must remain removed');
 assert.doesNotMatch(navigation, /data-mode-swipe|modeTextOpacities|ResizeObserver/, 'the width-compressing carousel must remain removed');
-assert.match(navigation, /is-burning'[\s\S]*}, 1000\)/, 'the opening question must remain fully readable for one second');
-assert.match(navigation, /setTimeout\(revealOptions, 1380\)/, 'the options must appear after the one-second hold and existing 380ms fade');
+assert.match(navigation, /sessionStorage\.getItem\('rideheroModeQuestionShown'\)[\s\S]*sessionStorage\.setItem\('rideheroModeQuestionShown', '1'\)/, 'the planning question timing must distinguish the first session view from later returns');
+assert.match(navigation, /questionHoldDuration = firstQuestionThisSession \? 3000 : 1000/, 'the first planning question must last three seconds and later views one second');
+assert.match(navigation, /setTimeout\(revealOptions, questionHoldDuration \+ 380\)/, 'both question timings must retain the existing 380ms fade');
 assert.match(navigation, /options\.inert = true[\s\S]*options\.inert = false/, 'hidden options must remain inaccessible until revealed');
 assert.match(navigation, /pointerdown[\s\S]*pointermove[\s\S]*pointerup[\s\S]*pointercancel/, 'the planning cards must support a complete reversible pull gesture');
 assert.match(navigation, /pullDirection = activeMode === 'quick' \? 1 : -1/, 'Quick must pull right and Maximize My Day must pull left');
@@ -26,8 +27,10 @@ assert.match(navigation, /document\.body\.classList\.remove\('mode-screen-active
 assert.match(css, /\.mode-catalog-page\{[^}]*linear-gradient/, 'planning mode should use the reference-inspired soft backdrop');
 assert.match(css, /\.mode-card-grid\{[^}]*repeat\(2,minmax\(0,1fr\)\)/, 'wide layouts must show two balanced mode cards');
 assert.match(css, /@media \(max-width:700px\)[\s\S]*\.mode-card-grid\{grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/, 'mobile layouts must keep both planning options visible');
-assert.match(css, /\.mode-card\{[^}]*border-radius:34px[^}]*background:rgba\(255,255,255,.96\)/, 'mode cards must use clean white rounded surfaces');
+assert.match(css, /\.mode-card\{[^}]*border-radius:34px[^}]*background:var\(--mode-surface\)/, 'mode cards must use clean rounded mode-colored surfaces');
 assert.match(css, /\.mode-card\{[^}]*display:grid[^}]*grid-template-rows:auto minmax\(0,1fr\) auto auto/, 'both cards must share symmetrical content, cue, and action rows');
+assert.match(css, /\.mode-card-quick\{--mode-accent:var\(--rh-red\);--mode-ink:#9f1d2c;--mode-surface:#fff8f9/, 'Quick Route must use the red color system throughout its card');
+assert.match(css, /\.mode-card-full\{--mode-accent:var\(--rh-blue\);--mode-ink:var\(--rh-navy\);--mode-surface:#f7f9ff/, 'Full Plan must use the blue color system throughout its card');
 assert.match(css, /\.mode-card-kicker\{[^}]*min-height:2\.4em/, 'mode kickers must reserve matching vertical space');
 assert.match(css, /\.mode-card-copy strong\{[^}]*min-height:2\.04em/, 'mode titles must reserve matching two-line space');
 assert.match(css, /\.mode-card-pull-cue\{[^}]*display:flex/, 'direction instructions must use a stable, readable box');

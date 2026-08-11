@@ -5,6 +5,7 @@
   var loadingParkId = null;
   var modeWorkflowTimers = [];
   var modePullCleanup = null;
+  var modeQuestionShown = false;
   var recent = global.RideHeroState.get().recent || {};
   var appState = {
     planningMode: normalizePlanningMode(recent.planningMode),
@@ -169,6 +170,12 @@
     var options = page.querySelector('.catalog-content');
     var stage = page.querySelector('[data-mode-pull]');
     var reduced = global.matchMedia && global.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var firstQuestionThisSession = !modeQuestionShown;
+    try {
+      firstQuestionThisSession = global.sessionStorage.getItem('rideheroModeQuestionShown') !== '1';
+      global.sessionStorage.setItem('rideheroModeQuestionShown', '1');
+    } catch (error) {}
+    modeQuestionShown = true;
     document.body.classList.add('mode-screen-active');
     page.classList.add('is-opening');
     options.setAttribute('tabindex', '-1');
@@ -185,8 +192,9 @@
     }
 
     if (reduced) { revealOptions(); return; }
-    modeWorkflowTimers.push(global.setTimeout(function(){ page.classList.add('is-burning'); }, 1000));
-    modeWorkflowTimers.push(global.setTimeout(revealOptions, 1380));
+    var questionHoldDuration = firstQuestionThisSession ? 3000 : 1000;
+    modeWorkflowTimers.push(global.setTimeout(function(){ page.classList.add('is-burning'); }, questionHoldDuration));
+    modeWorkflowTimers.push(global.setTimeout(revealOptions, questionHoldDuration + 380));
   }
 
   function initModePull(page, stage) {
