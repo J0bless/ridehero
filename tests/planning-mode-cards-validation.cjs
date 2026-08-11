@@ -12,8 +12,8 @@ assert.match(navigation, /Pull right to select[\s\S]*Pull left to select/, 'each
 assert.doesNotMatch(navigation, /mode-card-preview/, 'the old Nearby, Live, Priority, and Balanced detail blocks must remain removed');
 assert.doesNotMatch(navigation, /mode-screen-divider|mode-screen-cart/, 'the squiggly divider and decorative cart must remain removed');
 assert.doesNotMatch(navigation, /data-mode-swipe|modeTextOpacities|ResizeObserver/, 'the width-compressing carousel must remain removed');
-assert.match(navigation, /is-burning'[\s\S]*}, 420\)/, 'the opening question must enter its burn phase after a short readable hold');
-assert.match(navigation, /setTimeout\(revealOptions, 800\)/, 'the opening question must reveal the options page on one concise timeline');
+assert.match(navigation, /is-burning'[\s\S]*}, 1000\)/, 'the opening question must remain fully readable for one second');
+assert.match(navigation, /setTimeout\(revealOptions, 1380\)/, 'the options must appear after the one-second hold and existing 380ms fade');
 assert.match(navigation, /options\.inert = true[\s\S]*options\.inert = false/, 'hidden options must remain inaccessible until revealed');
 assert.match(navigation, /pointerdown[\s\S]*pointermove[\s\S]*pointerup[\s\S]*pointercancel/, 'the planning cards must support a complete reversible pull gesture');
 assert.match(navigation, /pullDirection = activeMode === 'quick' \? 1 : -1/, 'Quick must pull right and Maximize My Day must pull left');
@@ -27,6 +27,9 @@ assert.match(css, /\.mode-catalog-page\{[^}]*linear-gradient/, 'planning mode sh
 assert.match(css, /\.mode-card-grid\{[^}]*repeat\(2,minmax\(0,1fr\)\)/, 'wide layouts must show two balanced mode cards');
 assert.match(css, /@media \(max-width:700px\)[\s\S]*\.mode-card-grid\{grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/, 'mobile layouts must keep both planning options visible');
 assert.match(css, /\.mode-card\{[^}]*border-radius:34px[^}]*background:rgba\(255,255,255,.96\)/, 'mode cards must use clean white rounded surfaces');
+assert.match(css, /\.mode-card\{[^}]*display:grid[^}]*grid-template-rows:auto minmax\(0,1fr\) auto auto/, 'both cards must share symmetrical content, cue, and action rows');
+assert.match(css, /\.mode-card-kicker\{[^}]*min-height:2\.4em/, 'mode kickers must reserve matching vertical space');
+assert.match(css, /\.mode-card-copy strong\{[^}]*min-height:2\.04em/, 'mode titles must reserve matching two-line space');
 assert.match(css, /\.mode-card-pull-cue\{[^}]*display:flex/, 'direction instructions must use a stable, readable box');
 assert.doesNotMatch(css, /mode-swipe-stage|mode-swipe-track|mode-progress-rail|mode-progress-cart|mode-switch-actions/, 'swipe-specific visual UI must remain removed');
 assert.doesNotMatch(css, /mode-screen-divider|mode-screen-cart|mode-card-preview/, 'obsolete divider, cart, and detail-block CSS must remain removed');
