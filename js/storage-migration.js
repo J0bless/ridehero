@@ -1,13 +1,15 @@
 (function(global) {
   'use strict';
   var KEY = 'rideheroState';
-  var VERSION = 3;
+  var VERSION = 4;
   function read() { try { return JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (error) { return null; } }
   function migrate() {
     var old = read() || {};
+    var recent = old.recent || { brandId: null, destinationId: null, parkId: old.parkId || null, planningMode: null };
+    if (recent.planningMode === 'strategic') recent.planningMode = 'full';
     var state = {
       version: VERSION,
-      recent: old.recent || { brandId: null, destinationId: null, parkId: old.parkId || null, planningMode: null },
+      recent: recent,
       preferencesByPark: old.preferencesByPark || {}
     };
     Object.keys(state.preferencesByPark).forEach(function(parkId) {
@@ -18,7 +20,7 @@
     });
     try {
       var legacyMode = localStorage.getItem('rideheroGuidanceMode');
-      if (!state.recent.planningMode && (legacyMode === 'quick' || legacyMode === 'strategic')) state.recent.planningMode = legacyMode;
+      if (!state.recent.planningMode && (legacyMode === 'quick' || legacyMode === 'strategic')) state.recent.planningMode = legacyMode === 'strategic' ? 'full' : 'quick';
       localStorage.setItem(KEY, JSON.stringify(state));
     } catch (error) {}
     return state;
