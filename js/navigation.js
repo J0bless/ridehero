@@ -173,10 +173,12 @@
     appState.parkId = null;
     rememberContext({ planningMode: mode });
     if (typeof applyGuidanceMode === 'function') applyGuidanceMode(legacyGuidanceMode());
+    document.body.classList.remove('mode-choice-quick', 'mode-choice-full');
+    document.body.classList.add(mode === 'full' ? 'mode-choice-full' : 'mode-choice-quick');
     document.body.classList.add('mode-choice-made');
     root.querySelectorAll('[data-planning-mode]').forEach(function(card){ card.classList.toggle('is-selected', card === button); card.disabled = true; });
     var reduced = global.matchMedia && global.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    global.setTimeout(function(){ document.body.classList.remove('mode-choice-made'); go(['brands']); }, reduced ? 0 : 240);
+    global.setTimeout(function(){ document.body.classList.remove('mode-choice-made', 'mode-choice-quick', 'mode-choice-full'); go(['brands']); }, reduced ? 0 : 240);
   }
 
   async function activatePark(parkId) {

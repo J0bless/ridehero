@@ -103,7 +103,7 @@ button:disabled{cursor:wait;opacity:.72}
 .catalog-section-label{margin:var(--rh-space-6) 2px var(--rh-space-3)}
 
 /* Planning mode cards */
-.mode-catalog-page{position:relative;isolation:isolate;background:radial-gradient(circle at 16% 24%,rgba(115,139,235,.2),transparent 28%),radial-gradient(circle at 88% 76%,rgba(229,57,74,.1),transparent 25%),linear-gradient(160deg,#e5eaff 0,#f0f3ff 48%,#f8f9fd 100%)}
+.mode-catalog-page{position:relative;isolation:isolate;background:radial-gradient(circle at 16% 24%,rgba(115,139,235,.2),transparent 28%),radial-gradient(circle at 88% 76%,rgba(229,57,74,.1),transparent 25%),linear-gradient(160deg,#e5eaff 0,#f0f3ff 48%,#f8f9fd 100%);transition:opacity .22s ease,transform .22s cubic-bezier(.22,.7,.25,1)}
 .mode-catalog-page:before,.mode-catalog-page:after{content:"";position:fixed;z-index:-1;border-radius:50%;filter:blur(1px);pointer-events:none}
 .mode-catalog-page:before{width:240px;height:240px;left:-92px;top:22%;background:rgba(47,86,179,.08)}
 .mode-catalog-page:after{width:190px;height:190px;right:-70px;bottom:14%;background:rgba(242,140,56,.09)}
@@ -133,6 +133,11 @@ button:disabled{cursor:wait;opacity:.72}
 .mode-card-preview small{margin-top:3px;color:var(--rh-text-muted);font-size:10px;line-height:1.25}
 .mode-card-cta{width:100%;min-height:54px;margin-top:auto;border-radius:18px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 17px;background:var(--mode-accent);color:#fff;font-size:14px;font-weight:950;box-shadow:0 10px 24px color-mix(in srgb,var(--mode-accent) 24%,transparent)}
 .mode-card-cta b{font-size:24px}
+/* Mode selection keeps the stable layout intact, then fades the text and page as one swipe-out. */
+.mode-card-top,.mode-card-copy,.mode-card-preview,.mode-card-cta{transition:opacity .14s linear}
+body.mode-choice-made .mode-card-top,body.mode-choice-made .mode-card-copy,body.mode-choice-made .mode-card-preview,body.mode-choice-made .mode-card-cta{opacity:0}
+body.mode-choice-made.mode-choice-quick .mode-catalog-page{opacity:0;transform:translate3d(-28px,0,0)}
+body.mode-choice-made.mode-choice-full .mode-catalog-page{opacity:0;transform:translate3d(28px,0,0)}
 
 .mode-context-card{padding:var(--rh-space-4);display:flex;align-items:center;gap:var(--rh-space-3)}
 .mode-context-icon{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:#eef3ff;color:var(--rh-blue);font-weight:950}
@@ -221,6 +226,7 @@ button:disabled{cursor:wait;opacity:.72}
 @media (prefers-reduced-motion:reduce){
   *,*:before,*:after{scroll-behavior:auto!important}
   .catalog-page,.catalog-card,.mode-card,.app-nav-btn{animation:none!important;transition:none!important}
+  .mode-card-top,.mode-card-copy,.mode-card-preview,.mode-card-cta{transition:none!important}
   .catalog-loading-spinner{animation-duration:1.4s}
   .splash-screen{display:none!important}
 }

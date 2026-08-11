@@ -18,5 +18,10 @@ assert.match(css, /\.mode-card\{[^}]*border-radius:34px[^}]*background:rgba\(255
 assert.match(css, /\.mode-card-preview\{[^}]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/, 'card information groups must use shrink-safe layout');
 assert.doesNotMatch(css, /mode-swipe-stage|mode-swipe-track|mode-progress-rail|mode-progress-cart|mode-switch-actions/, 'swipe-specific visual UI must remain removed');
 assert.doesNotMatch(css, /mode-card-copy[^}]*white-space:\s*nowrap|mode-card-copy[^}]*scaleX/, 'mode copy must use normal unsquashed wrapping');
+assert.match(navigation, /mode-choice-quick'[\s\S]*mode-choice-full'/, 'selection must set a directional page-swipe class');
+assert.match(css, /body\.mode-choice-made \.mode-card-top[\s\S]*opacity:0/, 'mode text and content must fade during selection');
+assert.match(css, /mode-choice-quick \.mode-catalog-page\{opacity:0;transform:translate3d\(-28px,0,0\)\}/, 'Quick selection must fade and swipe the page left');
+assert.match(css, /mode-choice-full \.mode-catalog-page\{opacity:0;transform:translate3d\(28px,0,0\)\}/, 'Full selection must fade and swipe the page right');
+assert.doesNotMatch(css, /mode-choice-made[^}]*width|mode-choice-made[^}]*scaleX/, 'the effect must not alter page or text width');
 
 console.log('Restored planning mode card UI validation passed.');
