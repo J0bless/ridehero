@@ -3,7 +3,6 @@
   var catalog = global.RIDEHERO_CATALOG;
   var root = document.getElementById('screen-setup');
   var loadingParkId = null;
-  var modeTransition = null;
   var recent = global.RideHeroState.get().recent || {};
   var appState = {
     planningMode: normalizePlanningMode(recent.planningMode),
@@ -45,24 +44,19 @@
 
   function modeCards() {
     var lastMode = normalizePlanningMode(recent.planningMode);
-    var initialProgress = lastMode === 'full' ? 1 : 0;
-    return '<div class="mode-selector" data-mode-selector>' +
-      '<div class="mode-swipe-stage" data-mode-swipe tabindex="0" role="group" aria-label="Planning mode. Use left and right arrow keys to compare modes." data-initial-progress="' + initialProgress + '">' +
-        '<div class="mode-swipe-track" data-mode-track>' +
-          '<article class="mode-card mode-card-quick mode-panel" data-mode-panel="quick">' +
-            '<div class="mode-card-inner" data-mode-copy="quick"><span class="mode-card-icon" aria-hidden="true">Q</span><span class="mode-card-copy"><span class="mode-card-kicker">Fast &amp; simple</span><strong>Quick Route</strong><span>Find the smartest nearby rides based on your location, current waits, and walking distance.</span></span><button class="mode-card-cta" type="button" data-planning-mode="quick">Plan a Quick Route <b aria-hidden="true">&rsaquo;</b></button></div>' +
-          '</article>' +
-          '<article class="mode-card mode-card-full mode-panel" data-mode-panel="full">' +
-            '<div class="mode-card-inner" data-mode-copy="full"><span class="mode-card-icon" aria-hidden="true">M</span><span class="mode-card-copy"><span class="mode-card-kicker">Intentional &amp; optimized</span><strong>Maximize My Day</strong><span>Build a full-day strategy balancing priority experiences, waits, walking, and timing.</span></span><button class="mode-card-cta" type="button" data-planning-mode="full">Maximize My Day <b aria-hidden="true">&rsaquo;</b></button></div>' +
-          '</article>' +
-        '</div>' +
-        '<div class="mode-progress-rail" data-mode-rail aria-hidden="true"><span class="mode-progress-cart"><i></i><i></i></span></div>' +
-      '</div>' +
-      '<div class="mode-switch-actions" role="group" aria-label="Compare planning modes">' +
-        '<button type="button" data-mode-target="quick">Quick Route</button>' +
-        '<button type="button" data-mode-target="full">Maximize My Day</button>' +
-      '</div>' +
-    '</div>';
+    return '<div class="mode-card-grid" aria-label="Planning modes">' +
+      '<button class="mode-card mode-card-quick' + (lastMode === 'quick' ? ' was-recent' : '') + '" type="button" data-planning-mode="quick">' +
+        '<span class="mode-card-top"><span class="mode-card-icon" aria-hidden="true">Q</span><span class="mode-card-badge">Rides only</span></span>' +
+        '<span class="mode-card-copy"><span class="mode-card-kicker">Fast &amp; simple</span><strong>Quick Route</strong><span>Find the smartest nearby rides based on your location, current waits, and walking distance.</span></span>' +
+        '<span class="mode-card-preview" aria-hidden="true"><span><b>Nearby</b><small>location-aware</small></span><span><b>Live</b><small>wait-aware</small></span></span>' +
+        '<span class="mode-card-cta">Plan a Quick Route <b aria-hidden="true">&rsaquo;</b></span>' +
+      '</button>' +
+      '<button class="mode-card mode-card-full' + (lastMode === 'full' ? ' was-recent' : '') + '" type="button" data-planning-mode="full">' +
+        '<span class="mode-card-top"><span class="mode-card-icon" aria-hidden="true">M</span><span class="mode-card-badge">Full-day plan</span></span>' +
+        '<span class="mode-card-copy"><span class="mode-card-kicker">Intentional &amp; optimized</span><strong>Maximize My Day</strong><span>Build a full-day strategy balancing priority experiences, waits, walking, and timing.</span></span>' +
+        '<span class="mode-card-preview" aria-hidden="true"><span><b>Priority</b><small>experience-led</small></span><span><b>Balanced</b><small>walk + waits</small></span></span>' +
+        '<span class="mode-card-cta">Maximize My Day <b aria-hidden="true">&rsaquo;</b></span>' +
+      '</button></div>';
   }
 
   function renderMode() {
@@ -149,7 +143,6 @@
       else { renderPark(found.brand, found.destination, found.park); parkToActivate = found.park.id; }
     } else renderMode();
     bind();
-    initModeTransition();
     var heading = root.querySelector('.catalog-heading');
     if (heading) heading.focus({ preventScroll: true });
     window.scrollTo(0, 0);
@@ -171,164 +164,6 @@
     root.querySelectorAll('[data-recent-park]').forEach(function(button){ button.onclick = function(){ var park = catalog.parks[button.dataset.recentPark]; var destination = catalog.destinations[park.destinationId]; var brand = catalog.brands[park.brandId]; go(['parks', brand.slug, destination.slug, park.slug]); }; });
   }
 
-  function clamp01(value) { return Math.max(0, Math.min(1, value)); }
-  function smoothRange(value, start, end) {
-    var t = clamp01((value - start) / (end - start));
-    return t * t * (3 - (2 * t));
-  }
-  function modeTextOpacities(value) {
-    var progress = clamp01(value);
-    return {
-      quick: 1 - smoothRange(progress, 0.14, 0.42),
-      full: smoothRange(progress, 0.58, 0.86)
-    };
-  }
-
-  function initModeTransition() {
-    if (modeTransition && modeTransition.destroy) modeTransition.destroy();
-    var stage = root.querySelector('[data-mode-swipe]');
-    if (!stage) { modeTransition = null; return; }
-    var track = stage.querySelector('[data-mode-track]');
-    var rail = stage.querySelector('[data-mode-rail]');
-    var quickPanel = stage.querySelector('[data-mode-panel="quick"]');
-    var fullPanel = stage.querySelector('[data-mode-panel="full"]');
-    var quickInner = stage.querySelector('[data-mode-copy="quick"]');
-    var fullInner = stage.querySelector('[data-mode-copy="full"]');
-    var targetButtons = root.querySelectorAll('[data-mode-target]');
-    var progress = Number(stage.dataset.initialProgress) || 0;
-    var settledMode = progress >= 0.5 ? 'full' : 'quick';
-    var dragging = false;
-    var moved = false;
-    var startX = 0;
-    var startProgress = progress;
-    var lastX = 0;
-    var lastTime = 0;
-    var velocity = 0;
-    var frame = 0;
-    var resizeObserver = null;
-    var reducedMotion = global.matchMedia && global.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    function setFocusable(panel, enabled) {
-      panel.querySelectorAll('button,a,input,select,textarea,[tabindex]').forEach(function(control) {
-        if (enabled) control.removeAttribute('tabindex'); else control.setAttribute('tabindex', '-1');
-      });
-      panel.inert = !enabled;
-      panel.setAttribute('aria-hidden', enabled ? 'false' : 'true');
-    }
-
-    function settleAccessibility(mode) {
-      settledMode = mode;
-      var quickActive = mode === 'quick';
-      quickPanel.classList.toggle('is-active', quickActive);
-      fullPanel.classList.toggle('is-active', !quickActive);
-      setFocusable(quickPanel, quickActive);
-      setFocusable(fullPanel, !quickActive);
-      targetButtons.forEach(function(button) {
-        var active = button.dataset.modeTarget === mode;
-        button.classList.toggle('is-active', active);
-        button.setAttribute('aria-pressed', active ? 'true' : 'false');
-      });
-    }
-
-    function applyProgress(nextProgress, isSettled) {
-      progress = clamp01(nextProgress);
-      var opacities = modeTextOpacities(progress);
-      var quickOpacity = opacities.quick;
-      var fullOpacity = opacities.full;
-      stage.style.setProperty('--mode-progress', progress.toFixed(4));
-      track.style.transform = 'translate3d(' + (-50 * progress).toFixed(4) + '%,0,0)';
-      var stageWidth = stage.getBoundingClientRect ? stage.getBoundingClientRect().width : stage.clientWidth;
-      rail.style.transform = 'translate3d(' + ((Math.max(stageWidth, 1) * (1 - progress)) - 3).toFixed(2) + 'px,0,0)';
-      quickInner.style.opacity = quickOpacity.toFixed(4);
-      fullInner.style.opacity = fullOpacity.toFixed(4);
-      quickInner.style.pointerEvents = quickOpacity < 0.5 ? 'none' : '';
-      fullInner.style.pointerEvents = fullOpacity < 0.5 ? 'none' : '';
-      if (isSettled) settleAccessibility(progress >= 0.5 ? 'full' : 'quick');
-      else {
-        quickPanel.classList.remove('is-active');
-        fullPanel.classList.remove('is-active');
-        setFocusable(quickPanel, false);
-        setFocusable(fullPanel, false);
-      }
-    }
-
-    function animateTo(target, done) {
-      target = clamp01(target);
-      if (frame) global.cancelAnimationFrame(frame);
-      var from = progress;
-      var distance = Math.abs(target - from);
-      if (reducedMotion || distance < 0.001) {
-        applyProgress(target, true);
-        if (done) done();
-        return;
-      }
-      var started = null;
-      var duration = 180 + (distance * 90);
-      function step(time) {
-        if (started == null) started = time;
-        var t = clamp01((time - started) / duration);
-        var eased = 1 - Math.pow(1 - t, 3);
-        applyProgress(from + ((target - from) * eased), t === 1);
-        if (t < 1) frame = global.requestAnimationFrame(step);
-        else { frame = 0; if (done) done(); }
-      }
-      frame = global.requestAnimationFrame(step);
-    }
-
-    function finishDrag(event) {
-      if (!dragging || event.pointerId !== stage.__modePointerId) return;
-      dragging = false;
-      stage.classList.remove('is-dragging');
-      if (stage.hasPointerCapture && stage.hasPointerCapture(event.pointerId)) stage.releasePointerCapture(event.pointerId);
-      var tappedPanel = !moved && event.target.closest ? event.target.closest('[data-mode-panel]') : null;
-      var target = tappedPanel ? (tappedPanel.dataset.modePanel === 'full' ? 1 : 0) : (Math.abs(velocity) > 0.35 ? (velocity < 0 ? 1 : 0) : (progress >= 0.5 ? 1 : 0));
-      animateTo(target);
-    }
-
-    stage.addEventListener('pointerdown', function(event) {
-      if (event.button != null && event.button !== 0) return;
-      if (event.target.closest && event.target.closest('button')) return;
-      if (frame) { global.cancelAnimationFrame(frame); frame = 0; }
-      dragging = true;
-      moved = false;
-      startX = lastX = event.clientX;
-      startProgress = progress;
-      lastTime = event.timeStamp || performance.now();
-      velocity = 0;
-      stage.__modePointerId = event.pointerId;
-      stage.setPointerCapture(event.pointerId);
-      stage.classList.add('is-dragging');
-    });
-    stage.addEventListener('pointermove', function(event) {
-      if (!dragging || event.pointerId !== stage.__modePointerId) return;
-      var width = Math.max(stage.clientWidth, 1);
-      var dx = event.clientX - startX;
-      var now = event.timeStamp || performance.now();
-      var elapsed = Math.max(now - lastTime, 1);
-      velocity = (event.clientX - lastX) / elapsed;
-      lastX = event.clientX;
-      lastTime = now;
-      moved = moved || Math.abs(dx) > 4;
-      applyProgress(startProgress - (dx / width), false);
-      if (moved) event.preventDefault();
-    });
-    stage.addEventListener('pointerup', finishDrag);
-    stage.addEventListener('pointercancel', finishDrag);
-    stage.addEventListener('keydown', function(event) {
-      if (event.key === 'ArrowLeft' || event.key === 'Home') { event.preventDefault(); animateTo(0); }
-      else if (event.key === 'ArrowRight' || event.key === 'End') { event.preventDefault(); animateTo(1); }
-    });
-    targetButtons.forEach(function(button) {
-      button.onclick = function() { animateTo(button.dataset.modeTarget === 'full' ? 1 : 0); };
-    });
-    applyProgress(progress, true);
-    if (global.ResizeObserver) {
-      resizeObserver = new global.ResizeObserver(function(){ applyProgress(progress, !dragging && !frame); });
-      resizeObserver.observe(stage);
-    }
-    modeTransition = { applyProgress: applyProgress, animateTo: animateTo, getProgress: function(){ return progress; }, getMode: function(){ return settledMode; }, destroy: function(){ if (frame) global.cancelAnimationFrame(frame); if (resizeObserver) resizeObserver.disconnect(); } };
-  }
-
   function selectPlanningMode(mode, button) {
     mode = normalizePlanningMode(mode);
     if (!mode) return;
@@ -341,9 +176,7 @@
     document.body.classList.add('mode-choice-made');
     root.querySelectorAll('[data-planning-mode]').forEach(function(card){ card.classList.toggle('is-selected', card === button); card.disabled = true; });
     var reduced = global.matchMedia && global.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    var target = mode === 'full' ? 1 : 0;
-    if (modeTransition) modeTransition.animateTo(target, function(){ global.setTimeout(function(){ document.body.classList.remove('mode-choice-made'); go(['brands']); }, reduced ? 0 : 120); });
-    else global.setTimeout(function(){ document.body.classList.remove('mode-choice-made'); go(['brands']); }, reduced ? 0 : 240);
+    global.setTimeout(function(){ document.body.classList.remove('mode-choice-made'); go(['brands']); }, reduced ? 0 : 240);
   }
 
   async function activatePark(parkId) {
@@ -427,7 +260,7 @@
   function goHome() { showScreen('setup'); go(appState.planningMode ? ['brands'] : ['mode']); }
   function activeScreenIdSafe() { return typeof activeScreenId === 'function' ? activeScreenId() : ''; }
   global.RideHeroAppState = appState;
-  global.RideHeroMultiResort = { render: render, choosePark: activatePark, selectPlanningMode: selectPlanningMode, goHome: goHome, changePark: openParkSwitcher, changeMode: function(){ showScreen('setup'); go(['mode']); }, updateChangeParkAction: updateContextActions, getState: function(){ return Object.assign({}, appState); }, getModeTextOpacities: modeTextOpacities };
+  global.RideHeroMultiResort = { render: render, choosePark: activatePark, selectPlanningMode: selectPlanningMode, goHome: goHome, changePark: openParkSwitcher, changeMode: function(){ showScreen('setup'); go(['mode']); }, updateChangeParkAction: updateContextActions, getState: function(){ return Object.assign({}, appState); } };
   global.addEventListener('hashchange', render);
   if (!location.hash || location.hash === '#/' || location.hash === '#') go(['mode'], true); else render();
 })(window);

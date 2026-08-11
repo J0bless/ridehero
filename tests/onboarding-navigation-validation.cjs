@@ -80,6 +80,8 @@ navigation.render();
 assert.match(root.innerHTML, /How should we guide your day\?/);
 assert.match(root.innerHTML, /Plan a Quick Route/);
 assert.match(root.innerHTML, /Maximize My Day/);
+assert.match(root.innerHTML, /mode-card-grid/);
+assert.doesNotMatch(root.innerHTML, /data-mode-swipe|mode-progress-rail/, 'the planning screen must use direct cards rather than the swipe carousel');
 assert.doesNotMatch(root.innerHTML, /data-brand=/, 'brands must not appear before mode selection');
 
 navigation.selectPlanningMode('quick');
