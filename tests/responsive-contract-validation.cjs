@@ -22,8 +22,10 @@ assert.match(onboardingCss, /min-height:52px/, 'primary onboarding CTAs must rem
 assert.match(onboardingCss, /overflow-wrap:normal/, 'stable text must retain normal word wrapping');
 assert.match(onboardingCss, /overflow-x:hidden/, 'the refreshed shell must prevent horizontal overflow');
 assert.match(onboardingCss, /@media \(prefers-reduced-motion:reduce\)/, 'onboarding motion must respect reduced-motion preferences');
-assert.match(onboardingCss, /\.brand-card-grid\{grid-template-columns:1fr;max-width:720px/, 'destination choices must use a clean single-column card list');
-assert.match(onboardingCss, /\.brand-card \.catalog-card-icon\{width:54px;height:54px;flex-basis:54px;border-radius:18px/, 'destination letter tiles must use consistent clean geometry');
+assert.match(onboardingCss, /\.catalog-view-brands \.brand-card-grid\{grid-template-columns:repeat\(3,minmax\(0,1fr\)\);max-width:none/, 'the destination dashboard must show three compact visual cards without horizontal scrolling');
+assert.match(onboardingCss, /\.brand-card-visual \.catalog-card-icon\{[^}]*width:50px;height:50px[^}]*border-radius:50%/, 'destination letter tiles must use compact circular geometry');
+assert.match(onboardingCss, /@media \(max-width:330px\)[\s\S]*\.catalog-view-brands \.brand-card-grid\{gap:6px\}/, '320px screens must receive explicit compact destination-card spacing');
+assert.match(onboardingCss, /\.app-nav\{left:12px!important;right:12px!important;bottom:8px!important[^}]*border-radius:28px!important/, 'the shared Home and Route navigation must use the floating native-app shell');
 assert.match(onboardingCss, /\.catalog-heading\[tabindex="-1"\]:focus[^}]*outline:0!important;box-shadow:none!important/, 'page headings must not render grey focus boundaries');
 assert.match(onboardingCss, /\.mode-catalog-page \.catalog-heading\{[^}]*align-items:center[^}]*text-align:center/, 'the planning-mode question must be centered');
 

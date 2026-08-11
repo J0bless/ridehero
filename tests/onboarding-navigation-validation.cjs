@@ -92,6 +92,11 @@ navigation.render();
 assert.match(root.innerHTML, /Where are you going\?/);
 assert.match(root.innerHTML, />Destinations</, 'the selector must use the user-facing Destinations label');
 assert.doesNotMatch(root.innerHTML, />Brands</, 'the old Brands label must be removed from the user interface');
+assert.match(root.innerHTML, /catalog-view-brands/, 'the destination landing page must use the dashboard theme');
+assert.match(root.innerHTML, /journey-hero-card/, 'the selected planning mode must be carried in a prominent journey card');
+assert.match(root.innerHTML, /<small>Next step<\/small><strong>Choose a destination<\/strong>/, 'a new journey card must show the real next step without fake progress');
+assert.match(root.innerHTML, /catalog-health-card/, 'park data health must remain available as a real dashboard action');
+assert.doesNotMatch(root.innerHTML, /2 of 6|Est\. Finish|Next Up|In Progress/i, 'the dashboard must not fabricate route progress or timing');
 assert.match(root.innerHTML, /data-brand="disney"/);
 assert.match(root.innerHTML, /data-brand="universal"/);
 assert.match(root.innerHTML, /data-brand="six-flags"/);
@@ -100,16 +105,23 @@ location.hash = '#/parks/disney';
 navigation.render();
 assert.match(root.innerHTML, /Choose a Disney destination/);
 assert.match(root.innerHTML, /Walt Disney World Resort/);
+assert.match(root.innerHTML, /catalog-view-destinations/);
 location.hash = '#/parks/disney/walt-disney-world';
 navigation.render();
 assert.match(root.innerHTML, /Choose your park/);
 assert.match(root.innerHTML, /Magic Kingdom/);
+assert.match(root.innerHTML, /catalog-view-parks/);
 
 (async function() {
   await navigation.choosePark('mk');
   assert.equal(quickCalls, 1, 'Quick selection must open the existing Quick route flow');
   assert.equal(fullCalls, 0);
   assert.equal(recent.planningMode, 'quick');
+  location.hash = '#/brands';
+  navigation.render();
+  assert.match(root.innerHTML, /journey-resume/, 'returning users must receive a real resume action');
+  assert.match(root.innerHTML, /Magic Kingdom/, 'the resume action must use the persisted recent park');
+  assert.doesNotMatch(root.innerHTML, /2 of 6|Est\. Finish|Next Up|In Progress/i, 'the recent-park card must not invent route progress');
 
   navigation.selectPlanningMode('full');
   assert.equal(navigation.getState().planningMode, 'full');
