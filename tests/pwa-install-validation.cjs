@@ -34,7 +34,7 @@ manifest.icons.forEach(function(icon) {
 const appleTouchIcon = fs.readFileSync(path.join(root, 'icons', 'ridehero-180.png'));
 assert.equal(appleTouchIcon.readUInt32BE(16), 180, 'incorrect Apple touch icon width');
 assert.equal(appleTouchIcon.readUInt32BE(20), 180, 'incorrect Apple touch icon height');
-assert.match(worker, /const CACHE_NAME = 'ridehero-shell-v4'/);
+assert.match(worker, /const CACHE_NAME = 'ridehero-shell-v5'/);
 assert.match(worker, /\.\/icons\/ridehero-180\.png/);
 assert.match(worker, /request\.mode === 'navigate'[\s\S]*networkFirst/);
 assert.match(worker, /css\|js\|webmanifest[\s\S]*networkFirst/, 'version-sensitive app code must update from the network before using cache');
@@ -49,11 +49,13 @@ assert.match(install, /Add to Home Screen/);
 ['#185FA5', '#14517A', '#245DF5', '#0B3D91', '#0B7AD1', '#D8242A', '#FF3B30'].forEach(function(color) {
   assert.ok(!appThemeSource.toUpperCase().includes(color), 'legacy bright red/blue color remains ' + color);
 });
-assert.match(css, /body\.mode-quick,body\.mode-strategic\{[\s\S]*--mode-primary:var\(--rh-vintage-blue\)!important/, 'both planning modes must inherit one shared visual palette');
-assert.doesNotMatch(css, /body\.mode-quick \.route-hero/, 'Quick Route must not remap the route UI to a separate red theme');
+assert.match(css, /body\.mode-quick\{[\s\S]*--mode-primary:var\(--rh-sixers-red\)!important;[\s\S]*--mode-accent:var\(--rh-retro-orange\)!important/, 'Quick Route must prioritize red with orange accents');
+assert.match(css, /body\.mode-strategic\{[\s\S]*--mode-primary:var\(--rh-vintage-blue\)!important;[\s\S]*--mode-accent:var\(--rh-retro-green\)!important/, 'Full Day must prioritize blue with green accents');
+assert.match(css, /body\.mode-quick \.route-hero\{background:var\(--rh-sixers-red\)!important\}/, 'Quick Route output must use the red swatch');
+assert.match(css, /body\.mode-strategic \.route-hero\{background:var\(--rh-deep-navy\)!important\}/, 'Full Day output must use the navy swatch');
 
 const navigation = fs.readFileSync(path.join(root, 'js', 'navigation.js'), 'utf8');
 assert.match(navigation, /parts\[0\] === 'mode'[\s\S]*classList\.remove\('mode-quick', 'mode-strategic'\)/, 'mode choice must stay neutral');
 assert.match(navigation, /appState\.planningMode[\s\S]*applyGuidanceMode\(legacyGuidanceMode\(\)\)/, 'reload-safe navigation must restore the chosen app theme');
 
-console.log('Installable PWA and shared RideHero palette validation passed.');
+console.log('Installable PWA and mode-specific RideHero palette validation passed.');
