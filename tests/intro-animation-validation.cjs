@@ -26,7 +26,9 @@ assert.match(css, /\.coaster-stage\{width:min\(520px,112vw\)!important;height:32
 assert.match(css, /\.coaster-train\.rebuilt-train \.train-car,[\s\S]*width:38px!important;[\s\S]*border-radius:16px 17px 9px 9px!important/, 'coaster cars must use the larger rounded artwork');
 assert.match(css, /\.train-car em\{display:block!important[\s\S]*width:10px!important;height:10px!important/, 'each coaster car must visibly carry two riders');
 assert.match(html, /var carGap = 40;/, 'the larger coaster cars must keep appropriate spacing on the rail');
-assert.match(html, /class="sky-kites"[\s\S]*class="park-silhouette"[\s\S]*class="ground-details"/, 'the intro must include richer background scenery');
+assert.match(html, /class="sky-kites"[\s\S]*class="festival-scene"[\s\S]*class="festival-wheel"[\s\S]*class="festival-bunting"[\s\S]*class="ground-details"/, 'the intro must include colorful coaster and festival scenery');
+assert.doesNotMatch(css, /background:linear-gradient\(180deg,rgba\(91,122,98,\.2\)/, 'the grey translucent horizon treatment must not return');
+assert.match(css, /\.splash-sky:before\{[^}]*background:#A9DF80/, 'the distant horizon must use a clean solid palette color');
 assert.match(css, /backface-visibility:hidden;[\s\S]*contain:layout paint style;/, 'each car must be isolated for smooth compositor animation');
 assert.match(css, /\.coaster-stage \.track-shadow\{stroke-width:18!important[\s\S]*\.coaster-stage \.track-rail\{stroke-width:3\.5!important/, 'the rail artwork must use the cleaner reduced visual weight');
 assert.doesNotMatch(html, /var rideDuration = 6600/, 'the old 7.6 second timeline must not return');

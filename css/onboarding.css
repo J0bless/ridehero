@@ -64,12 +64,31 @@ button:disabled{cursor:wait;opacity:.72}
 
 /* Larger, rider-filled coaster artwork with compositor-only per-car movement. */
 .splash-page{background:radial-gradient(circle at 82% 18%,rgba(255,240,171,.9) 0 34px,rgba(255,240,171,.28) 35px 58px,transparent 59px),linear-gradient(#BFE8F7 0%,#DDF5FF 58%,#83D64C 58%,#72CB38 100%)!important}
-.splash-sky:after{content:"";position:absolute;left:-12%;right:-12%;bottom:-8%;height:30%;border-radius:50% 50% 0 0;background:linear-gradient(180deg,rgba(91,122,98,.2),rgba(78,122,78,.08));box-shadow:0 -20px 48px rgba(13,27,76,.05)}
+.splash-sky:before,.splash-sky:after{content:"";position:absolute;bottom:-9%;height:23%;border-radius:50% 50% 0 0;pointer-events:none}
+.splash-sky:before{left:-16%;width:72%;background:#A9DF80;transform:rotate(2deg)}
+.splash-sky:after{right:-18%;width:78%;background:#91D36B;transform:rotate(-2deg)}
 .sky-kites{position:absolute;right:14%;top:34%;width:34px;height:34px;transform:rotate(45deg);border-radius:4px;background:linear-gradient(135deg,var(--rh-retro-orange) 0 50%,var(--rh-sixers-red) 50%);box-shadow:0 4px 10px rgba(13,27,76,.12)}
 .sky-kites:before{content:"";position:absolute;width:42px;height:42px;left:27px;top:27px;border-left:2px solid rgba(13,27,76,.35);border-radius:0 0 0 80%}
-.park-silhouette{position:absolute;left:6%;right:6%;bottom:-2%;height:70px;opacity:.3;background:linear-gradient(90deg,transparent 0 4%,var(--rh-vintage-blue) 4% 6%,transparent 6% 13%,var(--rh-vintage-blue) 13% 20%,transparent 20% 27%,var(--rh-vintage-blue) 27% 30%,transparent 30% 58%,var(--rh-vintage-blue) 58% 65%,transparent 65% 74%,var(--rh-vintage-blue) 74% 78%,transparent 78%)}
-.park-silhouette:before{content:"";position:absolute;left:14%;bottom:0;width:48px;height:48px;border:5px solid var(--rh-vintage-blue);border-radius:50%}
-.park-silhouette:after{content:"";position:absolute;right:17%;bottom:0;width:32px;height:55px;background:linear-gradient(135deg,transparent 48%,var(--rh-vintage-blue) 49% 54%,transparent 55%),linear-gradient(45deg,transparent 48%,var(--rh-vintage-blue) 49% 54%,transparent 55%)}
+.festival-scene{position:absolute;z-index:1;left:3%;right:3%;bottom:-2%;height:120px;pointer-events:none}
+.festival-coaster{position:absolute;left:0;right:0;bottom:0;width:100%;height:74px;overflow:visible}
+.festival-coaster .festival-support{fill:none;stroke:var(--rh-retro-green);stroke-width:3;opacity:.72}
+.festival-coaster .festival-rail{fill:none;stroke:var(--rh-sixers-red);stroke-width:5;stroke-linecap:round;filter:drop-shadow(0 3px 0 rgba(13,27,76,.12))}
+.festival-wheel{position:absolute;right:2%;bottom:2px;width:88px;height:88px;border:5px solid var(--rh-retro-blue);border-radius:50%;background:rgba(248,250,252,.28);box-shadow:0 0 0 3px rgba(248,250,252,.72)}
+.festival-wheel:before,.festival-wheel:after,.festival-wheel i{content:"";position:absolute;left:50%;top:50%;width:4px;height:82px;border-radius:99px;background:var(--rh-vintage-blue);transform:translate(-50%,-50%)}
+.festival-wheel:after{transform:translate(-50%,-50%) rotate(60deg)}
+.festival-wheel i{display:block;transform:translate(-50%,-50%) rotate(-60deg)}
+.festival-wheel b{position:absolute;z-index:2;width:14px;height:11px;border:2px solid #fff;border-radius:4px 4px 7px 7px;background:var(--rh-retro-orange);box-shadow:0 2px 4px rgba(13,27,76,.16)}
+.festival-wheel b:nth-of-type(1){left:32px;top:-9px}.festival-wheel b:nth-of-type(2){right:-8px;top:34px;background:var(--rh-sixers-red)}.festival-wheel b:nth-of-type(3){left:32px;bottom:-9px;background:var(--rh-retro-green)}.festival-wheel b:nth-of-type(4){left:-8px;top:34px;background:var(--rh-retro-blue)}
+.festival-tent{position:absolute;bottom:0;width:74px;height:54px;background:repeating-linear-gradient(90deg,var(--rh-jersey-white) 0 12px,var(--rh-retro-orange) 12px 24px);clip-path:polygon(50% 0,100% 58%,92% 58%,92% 100%,8% 100%,8% 58%,0 58%);filter:drop-shadow(0 4px 4px rgba(13,27,76,.12))}
+.festival-tent:before{content:"";position:absolute;left:50%;top:0;width:3px;height:16px;background:var(--rh-deep-navy);transform:translateX(-50%)}
+.festival-tent:after{content:"";position:absolute;left:50%;top:0;border-top:7px solid transparent;border-bottom:7px solid transparent;border-left:16px solid var(--rh-sixers-red)}
+.festival-tent-one{left:4%}.festival-tent-two{left:24%;width:58px;height:43px;background:repeating-linear-gradient(90deg,var(--rh-jersey-white) 0 10px,var(--rh-retro-blue) 10px 20px)}
+.festival-tower{position:absolute;right:24%;bottom:0;width:12px;height:92px;border-radius:8px 8px 2px 2px;background:linear-gradient(90deg,var(--rh-vintage-blue),var(--rh-retro-blue),var(--rh-vintage-blue));box-shadow:0 4px 7px rgba(13,27,76,.14)}
+.festival-tower:before{content:"";position:absolute;left:-12px;top:16px;width:36px;height:18px;border:3px solid #fff;border-radius:7px;background:var(--rh-sixers-red);box-sizing:border-box}
+.festival-tower:after{content:"★";position:absolute;left:50%;top:-22px;color:var(--rh-retro-orange);font-size:22px;transform:translateX(-50%)}
+.festival-bunting{position:absolute;z-index:2;left:13%;right:14%;top:4px;height:28px;border-top:2px solid var(--rh-vintage-blue);transform:rotate(-2deg)}
+.festival-bunting i{position:relative;display:inline-block;width:0;height:0;margin-left:clamp(12px,4vw,32px);border-left:6px solid transparent;border-right:6px solid transparent;border-top:12px solid var(--rh-sixers-red)}
+.festival-bunting i:nth-child(2n){border-top-color:var(--rh-retro-orange)}.festival-bunting i:nth-child(3n){border-top-color:var(--rh-retro-blue)}.festival-bunting i:nth-child(4n){border-top-color:var(--rh-retro-green)}
 .coaster-stage .track-shadow{stroke-width:18!important;stroke:#e2e8f0!important}
 .coaster-stage .track-main{stroke-width:9!important}
 .coaster-stage .track-rail{stroke-width:3.5!important}
