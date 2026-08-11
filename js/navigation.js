@@ -50,16 +50,14 @@
     var lastMode = normalizePlanningMode(recent.planningMode);
     return '<h2 class="catalog-visually-hidden" id="mode-options-title">Choose a planning mode</h2><div class="mode-choice-stage" data-mode-pull aria-labelledby="mode-options-title"><div class="mode-card-grid">' +
       '<button class="mode-card mode-card-quick' + (lastMode === 'quick' ? ' was-recent' : '') + '" type="button" data-planning-mode="quick">' +
-        '<span class="mode-card-top"><span class="mode-card-icon" aria-hidden="true">Q</span><span class="mode-card-badge">Rides only</span></span>' +
+        '<span class="mode-card-top"><span class="mode-card-badge">Rides only</span></span>' +
         '<span class="mode-card-copy"><span class="mode-card-kicker">Fast &amp; simple</span><strong>Quick Route</strong><span>Find the smartest nearby rides based on your location, current waits, and walking distance.</span></span>' +
         '<span class="mode-card-pull-cue" aria-hidden="true"><b>Pull right to select</b><span>&rarr;</span></span>' +
-        '<span class="mode-card-cta">Plan a Quick Route <b aria-hidden="true">&rsaquo;</b></span>' +
       '</button>' +
       '<button class="mode-card mode-card-full' + (lastMode === 'full' ? ' was-recent' : '') + '" type="button" data-planning-mode="full">' +
-        '<span class="mode-card-top"><span class="mode-card-icon" aria-hidden="true">M</span><span class="mode-card-badge">Full-day plan</span></span>' +
+        '<span class="mode-card-top"><span class="mode-card-badge">Full-day plan</span></span>' +
         '<span class="mode-card-copy"><span class="mode-card-kicker">Intentional &amp; optimized</span><strong>Maximize My Day</strong><span>Build a full-day strategy balancing priority experiences, waits, walking, and timing.</span></span>' +
         '<span class="mode-card-pull-cue" aria-hidden="true"><span>&larr;</span><b>Pull left to select</b></span>' +
-        '<span class="mode-card-cta">Maximize My Day <b aria-hidden="true">&rsaquo;</b></span>' +
       '</button></div></div>';
   }
 
