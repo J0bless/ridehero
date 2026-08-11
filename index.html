@@ -3087,7 +3087,7 @@ body{
 }
 
 </style>
-<link rel="stylesheet" href="css/onboarding.css?v=1"/>
+<link rel="stylesheet" href="css/onboarding.css?v=3"/>
 </head>
 <body>
 
@@ -3100,6 +3100,8 @@ body{
       <span class="cloud cloud-two"></span>
       <span class="cloud cloud-three"></span>
       <span class="balloons">🎈</span>
+      <span class="sky-kites" aria-hidden="true"></span>
+      <span class="park-silhouette" aria-hidden="true"></span>
     </div>
 
     <div class="splash-brand">
@@ -3155,6 +3157,7 @@ body{
       <span class="tree t2">🌲</span>
       <span class="tree t3">🌲</span>
       <span class="tree t4">🌲</span>
+      <span class="ground-details" aria-hidden="true"><span></span><span></span></span>
     </div>
 
     <button class="splash-skip" type="button" onclick="finishSplash(true)">Skip</button>
@@ -6028,7 +6031,7 @@ function animateSplashTrain() {
   var rideDuration = 1981;
   var pullAwayDuration = 519;
   var totalDuration = rideDuration + pullAwayDuration;
-  var carGap = 27;
+  var carGap = 40;
   var startTs = null;
 
   // Start the page pull earlier while cars remain rail-locked.
@@ -6239,7 +6242,7 @@ updateNavState('setup');
 </nav>
 
 <script src="js/data-health.js?v=1"></script>
-<script src="js/navigation.js?v=1"></script>
+<script src="js/navigation.js?v=2"></script>
 <script src="js/pwa-install.js?v=1"></script>
 </body>
 </html>

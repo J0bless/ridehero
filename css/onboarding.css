@@ -62,36 +62,54 @@ button:disabled{cursor:wait;opacity:.72}
 .splash-skip{min-width:64px;min-height:44px;padding:10px 16px!important}
 .left-pull-edge,.left-peel,.pull-rope,.page-hook,.night-reveal{display:none!important}
 
-/* Slim, rounded coaster artwork with compositor-only per-car movement. */
+/* Larger, rider-filled coaster artwork with compositor-only per-car movement. */
+.splash-page{background:radial-gradient(circle at 82% 18%,rgba(255,240,171,.9) 0 34px,rgba(255,240,171,.28) 35px 58px,transparent 59px),linear-gradient(#BFE8F7 0%,#DDF5FF 58%,#83D64C 58%,#72CB38 100%)!important}
+.splash-sky:after{content:"";position:absolute;left:-12%;right:-12%;bottom:-8%;height:30%;border-radius:50% 50% 0 0;background:linear-gradient(180deg,rgba(91,122,98,.2),rgba(78,122,78,.08));box-shadow:0 -20px 48px rgba(13,27,76,.05)}
+.sky-kites{position:absolute;right:14%;top:34%;width:34px;height:34px;transform:rotate(45deg);border-radius:4px;background:linear-gradient(135deg,var(--rh-retro-orange) 0 50%,var(--rh-sixers-red) 50%);box-shadow:0 4px 10px rgba(13,27,76,.12)}
+.sky-kites:before{content:"";position:absolute;width:42px;height:42px;left:27px;top:27px;border-left:2px solid rgba(13,27,76,.35);border-radius:0 0 0 80%}
+.park-silhouette{position:absolute;left:6%;right:6%;bottom:-2%;height:70px;opacity:.3;background:linear-gradient(90deg,transparent 0 4%,var(--rh-vintage-blue) 4% 6%,transparent 6% 13%,var(--rh-vintage-blue) 13% 20%,transparent 20% 27%,var(--rh-vintage-blue) 27% 30%,transparent 30% 58%,var(--rh-vintage-blue) 58% 65%,transparent 65% 74%,var(--rh-vintage-blue) 74% 78%,transparent 78%)}
+.park-silhouette:before{content:"";position:absolute;left:14%;bottom:0;width:48px;height:48px;border:5px solid var(--rh-vintage-blue);border-radius:50%}
+.park-silhouette:after{content:"";position:absolute;right:17%;bottom:0;width:32px;height:55px;background:linear-gradient(135deg,transparent 48%,var(--rh-vintage-blue) 49% 54%,transparent 55%),linear-gradient(45deg,transparent 48%,var(--rh-vintage-blue) 49% 54%,transparent 55%)}
 .coaster-stage .track-shadow{stroke-width:18!important;stroke:#e2e8f0!important}
 .coaster-stage .track-main{stroke-width:9!important}
 .coaster-stage .track-rail{stroke-width:3.5!important}
+.coaster-stage{width:min(520px,112vw)!important;height:320px!important;transform:translate(-50%,-34%)!important}
 .coaster-train.rebuilt-train .train-car,
 .coaster-train.articulated-train .train-car{
-  width:26px!important;
-  height:16px!important;
-  border:1.5px solid rgba(255,255,255,.96)!important;
-  border-radius:12px 13px 8px 8px!important;
-  box-shadow:0 3px 7px rgba(13,27,76,.2)!important;
+  width:38px!important;
+  height:24px!important;
+  border:2px solid rgba(255,255,255,.96)!important;
+  border-radius:16px 17px 9px 9px!important;
+  box-shadow:0 5px 9px rgba(13,27,76,.24),inset 0 -4px 0 rgba(13,27,76,.16)!important;
   transform-origin:50% 50%!important;
   backface-visibility:hidden;
   contain:layout paint style;
   will-change:transform;
 }
 .coaster-train.rebuilt-train .train-car:before,
-.coaster-train.articulated-train .train-car:before{inset:3px 5px auto!important;height:3px!important;border-radius:999px!important}
+.coaster-train.articulated-train .train-car:before{inset:5px 6px auto!important;height:4px!important;border-radius:999px!important}
 .coaster-train.rebuilt-train .train-car b,
-.coaster-train.rebuilt-train .train-car em,
 .coaster-train.articulated-train .train-car b,
-.coaster-train.articulated-train .train-car em{display:none!important}
+.coaster-train.articulated-train .train-car b{display:block!important;position:absolute;z-index:3;left:5px;right:5px;top:1px;height:12px;border:2px solid var(--rh-deep-navy);border-top:0;border-radius:0 0 8px 8px}
 .coaster-train.rebuilt-train .train-car span,
-.coaster-train.articulated-train .train-car span{top:-6px!important;left:9px!important;width:6px!important;height:6px!important;border-width:1px!important}
+.coaster-train.rebuilt-train .train-car em,
+.coaster-train.articulated-train .train-car span,
+.coaster-train.articulated-train .train-car em{display:block!important;position:absolute!important;z-index:2;top:-9px!important;width:10px!important;height:10px!important;border:1.5px solid var(--rh-deep-navy)!important;border-radius:50%!important;background:#F3C58E!important}
+.coaster-train.rebuilt-train .train-car span,
+.coaster-train.articulated-train .train-car span{left:6px!important}
+.coaster-train.rebuilt-train .train-car em,
+.coaster-train.articulated-train .train-car em{right:6px!important;left:auto!important}
+.coaster-train.rebuilt-train .car-two em,.coaster-train.articulated-train .car-two em,.coaster-train.rebuilt-train .car-four span,.coaster-train.articulated-train .car-four span{background:#8E5A3C!important}
 .coaster-train.rebuilt-train .train-car i,
-.coaster-train.articulated-train .train-car i{bottom:-4px!important;width:5px!important;height:5px!important}
+.coaster-train.articulated-train .train-car i{bottom:-5px!important;width:7px!important;height:7px!important;border:1px solid #fff}
 .coaster-train.rebuilt-train .train-car i:first-of-type,
-.coaster-train.articulated-train .train-car i:first-of-type{left:4px!important}
+.coaster-train.articulated-train .train-car i:first-of-type{left:6px!important}
 .coaster-train.rebuilt-train .train-car i:last-of-type,
-.coaster-train.articulated-train .train-car i:last-of-type{right:4px!important}
+.coaster-train.articulated-train .train-car i:last-of-type{right:6px!important}
+.splash-ground:after{content:"";position:absolute;left:25%;right:-8%;bottom:4%;height:22%;border-radius:50% 0 0;background:linear-gradient(165deg,rgba(248,250,252,.9),rgba(248,250,252,.32));transform:skewX(-18deg);box-shadow:0 -5px 18px rgba(13,27,76,.05)}
+.ground-details{position:absolute;inset:0;z-index:1;pointer-events:none}
+.ground-details span{position:absolute;bottom:14%;width:8px;height:8px;border-radius:50%;background:var(--rh-retro-orange);box-shadow:10px 5px 0 var(--rh-jersey-white),20px -2px 0 var(--rh-retro-blue),30px 6px 0 var(--rh-sixers-red)}
+.ground-details span:first-child{left:29%}.ground-details span:nth-child(2){right:22%;bottom:24%;transform:scale(.75)}
 
 /* Planning-first catalog shell */
 .catalog-page{
@@ -113,6 +131,7 @@ button:disabled{cursor:wait;opacity:.72}
 .catalog-mode-action span{max-width:118px;overflow:hidden;text-overflow:ellipsis;color:var(--rh-text-muted);font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.05em}
 .catalog-mode-action strong{margin-top:2px;font-size:12px;font-weight:900}
 .catalog-heading{outline:none;padding:clamp(26px,6vw,50px) 0 var(--rh-space-4)}
+.catalog-heading[tabindex="-1"]:focus,.catalog-heading[tabindex="-1"]:focus-visible{outline:0!important;box-shadow:none!important}
 .catalog-heading>span,.catalog-section-label{display:block;color:var(--rh-blue);font-size:11px;font-weight:950;letter-spacing:.12em;text-transform:uppercase}
 .catalog-heading h1{max-width:760px;margin:7px 0 0;font-size:clamp(30px,7.8vw,52px);line-height:1.04;letter-spacing:-.045em;overflow-wrap:normal;word-break:normal;text-wrap:balance}
 .catalog-heading p{max-width:620px;margin:12px 0 0;color:var(--rh-text-muted);font-size:clamp(14px,2.4vw,17px);line-height:1.5;text-wrap:pretty}
@@ -170,7 +189,8 @@ button:disabled{cursor:wait;opacity:.72}
 .mode-catalog-page .catalog-header,.mode-catalog-page .catalog-content{width:min(980px,100%)}
 .mode-catalog-page .catalog-content{flex:1;display:flex;flex-direction:column;opacity:0;visibility:hidden;transform:translate3d(0,12px,0);transition:opacity .28s ease,transform .28s cubic-bezier(.22,.7,.25,1),visibility 0s linear .28s}
 .mode-catalog-page.is-options-ready .catalog-content{opacity:1;visibility:visible;transform:translate3d(0,0,0);transition-delay:0s}
-.mode-catalog-page .catalog-heading{position:absolute;z-index:6;inset:calc(70px + env(safe-area-inset-top)) clamp(18px,6vw,72px) calc(104px + env(safe-area-inset-bottom));max-width:none;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;padding:0;opacity:1;transform:translate3d(0,0,0);filter:blur(0);transition:opacity .38s ease,transform .38s ease,filter .38s ease,visibility 0s linear .38s}
+.mode-catalog-page .catalog-heading{position:absolute;z-index:6;inset:calc(70px + env(safe-area-inset-top)) clamp(18px,6vw,72px) calc(104px + env(safe-area-inset-bottom));max-width:none;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:0;text-align:center;opacity:1;transform:translate3d(0,0,0);filter:blur(0);transition:opacity .38s ease,transform .38s ease,filter .38s ease,visibility 0s linear .38s}
+.mode-catalog-page .catalog-heading h1,.mode-catalog-page .catalog-heading p{margin-left:auto;margin-right:auto}
 .mode-catalog-page .catalog-heading>span{color:var(--rh-vintage-blue)}
 .mode-catalog-page.is-burning .catalog-heading{opacity:0;transform:translate3d(0,-10px,0) scale(.985);filter:blur(6px);visibility:hidden}
 .mode-catalog-page.is-burning .catalog-heading h1{text-shadow:0 0 8px rgba(242,107,56,.72),0 0 20px rgba(214,40,40,.34)}

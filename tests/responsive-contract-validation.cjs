@@ -24,5 +24,7 @@ assert.match(onboardingCss, /overflow-x:hidden/, 'the refreshed shell must preve
 assert.match(onboardingCss, /@media \(prefers-reduced-motion:reduce\)/, 'onboarding motion must respect reduced-motion preferences');
 assert.match(onboardingCss, /\.brand-card-grid\{grid-template-columns:1fr;max-width:720px/, 'destination choices must use a clean single-column card list');
 assert.match(onboardingCss, /\.brand-card \.catalog-card-icon\{width:54px;height:54px;flex-basis:54px;border-radius:18px/, 'destination letter tiles must use consistent clean geometry');
+assert.match(onboardingCss, /\.catalog-heading\[tabindex="-1"\]:focus[^}]*outline:0!important;box-shadow:none!important/, 'page headings must not render grey focus boundaries');
+assert.match(onboardingCss, /\.mode-catalog-page \.catalog-heading\{[^}]*align-items:center[^}]*text-align:center/, 'the planning-mode question must be centered');
 
 console.log('Responsive contract validation passed for 320/360/390/430px, tablet, and desktop CSS breakpoints.');
