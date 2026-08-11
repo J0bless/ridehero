@@ -185,8 +185,8 @@
     }
 
     if (reduced) { revealOptions(); return; }
-    modeWorkflowTimers.push(global.setTimeout(function(){ page.classList.add('is-burning'); }, 420));
-    modeWorkflowTimers.push(global.setTimeout(revealOptions, 800));
+    modeWorkflowTimers.push(global.setTimeout(function(){ page.classList.add('is-burning'); }, 1000));
+    modeWorkflowTimers.push(global.setTimeout(revealOptions, 1380));
   }
 
   function initModePull(page, stage) {
