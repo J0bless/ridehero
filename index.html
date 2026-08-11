@@ -8,12 +8,12 @@
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
 <meta name="apple-mobile-web-app-title" content="RideHero"/>
-<meta name="theme-color" content="#E5394A"/>
+<meta name="theme-color" content="#0D1B4C"/>
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
 <meta http-equiv="Pragma" content="no-cache"/>
 <meta http-equiv="Expires" content="0"/>
 <link rel="manifest" href="manifest.webmanifest"/>
-<link rel="apple-touch-icon" href="icons/ridehero-192.png"/>
+<link rel="apple-touch-icon" sizes="180x180" href="icons/ridehero-180.png"/>
 <link rel="stylesheet" href="css/multi-resort.css?v=1"/>
 <title>RideHero — Plan less. Ride more.</title>
 <!-- RideHero cleaned runtime build 2026-06-25 -->
@@ -31,7 +31,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .screen{display:none;}.screen.active{display:block;}
 .setup{padding:24px 20px 40px;}
 .logo{display:flex;align-items:center;gap:10px;margin-bottom:20px;}
-.logo-icon{width:44px;height:44px;background:#185FA5;border-radius:12px;display:flex;align-items:center;justify-content:center;}
+.logo-icon{width:44px;height:44px;background:#334E68;border-radius:12px;display:flex;align-items:center;justify-content:center;}
 .logo-icon svg{width:24px;height:24px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
 .logo h1{font-size:22px;font-weight:700;color:#1c1c1e;}
 .logo p{font-size:13px;color:#8e8e93;margin-top:1px;}
@@ -40,37 +40,37 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .inset-row{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:0.5px solid #e5e5ea;}
 .inset-row:last-child{border-bottom:none;}
 .inset-row label{font-size:15px;color:#1c1c1e;flex-shrink:0;}
-.inset-row input[type=number]{width:60px;border:none;outline:none;font-size:15px;color:#185FA5;background:transparent;text-align:right;font-weight:600;}
+.inset-row input[type=number]{width:60px;border:none;outline:none;font-size:15px;color:#334E68;background:transparent;text-align:right;font-weight:600;}
 .mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .mode-card{background:#fff;border-radius:14px;padding:18px 14px;border:2px solid transparent;cursor:pointer;transition:border-color 0.15s,background 0.15s;text-align:left;-webkit-tap-highlight-color:transparent;}
-.mode-card.active{border-color:#185FA5;background:#f0f6ff;}
+.mode-card.active{border-color:#334E68;background:#f0f6ff;}
 .mode-card .mode-icon{font-size:26px;display:block;margin-bottom:10px;}
 .mode-card .mode-name{font-size:14px;font-weight:700;color:#1c1c1e;}
 .mode-card .mode-sub{font-size:11px;color:#8e8e93;margin-top:4px;line-height:1.4;}
-.mode-card.active .mode-name{color:#185FA5;}
+.mode-card.active .mode-name{color:#334E68;}
 .park-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .park-card{background:#fff;border-radius:14px;padding:16px 14px;border:2px solid transparent;cursor:pointer;transition:border-color 0.15s,background 0.15s;text-align:left;-webkit-tap-highlight-color:transparent;}
-.park-card.active{border-color:#185FA5;background:#f0f6ff;}
+.park-card.active{border-color:#334E68;background:#f0f6ff;}
 .park-card .park-emoji{font-size:28px;display:block;margin-bottom:8px;}
 .park-card .park-name{font-size:14px;font-weight:600;color:#1c1c1e;line-height:1.3;}
 .park-card .park-sub{font-size:12px;color:#8e8e93;margin-top:2px;}
 .cta{margin-top:28px;}
-.big-btn{width:100%;padding:16px;background:#185FA5;color:#fff;border:none;border-radius:14px;font-size:17px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;-webkit-tap-highlight-color:transparent;}
+.big-btn{width:100%;padding:16px;background:#334E68;color:#fff;border:none;border-radius:14px;font-size:17px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;-webkit-tap-highlight-color:transparent;}
 .big-btn:active{opacity:0.85;}
 .big-btn.secondary{background:#e5e5ea;color:#1c1c1e;}
 .rides-screen{padding-bottom:100px;}
 .top-bar{background:#fff;border-bottom:0.5px solid #e5e5ea;padding:12px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10;}
-.back-btn{background:none;border:none;color:#185FA5;font-size:15px;font-weight:500;cursor:pointer;padding:4px 0;}
+.back-btn{background:none;border:none;color:#334E68;font-size:15px;font-weight:500;cursor:pointer;padding:4px 0;}
 .top-bar-title{font-size:17px;font-weight:600;flex:1;}
-.refresh-btn{background:none;border:none;color:#185FA5;font-size:22px;cursor:pointer;padding:4px;line-height:1;}
+.refresh-btn{background:none;border:none;color:#334E68;font-size:22px;cursor:pointer;padding:4px;line-height:1;}
 .source-chip{font-size:11px;font-weight:600;padding:3px 8px;border-radius:99px;}
 .sc-tp{background:#dcfce7;color:#166534;}
 .sc-qt{background:#fef9c3;color:#854d0e;}
 .rides-list{padding:12px 16px;display:flex;flex-direction:column;gap:8px;}
 .ride-card{background:#fff;border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;border:2px solid transparent;cursor:pointer;-webkit-tap-highlight-color:transparent;}
-.ride-card.on{border-color:#185FA5;background:#f0f6ff;}
+.ride-card.on{border-color:#334E68;background:#f0f6ff;}
 .ride-check{width:24px;height:24px;border-radius:50%;border:2px solid #c7c7cc;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
-.ride-card.on .ride-check{background:#185FA5;border-color:#185FA5;}
+.ride-card.on .ride-check{background:#334E68;border-color:#334E68;}
 .ride-check-mark{display:none;color:#fff;font-size:13px;font-weight:700;line-height:1;}
 .ride-card.on .ride-check-mark{display:block;}
 .ride-info{flex:1;min-width:0;}
@@ -84,16 +84,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .sel-info{font-size:13px;color:#8e8e93;text-align:center;margin-bottom:8px;}
 .bottom-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .sm-btn{padding:13px;border-radius:12px;font-size:15px;font-weight:600;border:none;cursor:pointer;-webkit-tap-highlight-color:transparent;}
-.sm-btn.outline{background:#fff;color:#185FA5;border:1.5px solid #185FA5;}
-.sm-btn.filled{background:#185FA5;color:#fff;}
+.sm-btn.outline{background:#fff;color:#334E68;border:1.5px solid #334E68;}
+.sm-btn.filled{background:#334E68;color:#fff;}
 .priority-screen{padding-bottom:110px;}
 .priority-list{padding:12px 16px;display:flex;flex-direction:column;gap:8px;}
 .priority-card{background:#fff;border-radius:12px;padding:13px 16px;display:flex;align-items:center;gap:12px;border:2px solid transparent;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:border-color 0.12s,background 0.12s;}
 .priority-card.must{border-color:#ff9500;background:#fff8f0;}
-.priority-card.want{border-color:#185FA5;background:#f0f6ff;}
+.priority-card.want{border-color:#334E68;background:#f0f6ff;}
 .priority-dot{width:24px;height:24px;border-radius:50%;border:2px solid #c7c7cc;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;}
 .priority-card.must .priority-dot{background:#ff9500;border-color:#ff9500;color:#fff;}
-.priority-card.want .priority-dot{background:#185FA5;border-color:#185FA5;color:#fff;}
+.priority-card.want .priority-dot{background:#334E68;border-color:#334E68;color:#fff;}
 .priority-name{font-size:15px;font-weight:500;color:#1c1c1e;}
 .priority-area{font-size:12px;color:#8e8e93;margin-top:2px;}
 .legend-row{display:flex;gap:14px;padding:10px 16px 4px;flex-wrap:wrap;}
@@ -114,7 +114,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .steps-section{padding:0 16px;}
 .steps-section h3{font-size:13px;font-weight:600;color:#8e8e93;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;}
 .step-card{background:#fff;border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:14px;margin-bottom:8px;}
-.step-num{width:32px;height:32px;border-radius:50%;background:#185FA5;color:#fff;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.step-num{width:32px;height:32px;border-radius:50%;background:#334E68;color:#fff;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .step-name{font-size:15px;font-weight:500;color:#1c1c1e;}
 .step-wait{font-size:13px;color:#8e8e93;margin-top:2px;}
 .walk-note{text-align:center;font-size:12px;color:#8e8e93;padding:4px 0 2px;}
@@ -130,12 +130,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .seg-sub{font-size:12px;color:#8e8e93;margin-top:1px;}
 .must-tag{font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;background:#fff3e0;color:#e65100;}
 .loading{text-align:center;padding:60px 20px;}
-.loading-spinner{width:36px;height:36px;border:3px solid #e5e5ea;border-top-color:#185FA5;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 16px;}
+.loading-spinner{width:36px;height:36px;border:3px solid #e5e5ea;border-top-color:#334E68;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 16px;}
 @keyframes spin{to{transform:rotate(360deg);}}
 .loading p{font-size:15px;color:#8e8e93;}
 .error-box{margin:16px;background:#fff;border-radius:12px;padding:20px;text-align:center;}
-.error-box p{font-size:14px;color:#ff3b30;line-height:1.5;}
-.error-box button{margin-top:14px;padding:10px 24px;background:#185FA5;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;}
+.error-box p{font-size:14px;color:#D62828;line-height:1.5;}
+.error-box button{margin-top:14px;padding:10px 24px;background:#334E68;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;}
 
 .route-mini-map {
   display:block;
@@ -175,7 +175,7 @@ g:hover > .ak-route-title{
 :root{
   --brand:#18a957;
   --brand-dark:#119546;
-  --brand-blue:#4774ff;
+  --brand-blue:#334E68;
   --brand-purple:#8b5cf6;
   --text:#111827;
   --muted:#667085;
@@ -194,7 +194,7 @@ body{background:linear-gradient(180deg,#fbfcff 0%, #f4f7fb 100%);color:var(--tex
 .bottom-actions{display:grid;grid-template-columns:1fr 1.25fr;gap:10px;}
 .sm-btn{border-radius:16px;font-weight:800;letter-spacing:-.01em;padding:14px 16px;box-shadow:0 3px 8px rgba(16,24,40,.06);}
 .sm-btn.outline{border:1px solid #d0d5dd;color:#344054;background:#fff;}
-.sm-btn.filled{background:linear-gradient(135deg,var(--brand-blue),#245df5);color:#fff;}
+.sm-btn.filled{background:linear-gradient(135deg,var(--brand-blue),#334E68);color:#fff;}
 .big-btn{background:linear-gradient(135deg,var(--brand),var(--brand-dark));box-shadow:0 10px 18px rgba(24,169,87,.22);border-radius:18px;font-weight:800;}
 .home-dashboard{padding:18px 16px 118px;max-width:920px;margin:0 auto;}
 .home-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;}
@@ -219,7 +219,7 @@ body{background:linear-gradient(180deg,#fbfcff 0%, #f4f7fb 100%);color:var(--tex
 .home-actions{display:grid;grid-template-columns:1fr;gap:12px;margin-top:16px;}
 .feature-card{border:none;border-radius:24px;padding:18px;text-align:left;color:#0f172a;background:#fff;box-shadow:var(--shadow);display:block;}
 .feature-card.green{background:linear-gradient(135deg,#ecfdf3,#f9fffb);}
-.feature-card.blue{background:linear-gradient(135deg,#eef4ff,#f7f9ff);}
+.feature-card.blue{background:linear-gradient(135deg,#EEF4FB,#f7f9ff);}
 .feature-card.purple{background:linear-gradient(135deg,#f4f0ff,#faf8ff);}
 .feature-icon{font-size:24px;margin-bottom:8px;display:block;}
 .feature-title{font-size:22px;font-weight:900;letter-spacing:-.03em;}
@@ -228,7 +228,7 @@ body{background:linear-gradient(180deg,#fbfcff 0%, #f4f7fb 100%);color:var(--tex
 .upcoming-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px;}
 .upcoming-kicker{font-size:12px;font-weight:800;color:var(--brand);text-transform:uppercase;letter-spacing:.06em;}
 .upcoming-title{font-size:24px;font-weight:900;letter-spacing:-.03em;color:#101828;margin-top:4px;}
-.inline-link{background:none;border:none;color:#245df5;font-weight:800;font-size:14px;}
+.inline-link{background:none;border:none;color:#334E68;font-weight:800;font-size:14px;}
 .mini-route-list{display:flex;flex-direction:column;gap:10px;}
 .mini-route-stop{display:flex;gap:10px;align-items:flex-start;background:#f8fafc;border-radius:16px;padding:12px;}
 .mini-route-stop strong{display:block;font-size:15px;color:#101828;}
@@ -242,7 +242,7 @@ body{background:linear-gradient(180deg,#fbfcff 0%, #f4f7fb 100%);color:var(--tex
 .search-shell span{color:#98a2b3;font-size:18px;}
 .waits-toolbar{padding:12px 16px 0;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
 .source-chip{font-size:12px;font-weight:800;padding:6px 10px;border-radius:999px;}
-.source-chip.sc-tp{background:#ebf5ff;color:#245df5;}.source-chip.sc-qt{background:#effcf6;color:#0a7c37;}
+.source-chip.sc-tp{background:#ebf5ff;color:#334E68;}.source-chip.sc-qt{background:#effcf6;color:#0a7c37;}
 .waits-count{font-size:12px;color:#667085;font-weight:700;}
 .filter-pills{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:10px 16px 0;}
 .filter-pills .sm-btn{padding:11px 12px;border-radius:14px;font-size:14px;}
@@ -267,7 +267,7 @@ body{background:linear-gradient(180deg,#fbfcff 0%, #f4f7fb 100%);color:var(--tex
 .ride-meta-pill{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;border-radius:999px;padding:5px 8px;background:#f2f4f7;color:#344054;}
 .ride-meta-note{font-size:12px;color:#667085;}
 .wait-badge{border-radius:14px;padding:9px 10px;min-width:60px;text-align:center;font-weight:900;font-size:14px;box-shadow:none;}
-.wl{background:#ecfdf3;color:#15803d;}.wm{background:#eff4ff;color:#245df5;}.wh{background:#fff4e8;color:#ea580c;}
+.wl{background:#ecfdf3;color:#15803d;}.wm{background:#eff4ff;color:#334E68;}.wh{background:#fff4e8;color:#ea580c;}
 .route-hero{margin:16px;border-radius:28px;padding:22px 20px;box-shadow:0 16px 30px rgba(31,41,55,.14);}
 .route-hero h2{font-size:28px;letter-spacing:-.03em;margin-bottom:6px;}.route-hero p{opacity:.92;max-width:44ch;}
 .route-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;background:transparent;border-radius:0;margin:0 16px 16px;overflow:visible;}
@@ -282,7 +282,7 @@ body{background:linear-gradient(180deg,#fbfcff 0%, #f4f7fb 100%);color:var(--tex
 .app-nav{position:fixed;left:0;right:0;bottom:0;z-index:999;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:10px 14px calc(10px + env(safe-area-inset-bottom));background:rgba(255,255,255,.92);backdrop-filter:blur(18px);border-top:1px solid rgba(229,231,235,.85);box-shadow:0 -8px 24px rgba(16,24,40,.08);}
 .app-nav-btn{border:none;background:#fff;color:#667085;border-radius:18px;padding:10px 8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:12px;font-weight:800;box-shadow:0 3px 10px rgba(16,24,40,.06);}
 .app-nav-btn span:first-child{font-size:18px;line-height:1;}
-.app-nav-btn.active{background:linear-gradient(135deg,#eef4ff,#f7f9ff);color:#245df5;}
+.app-nav-btn.active{background:linear-gradient(135deg,#EEF4FB,#f7f9ff);color:#334E68;}
 @media (min-width:720px){
   .home-actions{grid-template-columns:repeat(3,1fr);} 
   .home-dashboard{padding-top:24px;} 
@@ -291,29 +291,29 @@ body{background:linear-gradient(180deg,#fbfcff 0%, #f4f7fb 100%);color:var(--tex
 
 /* RideHero UI Refresh v2 — blue/red/white jersey-inspired palette */
 :root{
-  --brand:#2F56B3;
-  --brand-dark:#142A66;
-  --brand-blue:#2F56B3;
-  --brand-red:#E5394A;
-  --brand-green:#2E9E57;
-  --brand-orange:#F28C38;
-  --text:#142A66;
+  --brand:#334E68;
+  --brand-dark:#0D1B4C;
+  --brand-blue:#334E68;
+  --brand-red:#D62828;
+  --brand-green:#4E7A4E;
+  --brand-orange:#F26B38;
+  --text:#0D1B4C;
   --muted:#64748b;
   --line:#e6eaf2;
   --surface:#ffffff;
-  --bg:#f7f9fd;
-  --shadow:0 12px 28px rgba(20,42,102,.10);
+  --bg:#F8FAFC;
+  --shadow:0 12px 28px rgba(13,27,76,.10);
 }
 body{
   background:
-    radial-gradient(circle at top left, rgba(47,86,179,.10), transparent 34%),
-    radial-gradient(circle at top right, rgba(229,57,74,.08), transparent 32%),
-    linear-gradient(180deg,#ffffff 0%,#f7f9fd 100%);
+    radial-gradient(circle at top left, rgba(51,78,104,.10), transparent 34%),
+    radial-gradient(circle at top right, rgba(214,40,40,.08), transparent 32%),
+    linear-gradient(180deg,#ffffff 0%,#F8FAFC 100%);
   color:var(--text);
 }
 .home-brand-mark{
   background:linear-gradient(135deg,var(--brand-blue),var(--brand-red));
-  box-shadow:0 12px 24px rgba(47,86,179,.24);
+  box-shadow:0 12px 24px rgba(51,78,104,.24);
 }
 .home-brand h1{color:var(--brand-dark);}
 .home-brand h1::after{
@@ -329,26 +329,26 @@ body{
 }
 .icon-ghost{
   color:var(--brand-blue);
-  border:1px solid rgba(47,86,179,.12);
+  border:1px solid rgba(51,78,104,.12);
 }
 .park-card.active{
-  border-color:rgba(47,86,179,.58);
-  background:linear-gradient(180deg,#ffffff 0%,#eef4ff 100%);
-  box-shadow:0 14px 28px rgba(47,86,179,.16);
+  border-color:rgba(51,78,104,.58);
+  background:linear-gradient(180deg,#ffffff 0%,#EEF4FB 100%);
+  box-shadow:0 14px 28px rgba(51,78,104,.16);
 }
 .park-card.active .park-name{color:var(--brand-dark);}
 .insight-value.ok{color:var(--brand-red);}
 .feature-card.green{
-  background:linear-gradient(135deg,rgba(47,86,179,.12),rgba(255,255,255,.95)),#fff;
-  border:1px solid rgba(47,86,179,.14);
+  background:linear-gradient(135deg,rgba(51,78,104,.12),rgba(255,255,255,.95)),#fff;
+  border:1px solid rgba(51,78,104,.14);
 }
 .feature-card.blue{
-  background:linear-gradient(135deg,rgba(229,57,74,.12),rgba(255,255,255,.95)),#fff;
-  border:1px solid rgba(229,57,74,.14);
+  background:linear-gradient(135deg,rgba(214,40,40,.12),rgba(255,255,255,.95)),#fff;
+  border:1px solid rgba(214,40,40,.14);
 }
 .feature-card.purple{
-  background:linear-gradient(135deg,rgba(47,86,179,.10),rgba(242,140,56,.10)),#fff;
-  border:1px solid rgba(47,86,179,.12);
+  background:linear-gradient(135deg,rgba(51,78,104,.10),rgba(242,107,56,.10)),#fff;
+  border:1px solid rgba(51,78,104,.12);
 }
 .feature-icon{color:var(--brand-blue);}
 .feature-card.blue .feature-icon{color:var(--brand-red);}
@@ -357,29 +357,29 @@ body{
 .mini-stop-num{background:linear-gradient(135deg,var(--brand-blue),var(--brand-dark));}
 .big-btn,.sm-btn.filled{
   background:linear-gradient(135deg,var(--brand-blue),var(--brand-dark));
-  box-shadow:0 10px 22px rgba(47,86,179,.24);
+  box-shadow:0 10px 22px rgba(51,78,104,.24);
 }
 .sm-btn.outline{
-  border-color:rgba(47,86,179,.38);
+  border-color:rgba(51,78,104,.38);
   color:var(--brand-blue);
 }
-.source-chip.sc-tp{background:#eef4ff;color:var(--brand-blue);}
-.source-chip.sc-qt{background:#fff1f2;color:var(--brand-red);}
+.source-chip.sc-tp{background:#EEF4FB;color:var(--brand-blue);}
+.source-chip.sc-qt{background:#FDEDEE;color:var(--brand-red);}
 .best-picks-card{
-  background:linear-gradient(135deg,#eef4ff 0%,#ffffff 58%,#fff1f2 100%);
+  background:linear-gradient(135deg,#EEF4FB 0%,#ffffff 58%,#FDEDEE 100%);
   border-color:#dbe6ff;
 }
 .best-picks-title{color:var(--brand-red);}
-.best-pick-row{border:1px solid rgba(47,86,179,.08);}
+.best-pick-row{border:1px solid rgba(51,78,104,.08);}
 .ride-card.on{
-  border-color:rgba(47,86,179,.55);
+  border-color:rgba(51,78,104,.55);
   background:linear-gradient(180deg,#ffffff,#f1f5ff);
 }
 .ride-card.on .ride-check{background:linear-gradient(135deg,var(--brand-blue),var(--brand-red));}
 .ride-name,.route-stat-v,.upcoming-title,.feature-title,.best-picks-sub{color:var(--brand-dark);}
 .wait-badge.wl,.wl{background:#eaf8ef;color:var(--brand-green);}
 .wait-badge.wm,.wm{background:#fff3e7;color:var(--brand-orange);}
-.wait-badge.wh,.wh{background:#fff1f2;color:var(--brand-red);}
+.wait-badge.wh,.wh{background:#FDEDEE;color:var(--brand-red);}
 .route-hero{
   background:linear-gradient(135deg,var(--brand-dark),var(--brand-blue) 58%,var(--brand-red)) !important;
 }
@@ -389,11 +389,11 @@ body{
 .top-bar-title{color:var(--brand-dark);}
 .back-btn,.refresh-btn{
   color:var(--brand-blue);
-  border:1px solid rgba(47,86,179,.12);
+  border:1px solid rgba(51,78,104,.12);
 }
 .app-nav{background:rgba(255,255,255,.94);}
 .app-nav-btn.active{
-  background:linear-gradient(135deg,#eef4ff,#fff1f2);
+  background:linear-gradient(135deg,#EEF4FB,#FDEDEE);
   color:var(--brand-blue);
 }
 .app-nav-btn.active span:first-child{color:var(--brand-red);}
@@ -423,7 +423,7 @@ body{
   justify-content:center;
   font-weight:900;
   flex-shrink:0;
-  box-shadow:0 6px 12px rgba(47,86,179,.24);
+  box-shadow:0 6px 12px rgba(51,78,104,.24);
 }
 .v3-stop-main{flex:1;min-width:0;}
 .v3-stop-title{
@@ -459,7 +459,7 @@ body{
 }
 .map-wrap svg{display:block;width:100%;height:auto;}
 .ride-meta-pill{
-  border:1px solid rgba(47,86,179,.10);
+  border:1px solid rgba(51,78,104,.10);
 }
 .best-picks-card,
 .upcoming-card,
@@ -473,28 +473,28 @@ body{
   .ride-card:hover,
   .park-card:hover{
     transform:translateY(-1px);
-    box-shadow:0 16px 34px rgba(20,42,102,.13);
+    box-shadow:0 16px 34px rgba(13,27,76,.13);
   }
 }
 
 
 /* RideHero v4 — solid color cleanup, fewer blends */
 :root{
-  --brand:#2F56B3;
-  --brand-dark:#142A66;
-  --brand-blue:#2F56B3;
-  --brand-red:#E5394A;
-  --brand-green:#2E9E57;
-  --brand-orange:#F28C38;
-  --text:#142A66;
+  --brand:#334E68;
+  --brand-dark:#0D1B4C;
+  --brand-blue:#334E68;
+  --brand-red:#D62828;
+  --brand-green:#4E7A4E;
+  --brand-orange:#F26B38;
+  --text:#0D1B4C;
   --muted:#64748b;
   --line:#E3E8F2;
   --surface:#FFFFFF;
-  --bg:#F7F9FD;
-  --shadow:0 8px 20px rgba(20,42,102,.08);
+  --bg:#F8FAFC;
+  --shadow:0 8px 20px rgba(13,27,76,.08);
 }
 body{
-  background:#F7F9FD !important;
+  background:#F8FAFC !important;
   color:var(--text);
 }
 .home-brand-mark,
@@ -529,7 +529,7 @@ body{
 .park-card.active,
 .ride-card.on,
 .app-nav-btn.active{
-  background:#EEF4FF !important;
+  background:#EEF4FB !important;
   border-color:var(--brand-blue) !important;
 }
 .park-card.active .park-name,
@@ -581,11 +581,11 @@ body{
   box-shadow:none !important;
 }
 .source-chip.sc-tp{
-  background:#EEF4FF !important;
+  background:#EEF4FB !important;
   color:var(--brand-blue) !important;
 }
 .source-chip.sc-qt{
-  background:#FFF1F2 !important;
+  background:#FDEDEE !important;
   color:var(--brand-red) !important;
 }
 .wait-badge.wl,
@@ -600,7 +600,7 @@ body{
 }
 .wait-badge.wh,
 .wh{
-  background:#FFF1F2 !important;
+  background:#FDEDEE !important;
   color:var(--brand-red) !important;
 }
 .route-hero{
@@ -615,7 +615,7 @@ body{
 .bottom-bar{
   background:#FFFFFF !important;
   border-color:var(--line) !important;
-  box-shadow:0 4px 14px rgba(20,42,102,.06) !important;
+  box-shadow:0 4px 14px rgba(13,27,76,.06) !important;
 }
 .app-nav-btn{
   background:#FFFFFF !important;
@@ -639,16 +639,16 @@ body{
   .ride-card:hover,
   .park-card:hover{
     transform:none !important;
-    box-shadow:0 10px 22px rgba(20,42,102,.10) !important;
+    box-shadow:0 10px 22px rgba(13,27,76,.10) !important;
   }
 }
 
 
 /* RideHero v4.1 park isolation visual cue */
-.map-wrap[data-park="mk"]{outline:2px solid rgba(47,86,179,.18);}
-.map-wrap[data-park="ep"]{outline:2px solid rgba(46,158,87,.18);}
-.map-wrap[data-park="hs"]{outline:2px solid rgba(229,57,74,.18);}
-.map-wrap[data-park="ak"]{outline:2px solid rgba(242,140,56,.18);}
+.map-wrap[data-park="mk"]{outline:2px solid rgba(51,78,104,.18);}
+.map-wrap[data-park="ep"]{outline:2px solid rgba(78,122,78,.18);}
+.map-wrap[data-park="hs"]{outline:2px solid rgba(214,40,40,.18);}
+.map-wrap[data-park="ak"]{outline:2px solid rgba(242,107,56,.18);}
 
 
 /* RideHero v5 franchise hub + coaster intro */
@@ -656,7 +656,7 @@ body{
   position:fixed;
   inset:0;
   z-index:9999;
-  background:#F7F9FD;
+  background:#F8FAFC;
   display:flex;
   align-items:center;
   justify-content:center;
@@ -696,7 +696,7 @@ body{
   display:flex;
   align-items:center;
   justify-content:center;
-  background:#2F56B3;
+  background:#334E68;
   color:#fff;
   font-size:24px;
   font-weight:900;
@@ -705,7 +705,7 @@ body{
   font-size:30px;
   font-weight:900;
   letter-spacing:-.04em;
-  color:#142A66;
+  color:#0D1B4C;
 }
 .splash-subtitle{
   font-size:13px;
@@ -733,14 +733,14 @@ body{
 }
 .track-main{
   fill:none;
-  stroke:#142A66;
+  stroke:#0D1B4C;
   stroke-width:8;
   stroke-linecap:round;
   stroke-linejoin:round;
 }
 .loop-dot{
   fill:none;
-  stroke:#E5394A;
+  stroke:#D62828;
   stroke-width:5;
   stroke-dasharray:5 10;
   opacity:.8;
@@ -761,13 +761,13 @@ body{
 }
 .cart-body{
   display:block;
-  filter:drop-shadow(0 7px 6px rgba(20,42,102,.22));
+  filter:drop-shadow(0 7px 6px rgba(13,27,76,.22));
 }
 .splash-pop{
   position:absolute;
   right:20px;
   top:28px;
-  background:#E5394A;
+  background:#D62828;
   color:#fff;
   padding:9px 12px;
   border-radius:999px;
@@ -782,9 +782,9 @@ body{
   position:absolute;
   right:20px;
   bottom:calc(22px + env(safe-area-inset-bottom));
-  border:1px solid #2F56B3;
+  border:1px solid #334E68;
   background:#fff;
-  color:#2F56B3;
+  color:#334E68;
   border-radius:999px;
   padding:10px 14px;
   font-weight:800;
@@ -825,7 +825,7 @@ body{
 }
 .franchise-card.active{
   border-color:var(--brand-blue);
-  background:#EEF4FF;
+  background:#EEF4FB;
 }
 .franchise-card.placeholder{
   opacity:.86;
@@ -869,7 +869,7 @@ body{
 }
 .live-pill{
   background:#EAF8EF;
-  color:#2E9E57;
+  color:#4E7A4E;
   border:1px solid #CBEED8;
   font-size:12px;
   font-weight:900;
@@ -889,7 +889,7 @@ body{
   width:48px;
   height:48px;
   border-radius:16px;
-  background:#EEF4FF;
+  background:#EEF4FB;
   display:flex;
   align-items:center;
   justify-content:center;
@@ -899,7 +899,7 @@ body{
 .placeholder-title{
   font-size:22px;
   font-weight:900;
-  color:#142A66;
+  color:#0D1B4C;
   letter-spacing:-.03em;
 }
 .placeholder-copy{
@@ -959,7 +959,7 @@ body{
   display:flex;
   align-items:center;
   justify-content:center;
-  background:#2F56B3 !important;
+  background:#334E68 !important;
   color:#fff;
   font-size:24px;
   font-weight:900;
@@ -968,11 +968,11 @@ body{
   font-size:30px;
   font-weight:900;
   letter-spacing:-.04em;
-  color:#142A66;
+  color:#0D1B4C;
 }
 .splash-subtitle{
   font-size:13px;
-  color:#142A66;
+  color:#0D1B4C;
   opacity:.74;
   margin-top:2px;
 }
@@ -1040,14 +1040,14 @@ body{
 }
 .track-main{
   fill:none;
-  stroke:#14517A;
+  stroke:#0D1B4C;
   stroke-width:10;
   stroke-linecap:round;
   stroke-linejoin:round;
 }
 .track-rail{
   fill:none;
-  stroke:#F28C38;
+  stroke:#F26B38;
   stroke-width:4;
   stroke-linecap:round;
   stroke-linejoin:round;
@@ -1068,8 +1068,8 @@ body{
   position:relative;
   width:28px;
   height:22px;
-  background:#2F56B3;
-  border:3px solid #142A66;
+  background:#334E68;
+  border:3px solid #0D1B4C;
   border-radius:7px 7px 4px 4px;
   transform:skewX(-4deg);
 }
@@ -1078,7 +1078,7 @@ body{
   position:absolute;
   inset:4px 4px auto 4px;
   height:5px;
-  background:#E5394A;
+  background:#D62828;
   border-radius:999px;
 }
 .train-car span{
@@ -1089,7 +1089,7 @@ body{
   height:9px;
   background:#F7D154;
   border-radius:50%;
-  border:1px solid #142A66;
+  border:1px solid #0D1B4C;
 }
 .train-car i{
   position:absolute;
@@ -1101,13 +1101,13 @@ body{
 }
 .train-car i:first-of-type{left:4px;}
 .train-car i:last-of-type{right:4px;}
-.car-two{background:#E5394A;}
-.car-three{background:#2E9E57;}
+.car-two{background:#D62828;}
+.car-three{background:#4E7A4E;}
 .splash-pop{
   position:absolute;
   right:30px;
   top:38px;
-  background:#E5394A !important;
+  background:#D62828 !important;
   color:#fff;
   padding:8px 13px;
   border-radius:999px;
@@ -1141,7 +1141,7 @@ body{
   position:absolute;
   font-size:44px;
   bottom:30%;
-  filter:drop-shadow(0 4px 2px rgba(20,42,102,.12));
+  filter:drop-shadow(0 4px 2px rgba(13,27,76,.12));
 }
 .t1{left:12%;font-size:58px;}
 .t2{left:49%;font-size:43px;}
@@ -1151,9 +1151,9 @@ body{
   position:absolute;
   right:20px;
   bottom:calc(22px + env(safe-area-inset-bottom));
-  border:1px solid #2F56B3 !important;
+  border:1px solid #334E68 !important;
   background:#fff !important;
-  color:#2F56B3 !important;
+  color:#334E68 !important;
   border-radius:999px;
   padding:10px 14px;
   font-weight:800;
@@ -1217,7 +1217,7 @@ body{
   position:absolute;
   height:4px;
   width:0;
-  background:#142A66;
+  background:#0D1B4C;
   border-radius:999px;
   transform-origin:left center;
   opacity:0;
@@ -1235,8 +1235,8 @@ body{
   height:38px;
   border-radius:50%;
   background:#FFFFFF;
-  color:#E5394A;
-  border:3px solid #142A66;
+  color:#D62828;
+  border:3px solid #0D1B4C;
   display:flex;
   align-items:center;
   justify-content:center;
@@ -1256,7 +1256,7 @@ body{
 }
 @keyframes pageHookTug{
   0%,100%{filter:none;}
-  50%{filter:drop-shadow(-8px 0 0 rgba(229,57,74,.12));}
+  50%{filter:drop-shadow(-8px 0 0 rgba(214,40,40,.12));}
 }
 
 
@@ -1376,7 +1376,7 @@ body{
   display:flex;
   align-items:center;
   justify-content:center;
-  background:#EEF4FF;
+  background:#EEF4FB;
   margin:0 !important;
   font-size:18px !important;
   flex-shrink:0;
@@ -1482,7 +1482,7 @@ body{
 }
 .pull-rope{
   height:4px !important;
-  background:#142A66 !important;
+  background:#0D1B4C !important;
 }
 .track-shadow,
 .track-main,
@@ -1540,7 +1540,7 @@ body{
 }
 @keyframes leftEdgeTug{
   0%,100%{filter:none;}
-  50%{filter:drop-shadow(8px 0 0 rgba(229,57,74,.14));}
+  50%{filter:drop-shadow(8px 0 0 rgba(214,40,40,.14));}
 }
 
 
@@ -1550,8 +1550,8 @@ body{
   top:0;
   bottom:0;
   width:18px;
-  background:linear-gradient(90deg,rgba(255,255,255,.92),rgba(255,255,255,.28),rgba(20,42,102,.05));
-  border-right:1px solid rgba(20,42,102,.14);
+  background:linear-gradient(90deg,rgba(255,255,255,.92),rgba(255,255,255,.28),rgba(13,27,76,.05));
+  border-right:1px solid rgba(13,27,76,.14);
   z-index:4;
   pointer-events:none;
 }
@@ -1564,8 +1564,8 @@ body{
   top:0;
   bottom:0;
   width:18px;
-  background:linear-gradient(90deg,rgba(255,255,255,.94),rgba(255,255,255,.38),rgba(20,42,102,.06));
-  border-right:1px solid rgba(20,42,102,.16);
+  background:linear-gradient(90deg,rgba(255,255,255,.94),rgba(255,255,255,.38),rgba(13,27,76,.06));
+  border-right:1px solid rgba(13,27,76,.16);
   z-index:4;
   pointer-events:none;
 }
@@ -1578,10 +1578,10 @@ body{
   width:18px;
   opacity:.85;
   background:
-    linear-gradient(90deg, rgba(255,255,255,.98) 0%, rgba(255,255,255,.9) 40%, rgba(232,237,245,.72) 68%, rgba(20,42,102,.04) 100%);
+    linear-gradient(90deg, rgba(255,255,255,.98) 0%, rgba(255,255,255,.9) 40%, rgba(232,237,245,.72) 68%, rgba(13,27,76,.04) 100%);
   clip-path:polygon(0 0, 100% 0, 62% 50%, 100% 100%, 0 100%);
-  border-right:1px solid rgba(20,42,102,.12);
-  box-shadow:8px 0 24px rgba(20,42,102,.12);
+  border-right:1px solid rgba(13,27,76,.12);
+  box-shadow:8px 0 24px rgba(13,27,76,.12);
   z-index:5;
   pointer-events:none;
   transform:translateX(0);
@@ -1600,7 +1600,7 @@ body{
 .pull-rope{
   transform-origin:left center !important;
   height:4px !important;
-  background:#142A66 !important;
+  background:#0D1B4C !important;
   box-shadow:0 1px 0 rgba(255,255,255,.4);
 }
 
@@ -1609,7 +1609,7 @@ body{
 }
 @keyframes leftEdgeTug{
   0%,100%{filter:none;}
-  50%{filter:drop-shadow(8px 0 0 rgba(229,57,74,.14));}
+  50%{filter:drop-shadow(8px 0 0 rgba(214,40,40,.14));}
 }
 
 
@@ -1634,11 +1634,11 @@ body{
   stroke-width:19 !important;
 }
 .track-main{
-  stroke:#14517A !important;
+  stroke:#0D1B4C !important;
   stroke-width:10 !important;
 }
 .track-rail{
-  stroke:#F28C38 !important;
+  stroke:#F26B38 !important;
   stroke-width:4 !important;
 }
 .left-pull-edge{
@@ -1652,11 +1652,11 @@ body{
   width:18px;
   opacity:0;
   background:
-    radial-gradient(120px 420px at 100% 50%, rgba(20,42,102,.14), rgba(20,42,102,0) 58%),
+    radial-gradient(120px 420px at 100% 50%, rgba(13,27,76,.14), rgba(13,27,76,0) 58%),
     linear-gradient(90deg, rgba(255,255,255,1) 0%, rgba(255,255,255,.96) 48%, rgba(232,237,245,.82) 76%, rgba(255,255,255,.12) 100%);
   clip-path:polygon(0 0, 100% 0, 68% 50%, 100% 100%, 0 100%);
-  border-right:1px solid rgba(20,42,102,.12);
-  box-shadow:10px 0 28px rgba(20,42,102,.14);
+  border-right:1px solid rgba(13,27,76,.12);
+  box-shadow:10px 0 28px rgba(13,27,76,.14);
   z-index:5;
   pointer-events:none;
   transform:translateX(0);
@@ -1681,7 +1681,7 @@ body{
 }
 @keyframes leftEdgeTugSoft{
   0%,100%{filter:none;}
-  50%{filter:drop-shadow(6px 0 0 rgba(229,57,74,.08));}
+  50%{filter:drop-shadow(6px 0 0 rgba(214,40,40,.08));}
 }
 
 
@@ -1692,7 +1692,7 @@ body{
   background:
     radial-gradient(circle at 70% 40%, rgba(255,255,255,.16), transparent 13%),
     radial-gradient(circle at 85% 25%, rgba(255,255,255,.12), transparent 10%),
-    linear-gradient(135deg,#061B4F 0%,#0A2D78 58%,#113E93 100%);
+    linear-gradient(135deg,#0D1B4C 0%,#0D1B4C 58%,#334E68 100%);
   opacity:0;
   z-index:0;
   transition:opacity .08s linear;
@@ -1706,8 +1706,8 @@ body{
 .splash-page{z-index:1;}
 .coaster-stage{transform:translate(-50%,-34%) !important;width:min(440px,104vw) !important;height:270px !important;}
 .track-shadow{stroke:#DCE6F0 !important;stroke-width:20 !important;}
-.track-main{stroke:#14517A !important;stroke-width:11 !important;}
-.track-rail{stroke:#F28C38 !important;stroke-width:4.5 !important;}
+.track-main{stroke:#0D1B4C !important;stroke-width:11 !important;}
+.track-rail{stroke:#F26B38 !important;stroke-width:4.5 !important;}
 .support{stroke:#8B949E !important;stroke-width:5 !important;opacity:.82 !important;}
 .left-pull-edge{display:none !important;}
 .left-peel{
@@ -1718,11 +1718,11 @@ body{
   width:18px;
   opacity:0;
   background:
-    radial-gradient(160px 480px at 100% 50%, rgba(20,42,102,.18), rgba(20,42,102,0) 60%),
+    radial-gradient(160px 480px at 100% 50%, rgba(13,27,76,.18), rgba(13,27,76,0) 60%),
     linear-gradient(90deg, rgba(255,255,255,1) 0%, rgba(255,255,255,.96) 50%, rgba(231,235,242,.82) 78%, rgba(255,255,255,.18) 100%);
   clip-path:polygon(0 0, 100% 0, 64% 50%, 100% 100%, 0 100%);
-  border-right:1px solid rgba(20,42,102,.16);
-  box-shadow:12px 0 32px rgba(20,42,102,.18);
+  border-right:1px solid rgba(13,27,76,.16);
+  box-shadow:12px 0 32px rgba(13,27,76,.18);
   z-index:6;
   pointer-events:none;
   transform:translateX(0);
@@ -1735,8 +1735,8 @@ body{
   width:34px !important;
   height:34px !important;
   background:#F8FAFC !important;
-  border:3px solid #142A66 !important;
-  color:#F28C38 !important;
+  border:3px solid #0D1B4C !important;
+  color:#F26B38 !important;
   transform:translateX(0px) scale(.82) rotate(10deg) !important;
   z-index:7 !important;
 }
@@ -1746,7 +1746,7 @@ body{
   opacity:1 !important;
   height:4px !important;
   background:repeating-linear-gradient(90deg,#9B6A18 0 7px,#F3B43F 7px 14px) !important;
-  box-shadow:0 1px 0 rgba(255,255,255,.45),0 2px 8px rgba(20,42,102,.2) !important;
+  box-shadow:0 1px 0 rgba(255,255,255,.45),0 2px 8px rgba(13,27,76,.2) !important;
   border-radius:999px !important;
   z-index:6 !important;
 }
@@ -1754,19 +1754,19 @@ body{
 .storyboard-train .train-car{
   width:27px !important;
   height:21px !important;
-  border:3px solid #142A66 !important;
+  border:3px solid #0D1B4C !important;
   border-radius:8px 8px 5px 5px !important;
-  box-shadow:0 5px 8px rgba(20,42,102,.18);
+  box-shadow:0 5px 8px rgba(13,27,76,.18);
 }
-.storyboard-train .car-one{background:#2F56B3 !important;}
-.storyboard-train .car-two{background:#E5394A !important;}
-.storyboard-train .car-three{background:#2E9E57 !important;}
-.storyboard-train .car-four{background:#F28C38 !important;}
+.storyboard-train .car-one{background:#334E68 !important;}
+.storyboard-train .car-two{background:#D62828 !important;}
+.storyboard-train .car-three{background:#4E7A4E !important;}
+.storyboard-train .car-four{background:#F26B38 !important;}
 .storyboard-train .train-car b{
-  position:absolute;top:-14px;left:6px;width:9px;height:9px;background:#F7D154;border:1px solid #142A66;border-radius:50%;
+  position:absolute;top:-14px;left:6px;width:9px;height:9px;background:#F7D154;border:1px solid #0D1B4C;border-radius:50%;
 }
 .storyboard-train .train-car em{
-  position:absolute;top:-10px;left:15px;width:8px;height:8px;background:#F7D154;border:1px solid #142A66;border-radius:50%;display:block;
+  position:absolute;top:-10px;left:15px;width:8px;height:8px;background:#F7D154;border:1px solid #0D1B4C;border-radius:50%;display:block;
 }
 .storyboard-train .train-car span{
   top:5px !important;left:8px !important;width:10px !important;height:5px !important;background:#F7D154 !important;border-radius:999px !important;
@@ -1775,7 +1775,7 @@ body{
 .splash-page.pull-shake{animation:leftEdgeTugStory .18s ease-in-out 2 !important;}
 @keyframes leftEdgeTugStory{
   0%,100%{filter:none;}
-  50%{filter:drop-shadow(9px 0 0 rgba(229,57,74,.10));}
+  50%{filter:drop-shadow(9px 0 0 rgba(214,40,40,.10));}
 }
 
 
@@ -1800,11 +1800,11 @@ body{
   stroke-width:21 !important;
 }
 .track-main{
-  stroke:#14517A !important;
+  stroke:#0D1B4C !important;
   stroke-width:11 !important;
 }
 .track-rail{
-  stroke:#F28C38 !important;
+  stroke:#F26B38 !important;
   stroke-width:4.5 !important;
 }
 .support{
@@ -1823,11 +1823,11 @@ body{
   width:18px;
   opacity:0;
   background:
-    radial-gradient(180px 520px at 100% 50%, rgba(20,42,102,.18), rgba(20,42,102,0) 60%),
+    radial-gradient(180px 520px at 100% 50%, rgba(13,27,76,.18), rgba(13,27,76,0) 60%),
     linear-gradient(90deg, rgba(255,255,255,1) 0%, rgba(255,255,255,.97) 52%, rgba(233,237,243,.84) 78%, rgba(255,255,255,.18) 100%);
   clip-path:polygon(0 0, 100% 0, 66% 50%, 100% 100%, 0 100%);
-  border-right:1px solid rgba(20,42,102,.15);
-  box-shadow:14px 0 34px rgba(20,42,102,.18);
+  border-right:1px solid rgba(13,27,76,.15);
+  box-shadow:14px 0 34px rgba(13,27,76,.18);
   z-index:6;
   pointer-events:none;
   transform:translateX(0);
@@ -1838,7 +1838,7 @@ body{
   background:
     radial-gradient(circle at 72% 40%, rgba(255,255,255,.16), transparent 13%),
     radial-gradient(circle at 86% 24%, rgba(255,255,255,.12), transparent 10%),
-    linear-gradient(135deg,#061B4F 0%,#0A2D78 58%,#113E93 100%);
+    linear-gradient(135deg,#0D1B4C 0%,#0D1B4C 58%,#334E68 100%);
   opacity:0;
   z-index:0;
 }
@@ -1850,7 +1850,7 @@ body{
   width:32px !important;
   height:32px !important;
   background:#F8FAFC !important;
-  border:3px solid #142A66 !important;
+  border:3px solid #0D1B4C !important;
   color:#8B949E !important;
   z-index:7 !important;
 }
@@ -1866,7 +1866,7 @@ body{
 }
 @keyframes leftEdgeTugRectified{
   0%,100%{filter:none;}
-  50%{filter:drop-shadow(8px 0 0 rgba(20,42,102,.08));}
+  50%{filter:drop-shadow(8px 0 0 rgba(13,27,76,.08));}
 }
 
 
@@ -1881,11 +1881,11 @@ body{
   stroke-width:22 !important;
 }
 .track-main{
-  stroke:#14517A !important;
+  stroke:#0D1B4C !important;
   stroke-width:11.5 !important;
 }
 .track-rail{
-  stroke:#F28C38 !important;
+  stroke:#F26B38 !important;
   stroke-width:4.5 !important;
 }
 .support{
@@ -1904,11 +1904,11 @@ body{
   width:18px;
   opacity:0;
   background:
-    radial-gradient(180px 560px at 100% 50%, rgba(20,42,102,.18), rgba(20,42,102,0) 60%),
+    radial-gradient(180px 560px at 100% 50%, rgba(13,27,76,.18), rgba(13,27,76,0) 60%),
     linear-gradient(90deg, rgba(255,255,255,1) 0%, rgba(255,255,255,.975) 54%, rgba(233,237,243,.86) 80%, rgba(255,255,255,.18) 100%);
   clip-path:polygon(0 0, 100% 0, 66% 50%, 100% 100%, 0 100%);
-  border-right:1px solid rgba(20,42,102,.15);
-  box-shadow:14px 0 34px rgba(20,42,102,.18);
+  border-right:1px solid rgba(13,27,76,.15);
+  box-shadow:14px 0 34px rgba(13,27,76,.18);
   z-index:6;
   pointer-events:none;
   transform:translateX(0);
@@ -1919,7 +1919,7 @@ body{
   background:
     radial-gradient(circle at 72% 40%, rgba(255,255,255,.16), transparent 13%),
     radial-gradient(circle at 86% 24%, rgba(255,255,255,.12), transparent 10%),
-    linear-gradient(135deg,#061B4F 0%,#0A2D78 58%,#113E93 100%);
+    linear-gradient(135deg,#0D1B4C 0%,#0D1B4C 58%,#334E68 100%);
   opacity:0;
   z-index:0;
 }
@@ -1931,7 +1931,7 @@ body{
   width:32px !important;
   height:32px !important;
   background:#F8FAFC !important;
-  border:3px solid #142A66 !important;
+  border:3px solid #0D1B4C !important;
   color:#8B949E !important;
   z-index:7 !important;
 }
@@ -1947,7 +1947,7 @@ body{
 }
 @keyframes leftEdgeTugFinal{
   0%,100%{filter:none;}
-  50%{filter:drop-shadow(7px 0 0 rgba(20,42,102,.08));}
+  50%{filter:drop-shadow(7px 0 0 rgba(13,27,76,.08));}
 }
 
 
@@ -1968,11 +1968,11 @@ body{
   width:18px;
   opacity:0;
   background:
-    radial-gradient(190px 580px at 100% 50%, rgba(20,42,102,.19), rgba(20,42,102,0) 60%),
+    radial-gradient(190px 580px at 100% 50%, rgba(13,27,76,.19), rgba(13,27,76,0) 60%),
     linear-gradient(90deg, rgba(255,255,255,1) 0%, rgba(255,255,255,.98) 54%, rgba(233,237,243,.87) 80%, rgba(255,255,255,.18) 100%);
   clip-path:polygon(0 0, 100% 0, 66% 50%, 100% 100%, 0 100%);
-  border-right:1px solid rgba(20,42,102,.15);
-  box-shadow:14px 0 34px rgba(20,42,102,.18);
+  border-right:1px solid rgba(13,27,76,.15);
+  box-shadow:14px 0 34px rgba(13,27,76,.18);
   z-index:6;
   pointer-events:none;
   transform:translateX(0);
@@ -1983,7 +1983,7 @@ body{
   background:
     radial-gradient(circle at 72% 40%, rgba(255,255,255,.16), transparent 13%),
     radial-gradient(circle at 86% 24%, rgba(255,255,255,.12), transparent 10%),
-    linear-gradient(135deg,#061B4F 0%,#0A2D78 58%,#113E93 100%);
+    linear-gradient(135deg,#0D1B4C 0%,#0D1B4C 58%,#334E68 100%);
   opacity:0;
   z-index:0;
 }
@@ -1995,7 +1995,7 @@ body{
   width:32px !important;
   height:32px !important;
   background:#F8FAFC !important;
-  border:3px solid #142A66 !important;
+  border:3px solid #0D1B4C !important;
   color:#8B949E !important;
   z-index:7 !important;
 }
@@ -2011,20 +2011,16 @@ body{
 }
 @keyframes leftEdgeTugUltra{
   0%,100%{filter:none;}
-  50%{filter:drop-shadow(7px 0 0 rgba(20,42,102,.08));}
+  50%{filter:drop-shadow(7px 0 0 rgba(13,27,76,.08));}
 }
 
 
-/* RideHero v7.0 mode choice experience */
-body.mode-quick{
-  --mode-primary:#2F56B3;
-  --mode-accent:#F28C38;
-  --mode-soft:#EEF4FF;
-}
+/* Planning modes share one visual system; mode classes only alter workflow. */
+body.mode-quick,
 body.mode-strategic{
-  --mode-primary:#142A66;
-  --mode-accent:#E5394A;
-  --mode-soft:#FFF1F2;
+  --mode-primary:#334E68;
+  --mode-accent:#F26B38;
+  --mode-soft:#ECEBF1;
 }
 
 .mode-pill{
@@ -2048,7 +2044,7 @@ body.mode-strategic{
   border-left:6px solid var(--mode-primary);
   border-radius:22px;
   padding:14px;
-  box-shadow:0 8px 20px rgba(20,42,102,.08);
+  box-shadow:0 8px 20px rgba(13,27,76,.08);
 }
 .advisor-kicker{
   font-size:11px;
@@ -2058,7 +2054,7 @@ body.mode-strategic{
   letter-spacing:.08em;
 }
 .advisor-title{
-  color:#142A66;
+  color:#0D1B4C;
   font-size:17px;
   font-weight:900;
   letter-spacing:-.025em;
@@ -2079,32 +2075,6 @@ body.mode-strategic{
   padding:13px 16px;
   min-width:58px;
 }
-body.mode-strategic .compact-feature.green{
-  border-top-color:#E5394A !important;
-}
-body.mode-strategic .compact-feature .feature-icon{
-  background:#FFF1F2;
-}
-body.mode-strategic .big-btn,
-body.mode-strategic .advisor-action{
-  background:#142A66 !important;
-}
-body.mode-quick .advisor-action{
-  background:#2F56B3 !important;
-}
-
-/* RideHero v7.3 intro polish + red quick mode */
-body.mode-quick{
-  --mode-primary:#E5394A !important;
-  --mode-accent:#F28C38 !important;
-  --mode-soft:#FFF1F2 !important;
-}
-body.mode-strategic{
-  --mode-primary:#142A66 !important;
-  --mode-accent:#2F56B3 !important;
-  --mode-soft:#EEF4FF !important;
-}
-
 /* intro geometry polish */
 .coaster-stage{
   transform:translate(-50%,-33%) !important;
@@ -2116,11 +2086,11 @@ body.mode-strategic{
   stroke-width:23 !important;
 }
 .track-main{
-  stroke:#14517A !important;
+  stroke:#0D1B4C !important;
   stroke-width:11.5 !important;
 }
 .track-rail{
-  stroke:#F28C38 !important;
+  stroke:#F26B38 !important;
   stroke-width:4.6 !important;
 }
 .support{
@@ -2133,7 +2103,7 @@ body.mode-strategic{
 }
 .left-peel{
   background:
-    radial-gradient(190px 580px at 100% 50%, rgba(20,42,102,.19), rgba(20,42,102,0) 60%),
+    radial-gradient(190px 580px at 100% 50%, rgba(13,27,76,.19), rgba(13,27,76,0) 60%),
     linear-gradient(90deg, rgba(255,255,255,1) 0%, rgba(255,255,255,.985) 56%, rgba(233,237,243,.88) 80%, rgba(255,255,255,.18) 100%) !important;
 }
 
@@ -2176,11 +2146,11 @@ body.hide-planning-ui .suggested-plan-section{
   stroke-width:24 !important;
 }
 .track-main{
-  stroke:#14517A !important;
+  stroke:#0D1B4C !important;
   stroke-width:12 !important;
 }
 .track-rail{
-  stroke:#F28C38 !important;
+  stroke:#F26B38 !important;
   stroke-width:4.8 !important;
 }
 .exit-track{
@@ -2225,11 +2195,11 @@ body.hide-planning-ui .suggested-plan-section{
   stroke-width:24 !important;
 }
 .track-main{
-  stroke:#14517A !important;
+  stroke:#0D1B4C !important;
   stroke-width:12 !important;
 }
 .track-rail{
-  stroke:#F28C38 !important;
+  stroke:#F26B38 !important;
   stroke-width:4.8 !important;
 }
 .loop-back{
@@ -2258,7 +2228,7 @@ body.hide-planning-ui .suggested-plan-section{
   will-change:transform;
 }
 .storyboard-train .train-car{
-  box-shadow:0 5px 9px rgba(20,42,102,.20);
+  box-shadow:0 5px 9px rgba(13,27,76,.20);
 }
 
 
@@ -2285,11 +2255,11 @@ body.hide-planning-ui .suggested-plan-section{
   stroke-width:24 !important;
 }
 .track-main{
-  stroke:#14517A !important;
+  stroke:#0D1B4C !important;
   stroke-width:12 !important;
 }
 .track-rail{
-  stroke:#F28C38 !important;
+  stroke:#F26B38 !important;
   stroke-width:4.8 !important;
 }
 .loop-circle{
@@ -2352,11 +2322,11 @@ body.hide-planning-ui .suggested-plan-section{
   stroke-width:24 !important;
 }
 .track-main{
-  stroke:#14517A !important;
+  stroke:#0D1B4C !important;
   stroke-width:12 !important;
 }
 .track-rail{
-  stroke:#F28C38 !important;
+  stroke:#F26B38 !important;
   stroke-width:4.8 !important;
 }
 .coaster-train.articulated-train{
@@ -2377,7 +2347,7 @@ body.hide-planning-ui .suggested-plan-section{
   height:20px !important;
   border-radius:8px 9px 6px 6px !important;
   border:2px solid rgba(255,255,255,.94) !important;
-  box-shadow:0 5px 10px rgba(20,42,102,.23) !important;
+  box-shadow:0 5px 10px rgba(13,27,76,.23) !important;
   transform-origin:15px 11px !important;
   will-change:transform !important;
   transform:translate(-80px,252px) rotate(0deg);
@@ -2387,10 +2357,10 @@ body.hide-planning-ui .suggested-plan-section{
   height:5px !important;
   background:rgba(255,255,255,.72) !important;
 }
-.articulated-train .train-car.car-one{ background:#E5394A !important; }
-.articulated-train .train-car.car-two{ background:#F28C38 !important; }
-.articulated-train .train-car.car-three{ background:#2F56B3 !important; }
-.articulated-train .train-car.car-four{ background:#142A66 !important; }
+.articulated-train .train-car.car-one{ background:#D62828 !important; }
+.articulated-train .train-car.car-two{ background:#F26B38 !important; }
+.articulated-train .train-car.car-three{ background:#334E68 !important; }
+.articulated-train .train-car.car-four{ background:#0D1B4C !important; }
 .articulated-train .train-car span{
   top:-9px !important;
   left:10px !important;
@@ -2443,7 +2413,7 @@ body.hide-planning-ui .suggested-plan-section{
   border-radius:24px;
   padding:16px;
   margin-bottom:16px;
-  box-shadow:0 12px 28px rgba(20,42,102,.10);
+  box-shadow:0 12px 28px rgba(13,27,76,.10);
 }
 .plan-hours-section{
   display:block !important;
@@ -2497,11 +2467,11 @@ body.park-selected #park-context-row{
   stroke-width:24 !important;
 }
 .track-main{
-  stroke:#14517A !important;
+  stroke:#0D1B4C !important;
   stroke-width:12 !important;
 }
 .track-rail{
-  stroke:#F28C38 !important;
+  stroke:#F26B38 !important;
   stroke-width:4.8 !important;
 }
 .support{
@@ -2532,7 +2502,7 @@ body.park-selected #park-context-row{
   height:20px !important;
   border-radius:8px 9px 6px 6px !important;
   border:2px solid rgba(255,255,255,.94) !important;
-  box-shadow:0 5px 10px rgba(20,42,102,.23) !important;
+  box-shadow:0 5px 10px rgba(13,27,76,.23) !important;
   transform-origin:15px 11px !important;
   will-change:transform !important;
   animation:none !important;
@@ -2544,13 +2514,13 @@ body.park-selected #park-context-row{
   background:rgba(255,255,255,.72) !important;
 }
 .coaster-train.rebuilt-train .train-car.car-one,
-.coaster-train.articulated-train .train-car.car-one{ background:#E5394A !important; }
+.coaster-train.articulated-train .train-car.car-one{ background:#D62828 !important; }
 .coaster-train.rebuilt-train .train-car.car-two,
-.coaster-train.articulated-train .train-car.car-two{ background:#F28C38 !important; }
+.coaster-train.articulated-train .train-car.car-two{ background:#F26B38 !important; }
 .coaster-train.rebuilt-train .train-car.car-three,
-.coaster-train.articulated-train .train-car.car-three{ background:#2F56B3 !important; }
+.coaster-train.articulated-train .train-car.car-three{ background:#334E68 !important; }
 .coaster-train.rebuilt-train .train-car.car-four,
-.coaster-train.articulated-train .train-car.car-four{ background:#142A66 !important; }
+.coaster-train.articulated-train .train-car.car-four{ background:#0D1B4C !important; }
 
 .left-peel,
 .page-hook,
@@ -2580,13 +2550,13 @@ body.park-selected #park-context-row{
 /* RideHero v8.7 header cleanup + readable morning sweep numbers */
 .mini-stop-num{
   color:#ffffff !important;
-  background:#2F56B3 !important;
+  background:#334E68 !important;
   font-weight:900 !important;
   display:inline-flex !important;
   align-items:center !important;
   justify-content:center !important;
   line-height:1 !important;
-  text-shadow:0 1px 1px rgba(20,42,102,.22);
+  text-shadow:0 1px 1px rgba(13,27,76,.22);
 }
 .home-header{
   grid-template-columns:1fr !important;
@@ -2609,7 +2579,7 @@ body.park-selected #park-context-row{
   padding:0 !important;
   border-radius:50% !important;
   color:#ffffff !important;
-  background:#2F56B3 !important;
+  background:#334E68 !important;
   font-weight:900 !important;
   font-size:13px !important;
   line-height:28px !important;
@@ -2620,7 +2590,7 @@ body.park-selected #park-context-row{
   place-self:center !important;
   text-indent:0 !important;
   transform:none !important;
-  text-shadow:0 1px 1px rgba(20,42,102,.22);
+  text-shadow:0 1px 1px rgba(13,27,76,.22);
 }
 .home-header{
   grid-template-columns:1fr !important;
@@ -2695,24 +2665,24 @@ body.park-selected #park-context-row{
 
 /* solid full-border colors */
 #plan-tools-row .compact-feature.green{
-  border-color:#2F56B3 !important; /* Build */
+  border-color:#334E68 !important; /* Build */
 }
 #plan-tools-row .compact-feature.blue{
-  border-color:#E5394A !important; /* Must-dos */
+  border-color:#D62828 !important; /* Must-dos */
 }
 #plan-tools-row .compact-feature.purple{
-  border-color:#F28C38 !important; /* Waits */
+  border-color:#F26B38 !important; /* Waits */
 }
 
 /* if the build uses positional cards instead of color classes, keep them solid */
 #plan-tools-row .compact-feature:nth-child(1){
-  border-color:#2F56B3 !important;
+  border-color:#334E68 !important;
 }
 #plan-tools-row .compact-feature:nth-child(2){
-  border-color:#E5394A !important;
+  border-color:#D62828 !important;
 }
 #plan-tools-row .compact-feature:nth-child(3){
-  border-color:#F28C38 !important;
+  border-color:#F26B38 !important;
 }
 
 @media (max-width:640px){
@@ -2739,7 +2709,7 @@ body.park-selected #park-context-row{
 }
 
 #screen-plan #plan-tools-row .compact-feature:nth-child(1){
-  border-color:#D8242A !important;
+  border-color:#D62828 !important;
 }
 #screen-plan #plan-tools-row .compact-feature:nth-child(2){
   border-color:#B51F2A !important;
@@ -2750,7 +2720,7 @@ body.park-selected #park-context-row{
   background:#ffffff;
   border:3px solid #00663A;
   border-radius:24px;
-  box-shadow:0 12px 28px rgba(20,42,102,.10);
+  box-shadow:0 12px 28px rgba(13,27,76,.10);
   padding:14px;
 }
 .compact-waits-head{
@@ -2761,14 +2731,14 @@ body.park-selected #park-context-row{
   padding:2px 2px 10px;
 }
 .compact-waits-kicker{
-  color:#E5394A;
+  color:#D62828;
   font-size:12px;
   font-weight:950;
   letter-spacing:.08em;
   text-transform:uppercase;
 }
 .compact-waits-title{
-  color:#142A66;
+  color:#0D1B4C;
   font-size:20px;
   line-height:1.05;
   font-weight:950;
@@ -2801,7 +2771,7 @@ body.park-selected #park-context-row{
 }
 .compact-wait-name{
   min-width:0;
-  color:#142A66;
+  color:#0D1B4C;
   font-size:13px;
   font-weight:900;
   white-space:nowrap;
@@ -2822,11 +2792,11 @@ body.park-selected #park-context-row{
   font-size:12px;
   font-weight:950;
   color:#ffffff;
-  background:#0B3D91;
+  background:#334E68;
 }
 .compact-wait-badge.low{ background:#00663A; }
-.compact-wait-badge.med{ background:#F28C38; }
-.compact-wait-badge.high{ background:#D8242A; }
+.compact-wait-badge.med{ background:#F26B38; }
+.compact-wait-badge.high{ background:#D62828; }
 .compact-waits-empty{
   color:#64748b;
   background:#F8FAFC;
@@ -2995,9 +2965,9 @@ body{
 }
 .rolling-queue-card{
   background:#ffffff;
-  border:3px solid #0B3D91;
+  border:3px solid #334E68;
   border-radius:22px;
-  box-shadow:0 12px 28px rgba(20,42,102,.10);
+  box-shadow:0 12px 28px rgba(13,27,76,.10);
   padding:14px;
   margin-bottom:10px;
 }
@@ -3005,14 +2975,14 @@ body{
   border-color:#00663A;
 }
 .rolling-kicker{
-  color:#E5394A;
+  color:#D62828;
   text-transform:uppercase;
   letter-spacing:.08em;
   font-size:11px;
   font-weight:950;
 }
 .rolling-title{
-  color:#142A66;
+  color:#0D1B4C;
   font-size:20px;
   font-weight:950;
   line-height:1.05;
@@ -3030,7 +3000,7 @@ body{
 .rolling-clear-btn{
   border:0;
   border-radius:999px;
-  background:#142A66;
+  background:#0D1B4C;
   color:#ffffff;
   padding:9px 13px;
   font-weight:900;
@@ -3056,7 +3026,7 @@ body{
 }
 .rolling-next-card strong{
   min-width:0;
-  color:#142A66;
+  color:#0D1B4C;
   font-size:13px;
   font-weight:950;
   white-space:normal;
@@ -3076,14 +3046,14 @@ body{
   display:none !important;
 }
 .rolling-queue-card.single-next-stop{
-  border-color:#0B3D91;
+  border-color:#334E68;
 }
 .rolling-sequence-badge{
   display:inline-flex;
   margin-top:8px;
   margin-bottom:4px;
   border-radius:999px;
-  background:#E5394A;
+  background:#D62828;
   color:#ffffff;
   padding:6px 10px;
   font-size:12px;
@@ -3293,7 +3263,7 @@ body{
     </div>
     <div class="legend-row">
       <div class="legend-item"><div class="legend-dot" style="background:#ff9500"></div>Tap once = Must ride</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#185FA5"></div>Twice = Want to</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#334E68"></div>Twice = Want to</div>
       <div class="legend-item"><div class="legend-dot" style="background:#e5e5ea"></div>Three times = Skip</div>
     </div>
     <div class="priority-list" id="priority-list"></div>
@@ -3349,7 +3319,7 @@ body{
 <script src="js/walking-network.js?v=1"></script>
 <script>
 const PARK_META = {
-  mk:{name:'Magic Kingdom',color:'#185FA5',emoji:'🏰',zones:[
+  mk:{name:'Magic Kingdom',color:'#334E68',emoji:'🏰',zones:[
     {n:'Main Street',x:200,y:270,c:'#bfdbfe'},{n:'Adventureland',x:85,y:200,c:'#bbf7d0'},
     {n:'Frontierland',x:80,y:145,c:'#fde68a'},{n:'Liberty Square',x:140,y:115,c:'#fecaca'},
     {n:'Fantasyland',x:240,y:95,c:'#ddd6fe'},{n:'Tomorrowland',x:315,y:175,c:'#a7f3d0'}
@@ -4606,7 +4576,7 @@ function buildMap(route) {
       var pos = null;
       rides.forEach(function(r){if(ridePos[r.id]&&ridePos[r.id].lmk===id)pos=ridePos[r.id];});
       if(!pos){Object.keys(ridePos).forEach(function(k){if(ridePos[k].lmk===id)pos=ridePos[k];});}
-      if(pos) ci(pos.x,pos.y,28,{fill:'none',stroke:'#185FA5','stroke-width':3,'stroke-dasharray':'5,4'},g);
+      if(pos) ci(pos.x,pos.y,28,{fill:'none',stroke:'#334E68','stroke-width':3,'stroke-dasharray':'5,4'},g);
     }
     g.addEventListener('click',function(){
       if(selected.has(id))selected.delete(id);else selected.add(id);
@@ -4664,20 +4634,20 @@ function buildMap(route) {
 
   function _drawStartMarker(startPoint, isLive) {
     if (!startPoint) return;
-    ci(startPoint.x, startPoint.y, isLive ? 11 : 8, {fill:'#fff', stroke:isLive ? '#0b7ad1' : '#185FA5', 'stroke-width':3}, svg);
-    ci(startPoint.x, startPoint.y, isLive ? 5.5 : 4, {fill:isLive ? '#0b7ad1' : '#185FA5'}, svg);
+    ci(startPoint.x, startPoint.y, isLive ? 11 : 8, {fill:'#fff', stroke:isLive ? '#5A98D9' : '#334E68', 'stroke-width':3}, svg);
+    ci(startPoint.x, startPoint.y, isLive ? 5.5 : 4, {fill:isLive ? '#5A98D9' : '#334E68'}, svg);
     if (isLive) {
       ci(startPoint.x, startPoint.y, 18, {fill:'none', stroke:'rgba(11,122,209,0.35)', 'stroke-width':3}, svg);
       var t = el('text',{
         x:startPoint.x + 20, y:startPoint.y - 8, 'text-anchor':'start',
-        'font-size':13, 'font-weight':800, fill:'#0b7ad1', 'font-family':'system-ui',
+        'font-size':13, 'font-weight':800, fill:'#5A98D9', 'font-family':'system-ui',
         'paint-order':'stroke', stroke:'rgba(255,255,255,0.95)', 'stroke-width':3
       }, svg);
       t.textContent = 'You are here';
     } else {
       var e = el('text',{
         x:startPoint.x + 16, y:startPoint.y - 8, 'text-anchor':'start',
-        'font-size':12, 'font-weight':800, fill:'#185FA5', 'font-family':'system-ui',
+        'font-size':12, 'font-weight':800, fill:'#334E68', 'font-family':'system-ui',
         'paint-order':'stroke', stroke:'rgba(255,255,255,0.95)', 'stroke-width':3
       }, svg);
       e.textContent = 'Entrance';
@@ -5277,7 +5247,7 @@ function buildRouteMiniMap(route) {
     for (var i = 1; i < pts.length; i++) d += ' L ' + pts[i].x + ' ' + pts[i].y;
     add('path', {d:d, fill:'none', stroke:'rgba(0,0,0,0.32)', 'stroke-width':18, 'stroke-linecap':'round', 'stroke-linejoin':'round'});
     add('path', {d:d, fill:'none', stroke:'#ffffff', 'stroke-width':11, 'stroke-linecap':'round', 'stroke-linejoin':'round'});
-    add('path', {d:d, fill:'none', stroke:(PARK_META[currentPark] ? PARK_META[currentPark].color : '#185FA5'), 'stroke-width':6, 'stroke-linecap':'round', 'stroke-linejoin':'round'});
+    add('path', {d:d, fill:'none', stroke:(PARK_META[currentPark] ? PARK_META[currentPark].color : '#334E68'), 'stroke-width':6, 'stroke-linecap':'round', 'stroke-linejoin':'round'});
   }
 
   if (!pts.length) {
@@ -5287,7 +5257,7 @@ function buildRouteMiniMap(route) {
 
   pts.forEach(function(p, idx) {
     add('circle', {cx:p.x, cy:p.y, r:isAK ? 34 : 24, fill:'rgba(0,0,0,0.30)'});
-    add('circle', {cx:p.x, cy:p.y, r:isAK ? 29 : 21, fill:(PARK_META[currentPark] ? PARK_META[currentPark].color : '#185FA5'), stroke:'#fff', 'stroke-width':4});
+    add('circle', {cx:p.x, cy:p.y, r:isAK ? 29 : 21, fill:(PARK_META[currentPark] ? PARK_META[currentPark].color : '#334E68'), stroke:'#fff', 'stroke-width':4});
     textNode(String(idx + 1), p.x, p.y + (isAK ? 10 : 7), isAK ? 24 : 17, '#fff', 900);
 
     var labelY = p.y - (isAK ? 46 : 34);
@@ -5773,7 +5743,7 @@ async function optimizeRoute() {
     var totalWait = top3.reduce(function(s,r) { return s + scoredWait(r); }, 0);
     var totalWalk = top3.reduce(function(s,r,i) { return s + walkMins(i === 0 ? routeStart : top3[i-1], r); }, 0);
     var totalTime = totalWait + Math.round(totalWalk) + top3.length * 5;
-    var heroBg = HERO_COLORS[currentPark] || '#185FA5';
+    var heroBg = HERO_COLORS[currentPark] || '#334E68';
 
     var rideHeading = top3.length === 1 ? 'Next ride' : 'Next ' + top3.length + ' rides';
     var html = '<div class="route-hero" style="background:' + heroBg + '"><h2>' + meta.emoji + ' ' + rideHeading + '</h2><p>' + escHTML(tip) + routeLocationMessageMarkup() + routingQualityMarkup(routeStart, top3[0]) + '</p></div>' +
@@ -5944,7 +5914,7 @@ async function buildFullDayRoute() {
     }
 
     var tip = safeTipForPark();
-    var heroBg = HERO_COLORS[currentPark] || '#185FA5';
+    var heroBg = HERO_COLORS[currentPark] || '#334E68';
     var openHour = currentMode === 'fullday' ? (parseInt(document.getElementById('open-hour').value) || 9) : 9;
 
     function minToTime(min) {
@@ -6058,7 +6028,7 @@ function animateSplashTrain() {
   var rideDuration = 1981;
   var pullAwayDuration = 519;
   var totalDuration = rideDuration + pullAwayDuration;
-  var carGap = 32;
+  var carGap = 27;
   var startTs = null;
 
   // Start the page pull earlier while cars remain rail-locked.
@@ -6066,70 +6036,52 @@ function animateSplashTrain() {
   var maxPrePull = Math.min(92, window.innerWidth * 0.22);
 
   function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
-  function mix(a,b,t){ return a + (b-a)*t; }
   function easeInOutSine(t){ return -(Math.cos(Math.PI * t) - 1) / 2; }
   function easeOutCubic(t){ return 1 - Math.pow(1 - t, 3); }
   function easeOutQuart(t){ return 1 - Math.pow(1 - t, 4); }
 
   function progressProfile(t) {
-    t = clamp(t,0,1);
-
-    // Approach
-    if (t < 0.16) {
-      return mix(0, 0.23, easeInOutSine(t / 0.16));
-    }
-
-    // Loop climb / top arc
-    if (t < 0.57) {
-      var u1 = (t - 0.16) / 0.41;
-      return mix(0.23, 0.64, easeInOutSine(u1));
-    }
-
-    // Exit arc
-    if (t < 0.80) {
-      var u2 = (t - 0.57) / 0.23;
-      return mix(0.64, 0.82, easeOutCubic(u2));
-    }
-
-    // Final rail run, ending exactly on the track path.
-    var u3 = (t - 0.80) / 0.20;
-    return mix(0.82, 1, easeInOutSine(u3));
+    // One continuous velocity curve avoids acceleration jumps between path sections.
+    return easeInOutSine(clamp(t,0,1));
   }
+
+  // Resolve the SVG's default xMidYMid meet transform once. Both the SVG and
+  // cars live inside the same stage, so page movement does not invalidate it.
+  var svg = path.ownerSVGElement;
+  var viewBox = svg && svg.viewBox ? svg.viewBox.baseVal : null;
+  var stageWidth = stage.clientWidth;
+  var stageHeight = stage.clientHeight;
+  var viewWidth = viewBox && viewBox.width ? viewBox.width : stageWidth;
+  var viewHeight = viewBox && viewBox.height ? viewBox.height : stageHeight;
+  var viewX = viewBox ? viewBox.x : 0;
+  var viewY = viewBox ? viewBox.y : 0;
+  var svgScale = Math.min(stageWidth / viewWidth, stageHeight / viewHeight);
+  var svgOffsetX = (stageWidth - viewWidth * svgScale) / 2 - viewX * svgScale;
+  var svgOffsetY = (stageHeight - viewHeight * svgScale) / 2 - viewY * svgScale;
+  var carAnchors = cars.map(function(car) {
+    return { x: car.offsetWidth / 2, y: car.offsetHeight / 2 };
+  });
 
   function pointAtDistance(d) {
     d = clamp(d, 0, pathLen);
     var p = path.getPointAtLength(d);
-    var p2 = path.getPointAtLength(clamp(d + 1.6, 0, pathLen));
-    var svg = path.ownerSVGElement;
-    var matrix = svg && svg.getScreenCTM ? svg.getScreenCTM() : null;
-    var stageRect = stage.getBoundingClientRect();
-    if (matrix && window.DOMPoint) {
-      var screenP = new DOMPoint(p.x, p.y).matrixTransform(matrix);
-      var screenP2 = new DOMPoint(p2.x, p2.y).matrixTransform(matrix);
-      return {
-        x:screenP.x - stageRect.left,
-        y:screenP.y - stageRect.top,
-        angle:Math.atan2(screenP2.y - screenP.y, screenP2.x - screenP.x) * 180 / Math.PI
-      };
-    }
+    var tangentStart = path.getPointAtLength(clamp(d - 2.5, 0, pathLen));
+    var tangentEnd = path.getPointAtLength(clamp(d + 2.5, 0, pathLen));
     return {
-      x:p.x,
-      y:p.y,
-      angle:Math.atan2(p2.y - p.y, p2.x - p.x) * 180 / Math.PI
+      x:svgOffsetX + p.x * svgScale,
+      y:svgOffsetY + p.y * svgScale,
+      angle:Math.atan2(tangentEnd.y - tangentStart.y, tangentEnd.x - tangentStart.x) * 180 / Math.PI
     };
   }
 
-  function renderCar(car, p) {
-    // Center each car's actual border box on the rendered SVG rail point.
-    var anchorX = car.offsetWidth / 2;
-    var anchorY = car.offsetHeight / 2;
-    car.style.transform = 'translate(' + (p.x - anchorX) + 'px,' + (p.y - anchorY) + 'px) rotate(' + p.angle + 'deg)';
+  function renderCar(car, p, anchor) {
+    car.style.transform = 'translate3d(' + (p.x - anchor.x) + 'px,' + (p.y - anchor.y) + 'px,0) rotate(' + p.angle + 'deg)';
   }
 
   function renderTrain(leadD) {
     cars.forEach(function(car, i){
       var p = pointAtDistance(leadD - i * carGap);
-      renderCar(car, p);
+      renderCar(car, p, carAnchors[i]);
     });
   }
 
@@ -6177,7 +6129,7 @@ function animateSplashTrain() {
           x: p.x,
           y: p.y,
           angle: p.angle
-        });
+        }, carAnchors[i]);
       });
       hidePullArtifacts();
     } else {
@@ -6210,7 +6162,7 @@ function applyGuidanceMode(mode) {
   document.body.classList.toggle('mode-strategic', guidanceMode === 'strategic');
   document.body.classList.toggle('mode-quick', guidanceMode !== 'strategic');
   var themeColor = document.querySelector('meta[name="theme-color"]');
-  if (themeColor) themeColor.setAttribute('content', guidanceMode === 'strategic' ? '#2F56B3' : '#E5394A');
+  if (themeColor) themeColor.setAttribute('content', guidanceMode === 'strategic' ? '#334E68' : '#D62828');
 
   var pill = document.getElementById('mode-pill');
   if (pill) pill.textContent = guidanceMode === 'strategic' ? 'Mode: Maximize' : 'Mode: Quick';
