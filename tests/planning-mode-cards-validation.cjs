@@ -29,8 +29,7 @@ assert.match(css, /\.mode-card-grid\{[^}]*repeat\(2,minmax\(0,1fr\)\)/, 'wide la
 assert.match(css, /@media \(max-width:700px\)[\s\S]*\.mode-card-grid\{grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/, 'mobile layouts must keep both planning options visible');
 assert.match(css, /\.mode-card\{[^}]*border-radius:34px[^}]*background:var\(--mode-surface\)/, 'mode cards must use clean rounded mode-colored surfaces');
 assert.match(css, /\.mode-card\{[^}]*display:grid[^}]*grid-template-rows:auto minmax\(0,1fr\) auto auto/, 'both cards must share symmetrical content, cue, and action rows');
-assert.match(css, /\.mode-card-quick\{--mode-accent:var\(--rh-red\);--mode-ink:#9f1d2c;--mode-surface:#fff8f9/, 'Quick Route must use the red color system throughout its card');
-assert.match(css, /\.mode-card-full\{--mode-accent:var\(--rh-blue\);--mode-ink:var\(--rh-navy\);--mode-surface:#f7f9ff/, 'Full Plan must use the blue color system throughout its card');
+assert.match(css, /\.mode-card-quick,\.mode-card-full\{--mode-accent:var\(--rh-vintage-blue\);--mode-ink:var\(--rh-deep-navy\)/, 'both planning cards must use the shared RideHero palette');
 assert.match(css, /\.mode-card-kicker\{[^}]*min-height:2\.4em/, 'mode kickers must reserve matching vertical space');
 assert.match(css, /\.mode-card-copy strong\{[^}]*min-height:2\.04em/, 'mode titles must reserve matching two-line space');
 assert.match(css, /\.mode-card-pull-cue\{[^}]*display:flex/, 'direction instructions must use a stable, readable box');
