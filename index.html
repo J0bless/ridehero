@@ -6042,7 +6042,7 @@ function animateSplashTrain() {
   var night = splash.querySelector('.night-reveal');
 
   if (!page || !stage || !train || !cars.length || !path || !path.getTotalLength) {
-    setTimeout(function(){ finishSplash(false); }, 1037);
+    setTimeout(function(){ finishSplash(false); }, 2000);
     return;
   }
 
@@ -6050,8 +6050,8 @@ function animateSplashTrain() {
   // Important: the train sits inside the same moving page as the track.
   // So while the page pulls, the train should NOT receive an extra page offset.
   var pathLen = path.getTotalLength();
-  var rideDuration = 822;
-  var pullAwayDuration = 215;
+  var rideDuration = 1585;
+  var pullAwayDuration = 415;
   var totalDuration = rideDuration + pullAwayDuration;
   var carGap = 32;
   var startTs = null;
