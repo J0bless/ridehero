@@ -29,8 +29,8 @@ assert.match(css, /\.mode-card-grid\{[^}]*repeat\(2,minmax\(0,1fr\)\)/, 'wide la
 assert.match(css, /@media \(max-width:700px\)[\s\S]*\.mode-card-grid\{grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/, 'mobile layouts must keep both planning options visible');
 assert.match(css, /\.mode-card\{[^}]*border-radius:34px[^}]*background:var\(--mode-surface\)/, 'mode cards must use clean rounded mode-colored surfaces');
 assert.match(css, /\.mode-card\{[^}]*display:grid[^}]*grid-template-rows:auto minmax\(0,1fr\) auto auto/, 'both cards must share symmetrical content, cue, and action rows');
-assert.match(css, /\.mode-card-quick\{--mode-accent:var\(--rh-sixers-red\);--mode-secondary:var\(--rh-retro-orange\)/, 'Quick Route must use red with orange and white support');
-assert.match(css, /\.mode-card-full\{--mode-accent:var\(--rh-vintage-blue\);--mode-secondary:var\(--rh-retro-green\)/, 'Full Day must use blue with navy and green support');
+assert.match(css, /\.mode-card-quick\{--mode-accent:var\(--rh-sixers-red\);--mode-secondary:var\(--rh-retro-orange\)/, 'Quick Route must use updated red with orange and white support');
+assert.match(css, /\.mode-card-full\{--mode-accent:var\(--rh-vintage-blue\);--mode-secondary:var\(--rh-retro-green\)/, 'Full Day must use updated blue with navy and green support');
 assert.match(css, /\.mode-card-kicker\{[^}]*min-height:2\.4em/, 'mode kickers must reserve matching vertical space');
 assert.match(css, /\.mode-card-copy strong\{[^}]*min-height:2\.04em/, 'mode titles must reserve matching two-line space');
 assert.match(css, /\.mode-card-pull-cue\{[^}]*display:flex/, 'direction instructions must use a stable, readable box');
