@@ -3,6 +3,8 @@
   var catalog = global.RIDEHERO_CATALOG;
   var root = document.getElementById('screen-setup');
   var loadingParkId = null;
+  var modeWorkflowTimers = [];
+  var modePullCleanup = null;
   var recent = global.RideHeroState.get().recent || {};
   var appState = {
     planningMode: normalizePlanningMode(recent.planningMode),
@@ -44,7 +46,7 @@
 
   function modeCards() {
     var lastMode = normalizePlanningMode(recent.planningMode);
-    return '<div class="mode-choice-stage"><div class="mode-card-grid" aria-label="Planning modes">' +
+    return '<h2 class="catalog-visually-hidden" id="mode-options-title">Choose a planning mode</h2><div class="mode-choice-stage" data-mode-pull aria-labelledby="mode-options-title"><div class="mode-card-grid">' +
       '<button class="mode-card mode-card-quick' + (lastMode === 'quick' ? ' was-recent' : '') + '" type="button" data-planning-mode="quick">' +
         '<span class="mode-card-top"><span class="mode-card-icon" aria-hidden="true">Q</span><span class="mode-card-badge">Rides only</span></span>' +
         '<span class="mode-card-copy"><span class="mode-card-kicker">Fast &amp; simple</span><strong>Quick Route</strong><span>Find the smartest nearby rides based on your location, current waits, and walking distance.</span></span>' +
@@ -56,7 +58,7 @@
         '<span class="mode-card-copy"><span class="mode-card-kicker">Intentional &amp; optimized</span><strong>Maximize My Day</strong><span>Build a full-day strategy balancing priority experiences, waits, walking, and timing.</span></span>' +
         '<span class="mode-card-preview" aria-hidden="true"><span><b>Priority</b><small>experience-led</small></span><span><b>Balanced</b><small>walk + waits</small></span></span>' +
         '<span class="mode-card-cta">Maximize My Day <b aria-hidden="true">&rsaquo;</b></span>' +
-      '</button></div><div class="mode-screen-rail" aria-hidden="true"><span class="mode-screen-cart"><i></i><i></i></span></div></div>';
+      '</button></div><div class="mode-screen-divider" aria-hidden="true"><svg viewBox="0 0 40 600" preserveAspectRatio="none"><path d="M20 0 C6 55 34 105 18 160 C4 215 36 270 20 326 C5 382 34 438 18 494 C9 535 28 570 20 600"/></svg><span class="mode-screen-cart"><i></i><i></i></span></div></div>';
   }
 
   function renderMode() {
@@ -143,11 +145,138 @@
       else { renderPark(found.brand, found.destination, found.park); parkToActivate = found.park.id; }
     } else renderMode();
     bind();
+    initModeWorkflow();
     var heading = root.querySelector('.catalog-heading');
     if (heading) heading.focus({ preventScroll: true });
     window.scrollTo(0, 0);
     updateContextActions();
     if (parkToActivate) activatePark(parkToActivate);
+  }
+
+  function clearModeWorkflow() {
+    if (global.clearTimeout) modeWorkflowTimers.forEach(function(timer){ global.clearTimeout(timer); });
+    modeWorkflowTimers = [];
+    if (modePullCleanup) modePullCleanup();
+    modePullCleanup = null;
+  }
+
+  function initModeWorkflow() {
+    clearModeWorkflow();
+    var page = root.querySelector('.mode-catalog-page');
+    if (!page) return;
+    var heading = page.querySelector('.catalog-heading');
+    var options = page.querySelector('.catalog-content');
+    var stage = page.querySelector('[data-mode-pull]');
+    var reduced = global.matchMedia && global.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    page.classList.add('is-opening');
+    options.setAttribute('tabindex', '-1');
+    options.setAttribute('aria-hidden', 'true');
+    options.inert = true;
+
+    function revealOptions() {
+      page.classList.remove('is-opening', 'is-burning');
+      page.classList.add('is-options-ready');
+      options.removeAttribute('aria-hidden');
+      options.inert = false;
+      initModePull(page, stage);
+      if (heading && document.activeElement === heading) options.focus({ preventScroll: true });
+    }
+
+    if (reduced) { revealOptions(); return; }
+    modeWorkflowTimers.push(global.setTimeout(function(){ page.classList.add('is-burning'); }, 420));
+    modeWorkflowTimers.push(global.setTimeout(revealOptions, 800));
+  }
+
+  function initModePull(page, stage) {
+    if (!page || !stage) return;
+    var startX = 0;
+    var lastX = 0;
+    var lastTime = 0;
+    var velocity = 0;
+    var dragging = false;
+    var moved = false;
+    var suppressClick = false;
+
+    function clearInlineMotion() {
+      page.style.removeProperty('transition');
+      page.style.removeProperty('transform');
+      page.style.removeProperty('opacity');
+    }
+    function returnToCenter() {
+      page.style.transition = 'transform .2s cubic-bezier(.22,.7,.25,1),opacity .16s linear';
+      page.style.transform = 'translate3d(0,0,0)';
+      page.style.opacity = '1';
+      modeWorkflowTimers.push(global.setTimeout(clearInlineMotion, 210));
+    }
+    function finishPull(event, cancelled) {
+      if (!dragging || event.pointerId !== stage.__modePointerId) return;
+      dragging = false;
+      stage.classList.remove('is-pulling');
+      if (stage.hasPointerCapture && stage.hasPointerCapture(event.pointerId)) stage.releasePointerCapture(event.pointerId);
+      var width = Math.max(stage.clientWidth, 1);
+      var dx = event.clientX - startX;
+      var commit = !cancelled && (Math.abs(dx) >= width * 0.2 || Math.abs(velocity) > 0.45);
+      if (!commit) {
+        suppressClick = moved;
+        returnToCenter();
+        modeWorkflowTimers.push(global.setTimeout(function(){ suppressClick = false; moved = false; }, 260));
+        return;
+      }
+      suppressClick = true;
+      var mode = dx < 0 ? 'quick' : 'full';
+      var button = stage.querySelector('[data-planning-mode="' + mode + '"]');
+      page.style.transition = 'transform .24s cubic-bezier(.22,.7,.25,1),opacity .18s linear';
+      page.style.transform = 'translate3d(' + (mode === 'quick' ? '-100vw' : '100vw') + ',0,0)';
+      page.style.opacity = '0';
+      selectPlanningMode(mode, button, true);
+    }
+    function onPointerDown(event) {
+      if (event.button != null && event.button !== 0) return;
+      clearInlineMotion();
+      dragging = true;
+      moved = false;
+      startX = lastX = event.clientX;
+      lastTime = event.timeStamp || global.performance.now();
+      velocity = 0;
+      stage.__modePointerId = event.pointerId;
+      stage.setPointerCapture(event.pointerId);
+      stage.classList.add('is-pulling');
+    }
+    function onPointerMove(event) {
+      if (!dragging || event.pointerId !== stage.__modePointerId) return;
+      var width = Math.max(stage.clientWidth, 1);
+      var dx = Math.max(-width, Math.min(width, event.clientX - startX));
+      var now = event.timeStamp || global.performance.now();
+      var elapsed = Math.max(now - lastTime, 1);
+      velocity = (event.clientX - lastX) / elapsed;
+      lastX = event.clientX;
+      lastTime = now;
+      moved = moved || Math.abs(dx) > 4;
+      page.style.transform = 'translate3d(' + dx.toFixed(2) + 'px,0,0)';
+      page.style.opacity = (1 - (Math.abs(dx) / width) * 0.72).toFixed(3);
+      if (moved) event.preventDefault();
+    }
+    function onClickCapture(event) {
+      if (!suppressClick && !moved) { clearInlineMotion(); return; }
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      suppressClick = false;
+      moved = false;
+    }
+    function onPointerUp(event) { finishPull(event, false); }
+    function onPointerCancel(event) { finishPull(event, true); }
+    stage.addEventListener('pointerdown', onPointerDown);
+    stage.addEventListener('pointermove', onPointerMove);
+    stage.addEventListener('pointerup', onPointerUp);
+    stage.addEventListener('pointercancel', onPointerCancel);
+    stage.addEventListener('click', onClickCapture, true);
+    modePullCleanup = function() {
+      stage.removeEventListener('pointerdown', onPointerDown);
+      stage.removeEventListener('pointermove', onPointerMove);
+      stage.removeEventListener('pointerup', onPointerUp);
+      stage.removeEventListener('pointercancel', onPointerCancel);
+      stage.removeEventListener('click', onClickCapture, true);
+    };
   }
 
   function bind() {
@@ -164,7 +293,7 @@
     root.querySelectorAll('[data-recent-park]').forEach(function(button){ button.onclick = function(){ var park = catalog.parks[button.dataset.recentPark]; var destination = catalog.destinations[park.destinationId]; var brand = catalog.brands[park.brandId]; go(['parks', brand.slug, destination.slug, park.slug]); }; });
   }
 
-  function selectPlanningMode(mode, button) {
+  function selectPlanningMode(mode, button, pageAlreadyMoving) {
     mode = normalizePlanningMode(mode);
     if (!mode) return;
     appState.planningMode = mode;
@@ -173,9 +302,11 @@
     appState.parkId = null;
     rememberContext({ planningMode: mode });
     if (typeof applyGuidanceMode === 'function') applyGuidanceMode(legacyGuidanceMode());
-    document.body.classList.remove('mode-choice-quick', 'mode-choice-full');
-    document.body.classList.add(mode === 'full' ? 'mode-choice-full' : 'mode-choice-quick');
-    document.body.classList.add('mode-choice-made');
+    if (!pageAlreadyMoving) {
+      document.body.classList.remove('mode-choice-quick', 'mode-choice-full');
+      document.body.classList.add(mode === 'full' ? 'mode-choice-full' : 'mode-choice-quick');
+      document.body.classList.add('mode-choice-made');
+    }
     root.querySelectorAll('[data-planning-mode]').forEach(function(card){ card.classList.toggle('is-selected', card === button); card.disabled = true; });
     var reduced = global.matchMedia && global.matchMedia('(prefers-reduced-motion: reduce)').matches;
     global.setTimeout(function(){ document.body.classList.remove('mode-choice-made', 'mode-choice-quick', 'mode-choice-full'); go(['brands']); }, reduced ? 0 : 240);

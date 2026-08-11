@@ -9,7 +9,12 @@ assert.match(navigation, /class="mode-card-grid"/, 'planning modes must render t
 assert.match(navigation, /mode-card-quick[\s\S]*mode-card-full/, 'Quick Route and Maximize My Day cards must both be present');
 assert.match(navigation, /Rides only/, 'Quick Route must clearly remain rides only');
 assert.match(navigation, /Nearby[\s\S]*Live[\s\S]*Priority[\s\S]*Balanced/, 'cards must expose concise planning context');
-assert.doesNotMatch(navigation, /data-mode-swipe|modeTextOpacities|pointerdown|pointermove|ResizeObserver/, 'the swipe carousel and drag controller must remain removed');
+assert.doesNotMatch(navigation, /data-mode-swipe|modeTextOpacities|ResizeObserver/, 'the width-compressing carousel must remain removed');
+assert.match(navigation, /is-burning'[\s\S]*}, 420\)/, 'the opening question must enter its burn phase after a short readable hold');
+assert.match(navigation, /setTimeout\(revealOptions, 800\)/, 'the opening question must reveal the options page on one concise timeline');
+assert.match(navigation, /options\.inert = true[\s\S]*options\.inert = false/, 'hidden options must remain inaccessible until revealed');
+assert.match(navigation, /pointerdown[\s\S]*pointermove[\s\S]*pointerup[\s\S]*pointercancel/, 'the full options page must support a complete reversible pull gesture');
+assert.match(navigation, /page\.style\.opacity = \(1 - \(Math\.abs\(dx\) \/ width\) \* 0\.72\)/, 'page opacity must follow pull distance continuously');
 
 assert.match(css, /\.mode-catalog-page\{[^}]*linear-gradient/, 'planning mode should use the reference-inspired soft backdrop');
 assert.match(css, /\.mode-card-grid\{[^}]*repeat\(2,minmax\(0,1fr\)\)/, 'wide layouts must show two balanced mode cards');
@@ -21,8 +26,11 @@ assert.doesNotMatch(css, /mode-card-copy[^}]*white-space:\s*nowrap|mode-card-cop
 assert.match(navigation, /mode-choice-quick'[\s\S]*mode-choice-full'/, 'selection must set a directional page-swipe class');
 assert.match(css, /body\.mode-choice-made \.mode-card-top[\s\S]*opacity:0/, 'mode text and content must fade during selection');
 assert.match(css, /\.mode-choice-stage\{[^}]*flex:1[^}]*min-height:clamp\(420px,52dvh,620px\)/, 'planning options must fill the usable screen');
-assert.match(css, /\.mode-screen-rail\{[^}]*left:50%/, 'the decorative RideHero rail must divide the two visible options');
+assert.match(css, /\.mode-screen-divider\{[^}]*left:50%/, 'the decorative RideHero divider must split the two visible options');
+assert.match(css, /\.mode-screen-divider path\{[^}]*stroke:#fff/, 'the divider must render as the sketched wavy white rail');
 assert.match(css, /\.mode-screen-cart\{[^}]*top:52%/, 'the decorative cart must stay centered on the rail');
+assert.match(css, /\.mode-catalog-page\.is-burning \.catalog-heading\{[^}]*opacity:0[^}]*filter:blur\(6px\)/, 'the opening question must burn and fade away without changing width');
+assert.match(css, /\.mode-catalog-page\.is-options-ready \.catalog-content\{opacity:1;visibility:visible/, 'the options page must appear only after the opening effect');
 assert.match(css, /mode-choice-quick \.mode-catalog-page\{opacity:0;transform:translate3d\(-100vw,0,0\)\}/, 'Quick selection must fade and swipe the full page left');
 assert.match(css, /mode-choice-full \.mode-catalog-page\{opacity:0;transform:translate3d\(100vw,0,0\)\}/, 'Full selection must fade and swipe the full page right');
 assert.doesNotMatch(css, /mode-choice-made[^}]*width|mode-choice-made[^}]*scaleX/, 'the effect must not alter page or text width');
