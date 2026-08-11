@@ -44,7 +44,7 @@
 
   function modeCards() {
     var lastMode = normalizePlanningMode(recent.planningMode);
-    return '<div class="mode-card-grid" aria-label="Planning modes">' +
+    return '<div class="mode-choice-stage"><div class="mode-card-grid" aria-label="Planning modes">' +
       '<button class="mode-card mode-card-quick' + (lastMode === 'quick' ? ' was-recent' : '') + '" type="button" data-planning-mode="quick">' +
         '<span class="mode-card-top"><span class="mode-card-icon" aria-hidden="true">Q</span><span class="mode-card-badge">Rides only</span></span>' +
         '<span class="mode-card-copy"><span class="mode-card-kicker">Fast &amp; simple</span><strong>Quick Route</strong><span>Find the smartest nearby rides based on your location, current waits, and walking distance.</span></span>' +
@@ -56,7 +56,7 @@
         '<span class="mode-card-copy"><span class="mode-card-kicker">Intentional &amp; optimized</span><strong>Maximize My Day</strong><span>Build a full-day strategy balancing priority experiences, waits, walking, and timing.</span></span>' +
         '<span class="mode-card-preview" aria-hidden="true"><span><b>Priority</b><small>experience-led</small></span><span><b>Balanced</b><small>walk + waits</small></span></span>' +
         '<span class="mode-card-cta">Maximize My Day <b aria-hidden="true">&rsaquo;</b></span>' +
-      '</button></div>';
+      '</button></div><div class="mode-screen-rail" aria-hidden="true"><span class="mode-screen-cart"><i></i><i></i></span></div></div>';
   }
 
   function renderMode() {
