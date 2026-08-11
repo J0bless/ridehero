@@ -34,11 +34,11 @@ manifest.icons.forEach(function(icon) {
 const appleTouchIcon = fs.readFileSync(path.join(root, 'icons', 'ridehero-180.png'));
 assert.equal(appleTouchIcon.readUInt32BE(16), 180, 'incorrect Apple touch icon width');
 assert.equal(appleTouchIcon.readUInt32BE(20), 180, 'incorrect Apple touch icon height');
-assert.match(worker, /const CACHE_NAME = 'ridehero-shell-v11'/);
-assert.match(html, /css\/onboarding\.css\?v=5/, 'the onboarding stylesheet must use the current cache-busting version');
-assert.match(html, /js\/navigation\.js\?v=3/, 'the navigation script must use the current cache-busting version');
-assert.match(worker, /\.\/css\/onboarding\.css\?v=5/, 'the service worker must precache the current onboarding stylesheet');
-assert.match(worker, /\.\/js\/navigation\.js\?v=3/, 'the service worker must precache the current navigation script');
+assert.match(worker, /const CACHE_NAME = 'ridehero-shell-v12'/);
+assert.match(html, /css\/onboarding\.css\?v=6/, 'the onboarding stylesheet must use the current cache-busting version');
+assert.match(html, /js\/navigation\.js\?v=4/, 'the navigation script must use the current cache-busting version');
+assert.match(worker, /\.\/css\/onboarding\.css\?v=6/, 'the service worker must precache the current onboarding stylesheet');
+assert.match(worker, /\.\/js\/navigation\.js\?v=4/, 'the service worker must precache the current navigation script');
 assert.match(worker, /\.\/icons\/ridehero-180\.png/);
 assert.match(worker, /request\.mode === 'navigate'[\s\S]*networkFirst/);
 assert.match(worker, /css\|js\|webmanifest[\s\S]*networkFirst/, 'version-sensitive app code must update from the network before using cache');

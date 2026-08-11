@@ -17,6 +17,7 @@ const document = {
   createElement() { return { id: '', className: '', hidden: false, onclick: null, setAttribute() {}, querySelector() { return null; }, querySelectorAll() { return []; } }; }
 };
 const catalog = {
+  lastVerified: '2026-08-10',
   brands: {
     disney: { id: 'disney', slug: 'disney', name: 'Disney', accent: '#2f56b3' },
     universal: { id: 'universal', slug: 'universal', name: 'Universal', accent: '#142a66' },
@@ -36,6 +37,7 @@ const catalog = {
 let recent = { planningMode: null, brandId: null, destinationId: null, parkId: null };
 let quickCalls = 0;
 let fullCalls = 0;
+let parkLoads = 0;
 const location = { hash: '', replace(next) { this.hash = next; } };
 const context = vm.createContext({
   console,
@@ -61,7 +63,7 @@ const context = vm.createContext({
   RideHeroState: { get() { return { recent }; }, rememberContext(next) { recent = Object.assign({}, recent, next); } },
   RideHeroLocationService: { setSelectedPark() {} },
   RideHeroParkData: {
-    load: async function() { return { rides: [] }; },
+    load: async function() { parkLoads += 1; return { rides: [] }; },
     findParkByRoute(brandSlug, destinationSlug, parkSlug) {
       const brand = Object.values(catalog.brands).find((item) => item.slug === brandSlug);
       const destination = brand && Object.values(catalog.destinations).find((item) => item.brandId === brand.id && item.slug === destinationSlug);
@@ -93,24 +95,36 @@ assert.match(root.innerHTML, /Where are you going\?/);
 assert.match(root.innerHTML, />Destinations</, 'the selector must use the user-facing Destinations label');
 assert.doesNotMatch(root.innerHTML, />Brands</, 'the old Brands label must be removed from the user interface');
 assert.match(root.innerHTML, /catalog-view-brands/, 'the destination landing page must use the dashboard theme');
+assert.match(root.innerHTML, /catalog-wordmark-text[^>]*><span>Ride<\/span><strong>Hero<\/strong>/, 'the app shell must use the refined two-tone RideHero wordmark');
+assert.match(root.innerHTML, /Destination selection step 1 of 3/, 'the dashboard must expose real selection progress');
 assert.match(root.innerHTML, /journey-hero-card/, 'the selected planning mode must be carried in a prominent journey card');
 assert.match(root.innerHTML, /<small>Next step<\/small><strong>Choose a destination<\/strong>/, 'a new journey card must show the real next step without fake progress');
 assert.match(root.innerHTML, /catalog-health-card/, 'park data health must remain available as a real dashboard action');
+assert.match(root.innerHTML, /catalog-health-grid/, 'the dashboard must summarize real catalog coverage by operator');
+assert.match(root.innerHTML, /Reviewed Aug 10/, 'catalog health must use the real reviewed date');
+assert.match(root.innerHTML, /1\/1 live waits/, 'catalog health must report objective live-wait capability counts');
+assert.match(root.innerHTML, /1\/1 detailed routes/, 'catalog health must report objective detailed-route counts');
+assert.doesNotMatch(root.innerHTML, /Updated just now|All systems normal|Healthy/i, 'catalog health must not fabricate live operational status');
+assert.equal(parkLoads, 0, 'the destination dashboard must not eagerly load every park dataset');
 assert.doesNotMatch(root.innerHTML, /2 of 6|Est\. Finish|Next Up|In Progress/i, 'the dashboard must not fabricate route progress or timing');
 assert.match(root.innerHTML, /data-brand="disney"/);
 assert.match(root.innerHTML, /data-brand="universal"/);
 assert.match(root.innerHTML, /data-brand="six-flags"/);
+assert.match(root.innerHTML, /brand-card-visual-six-flags[\s\S]*catalog-card-icon">S<\//, 'Six Flags must use S rather than the old numeric marker');
+assert.doesNotMatch(root.innerHTML, /brand-card-visual-six-flags[\s\S]{0,120}catalog-card-icon">6<\//, 'the old Six Flags 6 marker must be removed');
 
 location.hash = '#/parks/disney';
 navigation.render();
 assert.match(root.innerHTML, /Choose a Disney destination/);
 assert.match(root.innerHTML, /Walt Disney World Resort/);
 assert.match(root.innerHTML, /catalog-view-destinations/);
+assert.match(root.innerHTML, /Destination selection step 2 of 3/);
 location.hash = '#/parks/disney/walt-disney-world';
 navigation.render();
 assert.match(root.innerHTML, /Choose your park/);
 assert.match(root.innerHTML, /Magic Kingdom/);
 assert.match(root.innerHTML, /catalog-view-parks/);
+assert.match(root.innerHTML, /Destination selection step 3 of 3/);
 
 (async function() {
   await navigation.choosePark('mk');
@@ -119,7 +133,9 @@ assert.match(root.innerHTML, /catalog-view-parks/);
   assert.equal(recent.planningMode, 'quick');
   location.hash = '#/brands';
   navigation.render();
-  assert.match(root.innerHTML, /journey-resume/, 'returning users must receive a real resume action');
+  assert.match(root.innerHTML, /journey-open/, 'returning users must receive a real recent-park action');
+  assert.match(root.innerHTML, /Open Quick Route/, 'the recent-park action must accurately describe opening a rebuilt planning flow');
+  assert.doesNotMatch(root.innerHTML, /Resume Quick Route/, 'the UI must not imply route progress is persisted');
   assert.match(root.innerHTML, /Magic Kingdom/, 'the resume action must use the persisted recent park');
   assert.doesNotMatch(root.innerHTML, /2 of 6|Est\. Finish|Next Up|In Progress/i, 'the recent-park card must not invent route progress');
 

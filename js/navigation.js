@@ -35,13 +35,14 @@
     options = options || {};
     var modeAction = appState.planningMode && !options.hideModeAction ? '<button class="catalog-mode-action" type="button" data-route="#/mode"><span>' + esc(modeName()) + '</span><strong>Change Mode</strong></button>' : '<span></span>';
     var viewClass = options.view ? ' catalog-view-' + String(options.view).replace(/[^a-z0-9-]/gi, '') : '';
+    var stepProgress = options.step ? '<div class="catalog-step-progress" role="img" aria-label="Destination selection step ' + options.step + ' of 3"><span class="' + (options.step >= 1 ? 'is-complete' : '') + '"></span><span class="' + (options.step >= 2 ? 'is-complete' : '') + '"></span><span class="' + (options.step >= 3 ? 'is-complete' : '') + '"></span><small>Step ' + options.step + ' of 3</small></div>' : '';
     return '<div class="catalog-page' + (options.modePage ? ' mode-catalog-page' : '') + viewClass + '" data-catalog-page>' +
       '<header class="catalog-header"><div class="catalog-nav-row">' +
       (backRoute ? '<button class="catalog-icon-btn" type="button" data-action="back" data-fallback-route="' + esc(backRoute) + '" aria-label="Go back">&lsaquo;</button>' : '<span></span>') +
-      '<button class="catalog-wordmark" type="button" data-action="home" aria-label="RideHero home"><span class="catalog-wordmark-mark" aria-hidden="true">RH</span><span>RideHero</span></button>' +
+      '<button class="catalog-wordmark" type="button" data-action="home" aria-label="RideHero home"><span class="catalog-wordmark-mark" aria-hidden="true">&#10022;</span><span class="catalog-wordmark-text"><span>Ride</span><strong>Hero</strong></span></button>' +
       modeAction + '</div>' +
       (crumbs && crumbs.length ? '<nav class="catalog-breadcrumbs" aria-label="Breadcrumb">' + crumbs.map(function(item, i){ return '<button type="button" data-route="' + esc(item.route) + '"' + (i === crumbs.length - 1 ? ' aria-current="page"' : '') + '>' + esc(item.label) + '</button>'; }).join('<span aria-hidden="true">&rsaquo;</span>') + '</nav>' : '') +
-      '<div class="catalog-heading" tabindex="-1"><span>' + esc(eyebrow) + '</span><h1>' + esc(title) + '</h1>' + (options.description ? '<p>' + esc(options.description) + '</p>' : '') + '</div></header>' +
+      '<div class="catalog-heading" tabindex="-1"><span>' + esc(eyebrow) + '</span><h1>' + esc(title) + '</h1>' + (options.description ? '<p>' + esc(options.description) + '</p>' : '') + '</div>' + stepProgress + '</header>' +
       '<main class="catalog-content">' + body + '</main></div>';
   }
 
@@ -70,13 +71,14 @@
     });
   }
 
-  function brandMarker(brand) { return brand.id === 'six-flags' ? '6' : brand.name.charAt(0).toUpperCase(); }
+  function brandMarker(brand) { return brand.id === 'six-flags' ? 'S' : brand.name.charAt(0).toUpperCase(); }
   function brandVisual(brand) {
     return '<span class="brand-card-visual brand-card-visual-' + esc(brand.id) + '" aria-hidden="true"><span class="catalog-card-icon">' + esc(brandMarker(brand)) + '</span><span class="brand-card-spark">&#10022;</span><span class="brand-card-landmark"><i></i><i></i><i></i></span></span>';
   }
   function brandCards() {
     return '<div class="catalog-card-grid brand-card-grid">' + values(catalog.brands).map(function(brand) {
-      return '<button class="catalog-card brand-card brand-card-' + esc(brand.id) + '" type="button" data-brand="' + brand.id + '" style="--catalog-accent:' + brand.accent + '">' + brandVisual(brand) + '<span class="catalog-card-copy"><strong>' + esc(brand.name) + '</strong><small>Choose a destination</small></span><span class="catalog-card-arrow" aria-hidden="true">&rsaquo;</span></button>';
+      var destinationCount = values(catalog.destinations).filter(function(destination){ return destination.brandId === brand.id; }).length;
+      return '<button class="catalog-card brand-card brand-card-' + esc(brand.id) + '" type="button" data-brand="' + brand.id + '" style="--catalog-accent:' + brand.accent + '">' + brandVisual(brand) + '<span class="catalog-card-copy"><strong>' + esc(brand.name) + '</strong><small>' + destinationCount + ' destination' + (destinationCount === 1 ? '' : 's') + '</small></span><span class="catalog-card-arrow" aria-hidden="true">&rsaquo;</span></button>';
     }).join('') + '</div>';
   }
 
@@ -85,19 +87,33 @@
     var modeTag = appState.planningMode === 'full' ? 'Full-day plan' : 'Rides only';
     var modeIcon = appState.planningMode === 'full' ? 'M' : 'Q';
     var modeHeader = '<div class="journey-hero-mode"><span class="journey-hero-icon" aria-hidden="true">' + modeIcon + '</span><span><small>Planning with</small><strong>' + esc(modeName()) + '</strong></span><em>' + esc(modeTag) + '</em></div>';
+    var heroArt = '<span class="journey-hero-art" aria-hidden="true"><i></i><i></i><i></i></span>';
     if (!park) {
-      return '<section class="journey-hero-card is-new" aria-label="Current planning mode">' + modeHeader + '<div class="journey-hero-next"><span class="journey-hero-pin" aria-hidden="true">&#9678;</span><span><small>Next step</small><strong>Choose a destination</strong><span>Pick a park family to continue.</span></span></div></section>';
+      var features = appState.planningMode === 'full' ? ['Priorities', 'Wait-aware', 'Less walking'] : ['Location-aware', 'Current waits', 'Nearby rides'];
+      return '<section class="journey-hero-card is-new" aria-label="Current planning mode">' + heroArt + modeHeader + '<div class="journey-hero-next"><span class="journey-hero-pin" aria-hidden="true">&#9678;</span><span><small>Next step</small><strong>Choose a destination</strong><span>Pick a park family to continue.</span></span></div><div class="journey-feature-row">' + features.map(function(feature){ return '<span>' + esc(feature) + '</span>'; }).join('') + '</div></section>';
     }
-    return '<section class="journey-hero-card" aria-labelledby="recent-park-title">' + modeHeader + '<button class="journey-resume" type="button" data-recent-park="' + park.id + '"><span class="journey-hero-pin" aria-hidden="true">&#9678;</span><span><small id="recent-park-title">Continue your plan</small><strong>' + esc(park.shortName) + '</strong><span>' + esc(catalog.destinations[park.destinationId].name) + '</span></span><b aria-hidden="true">&rsaquo;</b></button></section>';
+    return '<section class="journey-hero-card" aria-labelledby="recent-park-title">' + heroArt + modeHeader + '<div class="journey-park-summary"><span class="journey-hero-pin" aria-hidden="true">&#9678;</span><span><small id="recent-park-title">Your recent park</small><strong>' + esc(park.shortName) + '</strong><span>' + esc(catalog.destinations[park.destinationId].name) + '</span></span></div><div class="journey-hero-capabilities">' + parkStatus(park) + '</div><button class="journey-open journey-primary" type="button" data-recent-park="' + park.id + '"><span>Open ' + esc(modeName()) + '</span><b aria-hidden="true">&rsaquo;</b></button></section>';
+  }
+
+  function verifiedDateLabel() {
+    var parts = String(catalog.lastVerified || '').split('-');
+    var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return parts.length === 3 && months[Number(parts[1]) - 1] ? months[Number(parts[1]) - 1] + ' ' + Number(parts[2]) : 'date available in details';
   }
 
   function healthCard() {
-    return '<button class="catalog-health-card" type="button" data-route="#/admin/data-health"><span class="catalog-health-icon" aria-hidden="true">&#10003;</span><span><strong>Park data health</strong><small>Review verified coverage and missing data</small></span><b aria-hidden="true">&rsaquo;</b></button>';
+    var cards = values(catalog.brands).map(function(brand) {
+      var parks = values(catalog.parks).filter(function(park){ return park.brandId === brand.id; });
+      var waits = parks.filter(function(park){ return park.liveWaitTimesAvailable; }).length;
+      var detailed = parks.filter(function(park){ return park.map && park.map.routingQuality === 'verified'; }).length;
+      return '<article class="catalog-health-mini" style="--catalog-accent:' + brand.accent + '"><span class="catalog-health-mini-icon" aria-hidden="true">' + esc(brandMarker(brand)) + '</span><strong>' + esc(brand.name) + '</strong><small>' + waits + '/' + parks.length + ' live waits</small><em>' + detailed + '/' + parks.length + ' detailed routes</em></article>';
+    }).join('');
+    return '<section class="catalog-health-overview" aria-labelledby="catalog-health-title"><div class="catalog-health-heading"><span><small>Park data health</small><strong id="catalog-health-title">Coverage snapshot</strong></span><em>Reviewed ' + esc(verifiedDateLabel()) + '</em></div><div class="catalog-health-grid">' + cards + '</div><button class="catalog-health-card" type="button" data-route="#/admin/data-health"><span class="catalog-health-icon" aria-hidden="true">&#10003;</span><span><strong>View park status details</strong><small>Coordinates, routing quality, restrictions, and sources</small></span><b aria-hidden="true">&rsaquo;</b></button></section>';
   }
 
   function renderBrands() {
     var body = '<div class="catalog-dashboard">' + recentCard() + '<section class="destination-deck" aria-labelledby="destination-deck-title"><div class="catalog-section-heading"><div class="catalog-section-label destination-section-label" id="destination-deck-title"><span aria-hidden="true">&#9679;</span> Destinations</div><small>Choose a park family</small></div>' + brandCards() + '</section>' + healthCard() + '</div>';
-    root.innerHTML = shell('Where are you going?', modeSummary(), body, routeFor(['mode']), [{ label: 'Mode', route: routeFor(['mode']) }, { label: 'Destinations', route: routeFor(['brands']) }], { description: 'Choose where you want to explore.', view: 'brands' });
+    root.innerHTML = shell('Where are you going?', modeSummary(), body, routeFor(['mode']), [{ label: 'Mode', route: routeFor(['mode']) }, { label: 'Destinations', route: routeFor(['brands']) }], { description: 'Choose where you want to explore.', view: 'brands', step: 1 });
   }
 
   function renderBrand(brand) {
@@ -107,7 +123,7 @@
       var count = destination.parkIds.length;
       return '<button class="catalog-card destination-card" type="button" data-destination="' + destination.id + '" style="--catalog-accent:' + brand.accent + '"><span class="destination-card-symbol" aria-hidden="true">' + esc(brandMarker(brand)) + '</span><span class="catalog-card-copy"><strong>' + esc(destination.name) + '</strong><small>' + esc(destination.location) + '</small><em>' + count + ' supported park' + (count === 1 ? '' : 's') + '</em></span><span class="catalog-card-arrow" aria-hidden="true">&rsaquo;</span></button>';
     }).join('') + '</div>';
-    root.innerHTML = shell('Choose a ' + brand.name + ' destination', modeName(), '<section class="selection-panel">' + cards + '</section>', routeFor(['brands']), [{ label: 'Mode', route: routeFor(['mode']) }, { label: 'Destinations', route: routeFor(['brands']) }, { label: brand.name, route: routeFor(['parks', brand.slug]) }], { description: 'Select a resort or destination.', view: 'destinations' });
+    root.innerHTML = shell('Choose a ' + brand.name + ' destination', modeName(), '<section class="selection-panel">' + cards + '</section>', routeFor(['brands']), [{ label: 'Mode', route: routeFor(['mode']) }, { label: 'Destinations', route: routeFor(['brands']) }, { label: brand.name, route: routeFor(['parks', brand.slug]) }], { description: 'Select a resort or destination.', view: 'destinations', step: 2 });
   }
 
   function parkStatus(park) {
@@ -123,7 +139,7 @@
       var park = catalog.parks[parkId];
       return '<button class="catalog-card park-catalog-card" type="button" data-park="' + park.id + '" style="--catalog-accent:' + brand.accent + '"><span class="park-card-symbol" aria-hidden="true">' + esc(park.shortName.charAt(0)) + '</span><span class="catalog-card-copy"><strong>' + esc(park.shortName) + '</strong><small>' + esc(destination.name) + '</small><em class="park-card-status">' + parkStatus(park) + '</em></span><span class="catalog-card-arrow" aria-hidden="true">&rsaquo;</span></button>';
     }).join('') + '</div>';
-    root.innerHTML = shell('Choose your park', destination.name, '<section class="selection-panel">' + cards + '</section>', routeFor(['parks', brand.slug]), [{ label: 'Mode', route: routeFor(['mode']) }, { label: 'Destinations', route: routeFor(['brands']) }, { label: brand.name, route: routeFor(['parks', brand.slug]) }, { label: destination.name, route: routeFor(['parks', brand.slug, destination.slug]) }], { description: 'RideHero will load only the selected park.', view: 'parks' });
+    root.innerHTML = shell('Choose your park', destination.name, '<section class="selection-panel">' + cards + '</section>', routeFor(['parks', brand.slug]), [{ label: 'Mode', route: routeFor(['mode']) }, { label: 'Destinations', route: routeFor(['brands']) }, { label: brand.name, route: routeFor(['parks', brand.slug]) }, { label: destination.name, route: routeFor(['parks', brand.slug, destination.slug]) }], { description: 'RideHero will load only the selected park.', view: 'parks', step: 3 });
   }
 
   function renderPark(brand, destination, park) {
@@ -132,7 +148,7 @@
     appState.parkId = park.id;
     var action = appState.planningMode === 'full' ? 'Opening Maximize My Day' : 'Finding nearby rides';
     var body = '<section class="park-ready-card" aria-live="polite"><div class="park-ready-kicker"><span>' + esc(modeName()) + '</span><em>Preparing plan</em></div><div class="park-ready-top"><span class="park-card-symbol" style="--catalog-accent:' + brand.accent + '" aria-hidden="true">' + esc(park.shortName.charAt(0)) + '</span><div><small>' + esc(destination.name) + '</small><strong>' + esc(park.officialName) + '</strong></div></div><div class="park-capabilities">' + parkStatus(park) + '</div><div class="catalog-inline-loading" data-loading-park><span class="catalog-loading-spinner" aria-hidden="true"></span><span><strong>' + esc(action) + '&hellip;</strong><small>Loading park information and current planning context.</small></span></div></section>';
-    root.innerHTML = shell(park.shortName, modeName(), body, routeFor(['parks', brand.slug, destination.slug]), [{ label: 'Mode', route: routeFor(['mode']) }, { label: brand.name, route: routeFor(['parks', brand.slug]) }, { label: destination.name, route: routeFor(['parks', brand.slug, destination.slug]) }, { label: park.shortName, route: routeFor(['parks', brand.slug, destination.slug, park.slug]) }], { description: action + '.', view: 'loading' });
+    root.innerHTML = shell(park.shortName, modeName(), body, routeFor(['parks', brand.slug, destination.slug]), [{ label: 'Mode', route: routeFor(['mode']) }, { label: brand.name, route: routeFor(['parks', brand.slug]) }, { label: destination.name, route: routeFor(['parks', brand.slug, destination.slug]) }, { label: park.shortName, route: routeFor(['parks', brand.slug, destination.slug, park.slug]) }], { description: action + '.', view: 'loading', step: 3 });
   }
 
   function renderDataHealth() {
