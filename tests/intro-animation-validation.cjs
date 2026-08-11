@@ -6,10 +6,10 @@ const root = path.join(__dirname, '..');
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const css = fs.readFileSync(path.join(root, 'css', 'onboarding.css'), 'utf8');
 
-assert.match(html, /var rideDuration = 1585;/, 'the coaster rail run must occupy its proportional share of the two-second timeline');
-assert.match(html, /var pullAwayDuration = 415;/, 'the synchronized page pull must complete the two-second timeline');
+assert.match(html, /var rideDuration = 1981;/, 'the coaster rail run must occupy its proportional share of the 2.5-second timeline');
+assert.match(html, /var pullAwayDuration = 519;/, 'the synchronized page pull must complete the 2.5-second timeline');
 assert.match(html, /var totalDuration = rideDuration \+ pullAwayDuration;/);
-assert.match(html, /setTimeout\(function\(\)\{ finishSplash\(false\); \}, 2000\);/, 'the fallback must match the two-second shared timeline');
+assert.match(html, /setTimeout\(function\(\)\{ finishSplash\(false\); \}, 2500\);/, 'the fallback must match the 2.5-second shared timeline');
 assert.match(html, /var pullStartT = 0\.68;/, 'the page pull must begin before the coaster fully exits');
 assert.match(html, /<path id="coaster-motion-path"/, 'the rail must expose one canonical SVG path');
 assert.match(html, /<use href="#coaster-motion-path" class="track-rail/, 'the visible rail must use the canonical path');
@@ -22,4 +22,4 @@ assert.match(css, /\.splash-page\{animation:none!important/, 'legacy CSS animati
 assert.doesNotMatch(html, /var rideDuration = 6600/, 'the old 7.6 second timeline must not return');
 assert.doesNotMatch(html, /split-mode-picker|mode-spinner-widget|SWIPE LEFT|SWIPE RIGHT/, 'obsolete mode interaction UI must remain removed');
 
-console.log('Synchronized intro animation validation passed at 2000ms.');
+console.log('Synchronized intro animation validation passed at 2500ms.');

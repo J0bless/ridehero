@@ -1,0 +1,27 @@
+{
+  "id": "./",
+  "name": "RideHero",
+  "short_name": "RideHero",
+  "description": "Plan smarter theme park routes using current waits, walking distance, and your location.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#F7F9FD",
+  "theme_color": "#E5394A",
+  "categories": ["travel", "navigation", "lifestyle"],
+  "icons": [
+    {
+      "src": "icons/ridehero-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/ridehero-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
