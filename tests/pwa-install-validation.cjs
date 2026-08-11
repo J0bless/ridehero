@@ -34,10 +34,10 @@ manifest.icons.forEach(function(icon) {
 const appleTouchIcon = fs.readFileSync(path.join(root, 'icons', 'ridehero-180.png'));
 assert.equal(appleTouchIcon.readUInt32BE(16), 180, 'incorrect Apple touch icon width');
 assert.equal(appleTouchIcon.readUInt32BE(20), 180, 'incorrect Apple touch icon height');
-assert.match(worker, /const CACHE_NAME = 'ridehero-shell-v8'/);
-assert.match(html, /css\/onboarding\.css\?v=2/, 'the onboarding stylesheet must use the current cache-busting version');
+assert.match(worker, /const CACHE_NAME = 'ridehero-shell-v9'/);
+assert.match(html, /css\/onboarding\.css\?v=3/, 'the onboarding stylesheet must use the current cache-busting version');
 assert.match(html, /js\/navigation\.js\?v=2/, 'the navigation script must use the current cache-busting version');
-assert.match(worker, /\.\/css\/onboarding\.css\?v=2/, 'the service worker must precache the current onboarding stylesheet');
+assert.match(worker, /\.\/css\/onboarding\.css\?v=3/, 'the service worker must precache the current onboarding stylesheet');
 assert.match(worker, /\.\/js\/navigation\.js\?v=2/, 'the service worker must precache the current navigation script');
 assert.match(worker, /\.\/icons\/ridehero-180\.png/);
 assert.match(worker, /request\.mode === 'navigate'[\s\S]*networkFirst/);
