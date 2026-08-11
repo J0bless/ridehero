@@ -34,7 +34,7 @@ manifest.icons.forEach(function(icon) {
 const appleTouchIcon = fs.readFileSync(path.join(root, 'icons', 'ridehero-180.png'));
 assert.equal(appleTouchIcon.readUInt32BE(16), 180, 'incorrect Apple touch icon width');
 assert.equal(appleTouchIcon.readUInt32BE(20), 180, 'incorrect Apple touch icon height');
-assert.match(worker, /const CACHE_NAME = 'ridehero-shell-v6'/);
+assert.match(worker, /const CACHE_NAME = 'ridehero-shell-v7'/);
 assert.match(worker, /\.\/icons\/ridehero-180\.png/);
 assert.match(worker, /request\.mode === 'navigate'[\s\S]*networkFirst/);
 assert.match(worker, /css\|js\|webmanifest[\s\S]*networkFirst/, 'version-sensitive app code must update from the network before using cache');

@@ -90,6 +90,8 @@ assert.equal(location.hash, '#/brands');
 assert.equal(context.lastGuidanceMode, 'quick');
 navigation.render();
 assert.match(root.innerHTML, /Where are you going\?/);
+assert.match(root.innerHTML, />Destinations</, 'the selector must use the user-facing Destinations label');
+assert.doesNotMatch(root.innerHTML, />Brands</, 'the old Brands label must be removed from the user interface');
 assert.match(root.innerHTML, /data-brand="disney"/);
 assert.match(root.innerHTML, /data-brand="universal"/);
 assert.match(root.innerHTML, /data-brand="six-flags"/);

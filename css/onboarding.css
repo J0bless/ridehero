@@ -122,7 +122,7 @@ button:disabled{cursor:wait;opacity:.72}
 
 /* Shared cards */
 .catalog-card-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--rh-space-4)}
-.brand-card-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.brand-card-grid{grid-template-columns:1fr;max-width:720px;gap:14px}
 .catalog-card,.mode-card,.catalog-continue,.mode-context-card,.park-ready-card{
   min-width:0;
   border:1px solid var(--rh-line);
@@ -142,6 +142,12 @@ button:disabled{cursor:wait;opacity:.72}
   transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease,background-color .16s ease;
 }
 .catalog-card:hover,.catalog-card:focus-visible{transform:translateY(-2px);border-color:#b9c9e3;box-shadow:var(--rh-shadow-md)}
+.catalog-card.brand-card{min-height:104px;padding:18px 20px;border-radius:26px;background:rgba(255,255,255,.98);border-color:color-mix(in srgb,var(--rh-line) 84%,white);box-shadow:0 8px 20px rgba(13,27,76,.065)}
+.brand-card .catalog-card-icon{width:54px;height:54px;flex-basis:54px;border-radius:18px;font-size:20px;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--catalog-accent) 10%,transparent)}
+.brand-card .catalog-card-copy strong{font-size:20px;letter-spacing:-.025em}
+.brand-card .catalog-card-copy small{margin-top:5px;font-size:13px}
+.brand-card .catalog-card-arrow{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--rh-blue) 9%,white);color:var(--rh-blue);font-size:25px}
+.destination-section-label{margin-top:28px;margin-bottom:12px;font-size:12px}
 .catalog-card-copy{min-width:0;flex:1}
 .catalog-card strong,.catalog-card small,.catalog-card em{display:block;overflow-wrap:normal;word-break:normal}
 .catalog-card strong{font-size:clamp(17px,2.8vw,20px);line-height:1.18;letter-spacing:-.02em}
@@ -363,6 +369,9 @@ body.mode-strategic .loading-spinner{border-top-color:var(--rh-vintage-blue)!imp
   .mode-card-icon{width:50px;height:50px;border-radius:16px}
   .mode-card-copy strong{font-size:25px}
   .catalog-card{padding:14px;gap:11px}
+  .catalog-card.brand-card{min-height:94px;padding:15px 14px;border-radius:22px}
+  .brand-card .catalog-card-icon{width:48px;height:48px;flex-basis:48px;border-radius:16px;font-size:18px}
+  .brand-card .catalog-card-arrow{width:34px;height:34px;font-size:22px}
   .catalog-card-icon{width:46px;height:46px;flex-basis:46px;border-radius:15px}
   .catalog-card strong{font-size:16px}
   .catalog-mode-action span{display:none}
