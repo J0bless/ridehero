@@ -1,12 +1,13 @@
 (function(global) {
   'use strict';
   var KEY = 'rideheroState';
-  var VERSION = 4;
+  var VERSION = 5;
   function read() { try { return JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (error) { return null; } }
   function migrate() {
     var old = read() || {};
-    var recent = old.recent || { brandId: null, destinationId: null, parkId: old.parkId || null, planningMode: null };
+    var recent = old.recent || { brandId: null, destinationId: null, parkId: old.parkId || null, planningMode: null, parkSelectedAt: null };
     if (recent.planningMode === 'strategic') recent.planningMode = 'full';
+    if (!Number.isFinite(Number(recent.parkSelectedAt)) || Number(recent.parkSelectedAt) < 0) recent.parkSelectedAt = null;
     var state = {
       version: VERSION,
       recent: recent,

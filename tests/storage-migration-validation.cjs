@@ -13,8 +13,9 @@ context.window.window = context.window;
 context.window.localStorage = localStorage;
 vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'js', 'storage-migration.js'), 'utf8'), context, { filename: 'js/storage-migration.js' });
 
-assert.equal(context.window.RideHeroState.migrationVersion, 4);
+assert.equal(context.window.RideHeroState.migrationVersion, 5);
 assert.equal(context.window.RideHeroState.get().recent.planningMode, 'full', 'legacy strategic mode must migrate to the new full planning state');
 assert.equal(context.window.RideHeroState.get().recent.parkId, 'mk', 'mode migration must preserve the recent park');
+assert.equal(context.window.RideHeroState.get().recent.parkSelectedAt, null, 'older state must safely default the recent park timestamp');
 
 console.log('Planning mode storage migration validation passed.');

@@ -35,7 +35,18 @@ const exactEvents = [
   'shared_route_joined',
   'day_summary_viewed',
   'day_summary_shared',
-  'route_completed'
+  'route_completed',
+  'planning_mode_selected',
+  'park_auto_detected',
+  'park_detection_confirmed',
+  'park_detection_changed',
+  'quick_route_generated',
+  'ride_recommended',
+  'ride_completed',
+  'ride_skipped',
+  'route_reoptimized',
+  'route_auto_updated',
+  'recommendation_reason_viewed'
 ];
 exactEvents.forEach((name) => {
   assert.equal(analytics.track(name, { parkId: 'hs' }).name, name, `${name} must be accepted`);
@@ -78,15 +89,69 @@ assert.deepEqual(JSON.parse(JSON.stringify(event.properties)), {
 assert.equal(dispatched.at(-1).type, 'ridehero:analytics');
 assert.equal(dispatched.at(-1).detail, event, 'a local custom event must expose the sanitized event to optional listeners');
 
+const intelligenceEvent = analytics.track('route_auto_updated', {
+  parkId: 'wdw-hs',
+  planningMode: 'quick',
+  status: 'updated',
+  method: 'automatic',
+  reasonCode: 'RIDE_UNAVAILABLE',
+  triggerType: 'ride_closure',
+  routeCount: 5,
+  completedCount: 2,
+  rideId: 'private-provider-ride-id',
+  rideName: 'Tower of Terror',
+  waitMinutes: 50,
+  previousWaitMinutes: 22,
+  latitude: 28.35,
+  longitude: -81.56,
+  accuracy: 4,
+  userId: 'user-123'
+});
+assert.deepEqual(JSON.parse(JSON.stringify(intelligenceEvent.properties)), {
+  parkId: 'wdw-hs',
+  reasonCode: 'RIDE_UNAVAILABLE',
+  triggerType: 'ride_closure',
+  planningMode: 'quick',
+  status: 'updated',
+  method: 'automatic',
+  routeCount: 5,
+  completedCount: 2
+}, 'intelligence events may retain only coarse route context, never ride, wait, identity, or location details');
+
 const invalid = analytics.track('route_share_opened', {
   shareId: 'bad token with spaces',
   parkId: '../private',
   planningMode: 'strategic',
   routeCount: -3,
   completedCount: Number.POSITIVE_INFINITY,
+  reasonCode: 'invalid reason with spaces',
+  triggerType: '../private',
   referral: 'personal-user-token'
 });
 assert.deepEqual(JSON.parse(JSON.stringify(invalid.properties)), {}, 'invalid identifiers, modes, counts, and personal referrals must be dropped');
+
+const invalidMachineLabels = analytics.track('route_auto_updated', {
+  status: 'Eric private route',
+  method: 'private@example.com'
+});
+assert.deepEqual(JSON.parse(JSON.stringify(invalidMachineLabels.properties)), {}, 'status and method must be coarse machine labels, not free-form personal text');
+
+analytics.clear();
+const recommendationProperties = {
+  parkId: 'hs',
+  planningMode: 'quick',
+  reasonCode: 'SHORT_WALK',
+  routeCount: 3
+};
+assert.ok(analytics.track('ride_recommended', recommendationProperties), 'the first recommendation render must be recorded');
+assert.equal(analytics.track('ride_recommended', recommendationProperties), null, 'identical recommendation rerenders must be deduplicated');
+analytics.track('recommendation_reason_viewed', recommendationProperties);
+assert.equal(analytics.track('ride_recommended', recommendationProperties), null, 'opening the explanation must not make the same rendered recommendation new');
+analytics.track('ride_completed', { parkId:'hs', planningMode:'quick', status:'manual' });
+assert.ok(analytics.track('ride_recommended', recommendationProperties), 'a route lifecycle change must allow the next recommendation to be recorded');
+assert.equal(analytics.getRecent().filter((item) => item.name === 'ride_recommended').length, 2, 'only distinct recommendation states may remain in the queue');
+analytics.clear();
+assert.ok(analytics.track('ride_recommended', recommendationProperties), 'clear must reset recommendation deduplication state');
 
 analytics.clear();
 for (let index = 0; index < 65; index += 1) {

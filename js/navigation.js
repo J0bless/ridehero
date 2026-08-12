@@ -5,6 +5,7 @@
   var loadingParkId = null;
   var modeWorkflowTimers = [];
   var modePullCleanup = null;
+  var smartEntryRequestId = 0;
   var GUEST_SESSION_KEY = 'ridehero.auth.guest.v1';
   var entryAccountActive = false;
   var recent = global.RideHeroState.get().recent || {};
@@ -129,22 +130,6 @@
     return '<section class="journey-hero-card" aria-labelledby="recent-park-title">' + heroArt + modeHeader + '<div class="journey-park-summary"><span class="journey-hero-pin" aria-hidden="true">&#9678;</span><span><small id="recent-park-title">Your recent park</small><strong>' + esc(park.shortName) + '</strong><span>' + esc(catalog.destinations[park.destinationId].name) + '</span></span></div><div class="journey-hero-capabilities">' + parkStatus(park) + '</div><button class="journey-open journey-primary" type="button" data-recent-park="' + park.id + '"><span>Open ' + esc(modeName()) + '</span><b aria-hidden="true">&rsaquo;</b></button></section>';
   }
 
-  function verifiedDateLabel() {
-    var parts = String(catalog.lastVerified || '').split('-');
-    var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return parts.length === 3 && months[Number(parts[1]) - 1] ? months[Number(parts[1]) - 1] + ' ' + Number(parts[2]) : 'date available in details';
-  }
-
-  function healthCard() {
-    var cards = values(catalog.brands).map(function(brand) {
-      var parks = values(catalog.parks).filter(function(park){ return park.brandId === brand.id; });
-      var waits = parks.filter(function(park){ return park.liveWaitTimesAvailable; }).length;
-      var detailed = parks.filter(function(park){ return park.map && park.map.routingQuality === 'verified'; }).length;
-      return '<article class="catalog-health-mini" style="--catalog-accent:' + brand.accent + '"><span class="catalog-health-mini-icon" aria-hidden="true">' + esc(brandMarker(brand)) + '</span><strong>' + esc(brand.name) + '</strong><small>' + waits + '/' + parks.length + ' live waits</small><em>' + detailed + '/' + parks.length + ' detailed routes</em></article>';
-    }).join('');
-    return '<section class="catalog-health-overview" aria-labelledby="catalog-health-title"><div class="catalog-health-heading"><span><small>Park data health</small><strong id="catalog-health-title">Coverage snapshot</strong></span><em>Reviewed ' + esc(verifiedDateLabel()) + '</em></div><div class="catalog-health-grid">' + cards + '</div><button class="catalog-health-card" type="button" data-route="#/admin/data-health"><span class="catalog-health-icon" aria-hidden="true">&#10003;</span><span><strong>View park status details</strong><small>Coordinates, routing quality, restrictions, and sources</small></span><b aria-hidden="true">&rsaquo;</b></button></section>';
-  }
-
   function renderBrands() {
     var body = '<div class="catalog-dashboard"><section class="destination-deck" aria-labelledby="destination-deck-title"><div class="catalog-section-heading"><div class="catalog-section-label destination-section-label" id="destination-deck-title"><span aria-hidden="true">&#9679;</span> Destinations</div><small>Choose a park family</small></div>' + brandCards() + '</section>' + recentCard() + '</div>';
     root.innerHTML = shell('Where are you going?', modeSummary(), body, routeFor(['mode']), [{ label: 'Mode', route: routeFor(['mode']) }, { label: 'Destinations', route: routeFor(['brands']) }], { description: 'Choose where you want to explore.', view: 'brands', step: 1 });
@@ -190,6 +175,94 @@
     if (global.RideHeroDataHealth) global.RideHeroDataHealth.render(root.querySelector('#data-health-root'));
   }
 
+  function smartEntryParkCard(park, detection, active) {
+    var destination = catalog.destinations[park.destinationId];
+    var isRecent = detection && detection.source === 'recent';
+    var high = detection && detection.confidence === 'high';
+    var heading = isRecent ? 'Recently used' : (high ? "You're at" : 'It looks like you\'re near');
+    var detail = isRecent ? 'Live location could not confirm your park.' : 'Confirm this park before RideHero starts planning.';
+    var progress = active && Array.isArray(active.completed) ? active.completed.length : 0;
+    var remaining = active && Array.isArray(active.stops) ? active.stops.filter(function(stop) {
+      return !(active.completed || []).some(function(event){ return event.rideId === stop.rideId; }) && !(active.skipped || []).some(function(event){ return event.rideId === stop.rideId; });
+    }) : [];
+    var resume = active && active.parkId === park.id && active.planningMode === appState.planningMode;
+    return '<section class="smart-entry-card' + (resume ? ' has-resume' : '') + '" aria-labelledby="smart-entry-park-title">' +
+      '<div class="smart-entry-location-mark" aria-hidden="true">&#9678;</div>' +
+      '<div class="smart-entry-copy"><span>' + esc(heading) + '</span><h2 id="smart-entry-park-title">' + esc(park.shortName) + '</h2><p>' + esc(destination.name) + '</p><small>' + esc(detail) + '</small></div>' +
+      (resume ? '<div class="smart-entry-resume"><strong>Resume your ' + esc(park.shortName) + ' ' + esc(modeName()) + '</strong><span>' + progress + ' of ' + active.stops.length + ' ' + (appState.planningMode === 'quick' ? 'rides' : 'stops') + ' complete</span>' + (remaining[0] ? '<small>Next: ' + esc(remaining[0].name) + '</small>' : '') + '<small>Wait freshness updates when you resume.</small></div>' : '') +
+      '<div class="smart-entry-actions">' +
+        (resume ? '<button class="smart-entry-primary" type="button" data-smart-source="' + (isRecent ? 'recent' : 'live') + '" data-smart-resume="' + esc(park.id) + '">Resume Route</button><button class="smart-entry-secondary" type="button" data-smart-source="' + (isRecent ? 'recent' : 'live') + '" data-smart-new="' + esc(park.id) + '">Start New Route</button>' : '<button class="smart-entry-primary" type="button" data-smart-source="' + (isRecent ? 'recent' : 'live') + '" data-smart-park="' + esc(park.id) + '">' + (isRecent ? 'Continue at ' : (high ? 'Continue' : 'Use ')) + (high ? '' : esc(park.shortName)) + '</button>') +
+        '<button class="smart-entry-link" type="button" data-smart-change>Change Park</button>' +
+      '</div></section>';
+  }
+
+  function smartEntryFailure(reason) {
+    var denied = reason === 'permission_denied';
+    return '<section class="smart-entry-card smart-entry-fallback" aria-labelledby="smart-entry-fallback-title"><div class="smart-entry-location-mark" aria-hidden="true">?</div><div class="smart-entry-copy"><span>Location check</span><h2 id="smart-entry-fallback-title">We couldn\'t confirm which park you\'re visiting.</h2><p>' + (denied ? 'Location permission is off. You can still choose any supported park.' : 'Choose a park now or retry when your location is available.') + '</p></div><div class="smart-entry-actions"><button class="smart-entry-primary" type="button" data-smart-change>Choose Park</button><button class="smart-entry-secondary" type="button" data-smart-retry>Retry Location</button></div></section>';
+  }
+
+  function renderSmartEntryBody(markup, status) {
+    var host = root.querySelector('[data-smart-entry-root]');
+    if (!host) return;
+    host.innerHTML = markup;
+    host.setAttribute('aria-busy', status === 'loading' ? 'true' : 'false');
+    bindSmartEntry();
+    var focusTarget = host.querySelector('h2');
+    if (focusTarget) { focusTarget.setAttribute('tabindex', '-1'); focusTarget.focus({ preventScroll:true }); }
+  }
+
+  function recentSmartEntrySuggestion() {
+    if (!global.RideHeroSmartEntry) return null;
+    return global.RideHeroSmartEntry.getRecentParkSuggestion({ parkId:recent.parkId, selectedAt:recent.parkSelectedAt }, catalog);
+  }
+
+  function activeRouteForSmartEntry() {
+    return global.RideHeroRouteSession && global.RideHeroRouteSession.getActive ? global.RideHeroRouteSession.getActive() : null;
+  }
+
+  function startSmartEntryDetection(force) {
+    var requestId = ++smartEntryRequestId;
+    renderSmartEntryBody('<div class="smart-entry-loading" role="status"><span class="catalog-loading-spinner" aria-hidden="true"></span><strong>Checking for a supported park&hellip;</strong><small>RideHero only suggests a park when the match is clear.</small></div>', 'loading');
+    if (!global.RideHeroLocationService || !global.RideHeroSmartEntry) {
+      var noServiceRecent = recentSmartEntrySuggestion();
+      renderSmartEntryBody(noServiceRecent ? smartEntryParkCard(catalog.parks[noServiceRecent.parkId], noServiceRecent, activeRouteForSmartEntry()) : smartEntryFailure('gps_unavailable'));
+      return;
+    }
+    global.RideHeroLocationService.getCurrentPosition({ force:force === true }).then(function(position) {
+      if (requestId !== smartEntryRequestId || currentRoute()[0] !== 'smart-entry') return;
+      var detection = global.RideHeroLocationService.detectCurrentPark(position);
+      if (detection.parkId && (detection.confidence === 'high' || detection.confidence === 'medium')) {
+        renderSmartEntryBody(smartEntryParkCard(catalog.parks[detection.parkId], detection, activeRouteForSmartEntry()));
+        track('park_auto_detected', { parkId:detection.parkId, planningMode:appState.planningMode, status:detection.confidence, reasonCode:detection.reason });
+        return;
+      }
+      var recentSuggestion = recentSmartEntrySuggestion();
+      renderSmartEntryBody(recentSuggestion ? smartEntryParkCard(catalog.parks[recentSuggestion.parkId], recentSuggestion, activeRouteForSmartEntry()) : smartEntryFailure(detection.reason));
+    }).catch(function(error) {
+      if (requestId !== smartEntryRequestId || currentRoute()[0] !== 'smart-entry') return;
+      var recentSuggestion = recentSmartEntrySuggestion();
+      var reason = error && Number(error.code) === 1 ? 'permission_denied' : 'gps_unavailable';
+      renderSmartEntryBody(recentSuggestion ? smartEntryParkCard(catalog.parks[recentSuggestion.parkId], recentSuggestion, activeRouteForSmartEntry()) : smartEntryFailure(reason));
+    });
+  }
+
+  function renderSmartEntry() {
+    var body = '<div class="smart-entry-shell" data-smart-entry-root aria-live="polite" aria-busy="true"></div>';
+    root.innerHTML = shell('Find your park faster', modeName(), body, routeFor(['mode']), [{ label:'Mode', route:routeFor(['mode']) }, { label:'Park check', route:routeFor(['smart-entry']) }], { description:'RideHero can suggest a supported park without silently choosing for you.', view:'smart-entry' });
+  }
+
+  function bindSmartEntry() {
+    root.querySelectorAll('[data-smart-change]').forEach(function(button){ button.onclick = function(){ track('park_detection_changed', { planningMode:appState.planningMode, status:'manual' }); go(['brands']); }; });
+    root.querySelectorAll('[data-smart-retry]').forEach(function(button){ button.onclick = function(){ startSmartEntryDetection(true); }; });
+    root.querySelectorAll('[data-smart-park]').forEach(function(button){ button.onclick = function(){ appState.locationSource = button.dataset.smartSource === 'recent' ? 'recent' : 'live'; track('park_detection_confirmed', { parkId:button.dataset.smartPark, planningMode:appState.planningMode, status:appState.locationSource }); activatePark(button.dataset.smartPark); }; });
+    root.querySelectorAll('[data-smart-new]').forEach(function(button){ button.onclick = function(){ appState.locationSource = button.dataset.smartSource === 'recent' ? 'recent' : 'live'; track('park_detection_confirmed', { parkId:button.dataset.smartNew, planningMode:appState.planningMode, status:'new_route' }); activatePark(button.dataset.smartNew, { startNew:true }); }; });
+    root.querySelectorAll('[data-smart-resume]').forEach(function(button){ button.onclick = function(){ appState.locationSource = button.dataset.smartSource === 'recent' ? 'recent' : 'live'; track('park_detection_confirmed', { parkId:button.dataset.smartResume, planningMode:appState.planningMode, status:'resume' }); activatePark(button.dataset.smartResume, { resume:true }); }; });
+  }
+
+  function track(name, properties) {
+    if (global.RideHeroAnalytics && typeof global.RideHeroAnalytics.track === 'function') global.RideHeroAnalytics.track(name, properties || {});
+  }
+
   function renderAccount() {
     var fallback = appState.planningMode ? routeFor(['brands']) : routeFor(['mode']);
     var backControl = entryAccountActive
@@ -217,6 +290,7 @@
     else if (parts[0] === 'admin' && parts[1] === 'data-health') renderDataHealth();
     else if (!parts.length || parts[0] === 'mode') renderMode();
     else if (!appState.planningMode) { go(['mode'], true); return; }
+    else if (parts[0] === 'smart-entry') renderSmartEntry();
     else if (parts[0] === 'brands') renderBrands();
     else if (parts[0] === 'parks') {
       var found = global.RideHeroParkData.findParkByRoute(parts[1], parts[2], parts[3]);
@@ -226,6 +300,7 @@
       else { renderPark(found.brand, found.destination, found.park); parkToActivate = found.park.id; }
     } else renderMode();
     bind();
+    if (parts[0] === 'smart-entry') startSmartEntryDetection(false);
     initModeWorkflow();
     var heading = root.querySelector('.catalog-heading');
     if (heading) heading.focus({ preventScroll: true });
@@ -411,6 +486,7 @@
     appState.destinationId = null;
     appState.parkId = null;
     rememberContext({ planningMode: mode });
+    track('planning_mode_selected', { planningMode:mode });
     if (typeof applyGuidanceMode === 'function') applyGuidanceMode(legacyGuidanceMode());
     if (!pageAlreadyMoving) {
       document.body.classList.remove('mode-choice-quick', 'mode-choice-full');
@@ -419,10 +495,11 @@
     }
     root.querySelectorAll('[data-planning-mode]').forEach(function(card){ card.classList.toggle('is-selected', card === button); card.disabled = true; });
     var reduced = global.matchMedia && global.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    global.setTimeout(function(){ document.body.classList.remove('mode-choice-made', 'mode-choice-quick', 'mode-choice-full'); go(['brands']); }, reduced ? 0 : 240);
+    global.setTimeout(function(){ document.body.classList.remove('mode-choice-made', 'mode-choice-quick', 'mode-choice-full'); go(['smart-entry']); }, reduced ? 0 : 240);
   }
 
-  async function activatePark(parkId) {
+  async function activatePark(parkId, options) {
+    options = options || {};
     var park = catalog.parks[parkId];
     if (!park || loadingParkId) return;
     loadingParkId = parkId;
@@ -430,14 +507,24 @@
       await global.RideHeroParkData.load(parkId);
       if (typeof currentPark !== 'undefined') {
         var changed = currentPark !== parkId;
+        var activeSession = global.RideHeroRouteSession && global.RideHeroRouteSession.getActive ? global.RideHeroRouteSession.getActive() : null;
+        if (options.startNew === true && activeSession && typeof global.RideHeroRouteSession.end === 'function') {
+          global.RideHeroRouteSession.end('new-route');
+        }
         currentPark = parkId;
         parkHasBeenSelected = true;
-        if (changed && typeof resetParkRuntimeState === 'function') resetParkRuntimeState();
+        if (typeof resetParkRuntimeState === 'function') {
+          resetParkRuntimeState({ preserveSession:options.resume === true, suppressSummary:options.startNew === true || options.resume === true });
+        }
       }
       global.RideHeroLocationService.setSelectedPark(parkId);
-      rememberContext({ planningMode: appState.planningMode, brandId: park.brandId, destinationId: park.destinationId, parkId: parkId });
+      rememberContext({ planningMode: appState.planningMode, brandId: park.brandId, destinationId: park.destinationId, parkId: parkId, parkSelectedAt:Date.now() });
       ensureLegacyBridge(park);
       if (typeof applyGuidanceMode === 'function') applyGuidanceMode(legacyGuidanceMode());
+      if (options.resume === true && global.RideHeroRouteResume && typeof global.RideHeroRouteResume.resume === 'function') {
+        await global.RideHeroRouteResume.resume();
+        return;
+      }
       if (appState.planningMode === 'full') openPlanFlow();
       else goQuickRouteForPark();
     } catch (error) {
@@ -500,7 +587,7 @@
     if (typeof dialog.showModal === 'function') dialog.showModal(); else dialog.setAttribute('open', '');
   }
 
-  function goHome() { showScreen('setup'); go(appState.planningMode ? ['brands'] : ['mode']); }
+  function goHome() { showScreen('setup'); go(appState.planningMode ? ['smart-entry'] : ['mode']); }
   function openAccount() { showScreen('setup'); go(['account']); }
   function activeScreenIdSafe() { return typeof activeScreenId === 'function' ? activeScreenId() : ''; }
   global.RideHeroAppState = appState;

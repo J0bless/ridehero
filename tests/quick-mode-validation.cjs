@@ -67,6 +67,22 @@ context.window = context;
 
 vm.runInContext(scriptMatch[2], context, { filename: 'index.inline.js' });
 const run = (source) => vm.runInContext(source, context);
+run(`window.RideHeroLocationService = {
+  setSelectedPark:function(){},
+  isInsideParkBounds:function(position, park){
+    if (park === 'mk') return position.latitude >= 28.4148969 && position.latitude <= 28.4232773 && position.longitude >= -81.5869975 && position.longitude <= -81.5750;
+    return false;
+  },
+  getCurrentPosition:function(){ return new Promise(function(resolve, reject){
+    if (!navigator.geolocation) { reject(new Error('unavailable')); return; }
+    navigator.geolocation.getCurrentPosition(function(pos){ resolve({ latitude:pos.coords.latitude, longitude:pos.coords.longitude, accuracy:pos.coords.accuracy }); }, reject);
+  }); },
+  detectCurrentPark:function(position){
+    return isLocationInPark(currentPark, position.latitude, position.longitude)
+      ? { parkId:currentPark, confidence:'high' }
+      : { parkId:null, confidence:'unknown' };
+  }
+};`);
 
 run(`
   currentPark = 'mk';

@@ -124,6 +124,18 @@ assert.equal(api.get('sfgam').rides.find((ride) => ride.id === 'sfgam-american-e
 assert.equal(catalog.parks.mk.map.routingQuality, 'verified');
 assert.equal(catalog.parks.dl.map.routingQuality, 'approximate');
 assert.equal(catalog.parks.sfga.map.routingQuality, 'approximate');
+['mk','ep','hs','ak'].forEach((parkId) => {
+  const fence = catalog.parks[parkId].geofence;
+  assert(fence, `${parkId} must expose a sourced Smart Entry geofence`);
+  assert.equal(fence.dataConfidence, 'provider');
+  assert.equal(fence.sourceName, 'OpenStreetMap contributors');
+  assert.match(fence.sourceUrl, /^https:\/\/www\.openstreetmap\.org\/way\/\d+$/);
+  assert.equal(fence.license, 'ODbL');
+  assert(fence.north > fence.south && fence.east > fence.west, `${parkId} provider bounds must be ordered`);
+});
+['dl','dca','usf','ioa','epic','vb','ush','usj','sfga','sfmm','sfgam'].forEach((parkId) => {
+  assert.equal(catalog.parks[parkId].geofence, undefined, `${parkId} must not receive an unsourced high-confidence geofence`);
+});
 
 const navigation = fs.readFileSync(path.join(root, 'js', 'navigation.js'), 'utf8');
 assert.match(navigation, /hashchange/, 'browser back and forward must be handled');

@@ -71,7 +71,14 @@ const context = vm.createContext({
   },
   RIDEHERO_CATALOG: catalog,
   RideHeroState: { get() { return { recent }; }, rememberContext(next) { recent = Object.assign({}, recent, next); } },
-  RideHeroLocationService: { setSelectedPark() {} },
+  RideHeroLocationService: {
+    setSelectedPark() {},
+    getCurrentPosition() { return new Promise(function() {}); },
+    detectCurrentPark() { return { parkId: null, confidence: 'unknown', reason: 'location_unavailable' }; }
+  },
+  RideHeroSmartEntry: {
+    getRecentParkSuggestion() { return null; }
+  },
   RideHeroParkData: {
     load: async function() { parkLoads += 1; return { rides: [] }; },
     findParkByRoute(brandSlug, destinationSlug, parkSlug) {
@@ -107,8 +114,13 @@ assert.doesNotMatch(root.innerHTML, /data-brand=/, 'brands must not appear befor
 
 navigation.selectPlanningMode('quick');
 assert.equal(navigation.getState().planningMode, 'quick');
-assert.equal(location.hash, '#/brands');
+assert.equal(location.hash, '#/smart-entry');
 assert.equal(context.lastGuidanceMode, 'quick');
+navigation.render();
+assert.match(root.innerHTML, /Find your park faster/, 'Smart Entry must follow Planning Mode before manual destination selection');
+assert.match(root.innerHTML, /data-smart-entry-root/, 'Smart Entry must provide a non-blocking park detection region');
+assert.doesNotMatch(root.innerHTML, /data-brand=/, 'manual destinations must remain behind the Smart Entry confirmation or fallback');
+location.hash = '#/brands';
 navigation.render();
 assert.match(root.innerHTML, /Where are you going\?/);
 assert.match(root.innerHTML, />Destinations</, 'the selector must use the user-facing Destinations label');
