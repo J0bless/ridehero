@@ -38,6 +38,8 @@ let recent = { planningMode: null, brandId: null, destinationId: null, parkId: n
 let quickCalls = 0;
 let fullCalls = 0;
 let parkLoads = 0;
+let authInitializations = 0;
+const sessionValues = new Map();
 const location = { hash: '', replace(next) { this.hash = next; } };
 const context = vm.createContext({
   console,
@@ -59,6 +61,14 @@ const context = vm.createContext({
   matchMedia() { return { matches: true }; },
   scrollTo() {},
   addEventListener() {},
+  sessionStorage: {
+    getItem(key) { return sessionValues.has(key) ? sessionValues.get(key) : null; },
+    setItem(key, value) { sessionValues.set(key, String(value)); },
+    removeItem(key) { sessionValues.delete(key); }
+  },
+  RideHeroAuth: {
+    initialize() { authInitializations += 1; return Promise.resolve({ authenticated: false }); }
+  },
   RIDEHERO_CATALOG: catalog,
   RideHeroState: { get() { return { recent }; }, rememberContext(next) { recent = Object.assign({}, recent, next); } },
   RideHeroLocationService: { setSelectedPark() {} },
@@ -77,7 +87,14 @@ context.window = context;
 vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'js', 'navigation.js'), 'utf8'), context, { filename: 'js/navigation.js' });
 const navigation = context.RideHeroMultiResort;
 
-assert.equal(location.hash, '#/mode', 'a fresh visit must start at planning mode');
+assert.equal(location.hash, '#/account', 'a fresh signed-out visit must start at the Account page under the intro');
+assert.equal(authInitializations, 1, 'fresh entry must check for a returning authenticated account');
+navigation.render();
+assert.match(root.innerHTML, /Account &amp; Friends/);
+assert.doesNotMatch(root.innerHTML, /data-action="back"/, 'the first Account screen must use the intentional guest action instead of an ambiguous back button');
+navigation.continueAsGuest();
+assert.equal(sessionValues.get('ridehero.auth.guest.v1'), '1', 'guest choice must be remembered only for the current browser session');
+assert.equal(location.hash, '#/mode', 'Continue as guest must open planning mode without an account loop');
 navigation.render();
 assert.match(root.innerHTML, /How should we guide your day\?/);
 assert.match(root.innerHTML, /Quick Route/);

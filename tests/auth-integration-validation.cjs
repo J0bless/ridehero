@@ -59,6 +59,15 @@ assert.match(ui, /autocomplete\s*=\s*['"]email['"]|setAttribute\(['"]autocomplet
 assert.match(ui, /aria-live|role['"]?\s*,?\s*['"]status/i, 'auth success and error messages must be announced');
 assert.match(ui, /focus\s*\(/, 'focus must move into the sign-in surface');
 assert.match(ui, /signOut/, 'signed-in users must be able to sign out');
+assert.match(ui, /Continue as guest/, 'signed-out users must be able to keep planning without an account');
+assert.match(navigation, /GUEST_SESSION_KEY\s*=\s*['"]ridehero\.auth\.guest\.v1['"]/,
+  'the guest bypass must be limited to the current browser session');
+assert.match(navigation, /else\s*\{\s*entryAccountActive\s*=\s*true;\s*go\(\['account'\],\s*true\);\s*\}/,
+  'the Account page must be the first fresh route beneath the coaster intro');
+assert.match(navigation, /initializeEntryAuth\(\)/,
+  'fresh entry must check whether a returning user is already authenticated');
+assert.doesNotMatch(navigation, /localStorage[\s\S]{0,160}ridehero\.auth\.guest/,
+  'guest continuation must never become a persistent authentication bypass');
 
 // Existing device-only names are ambiguous labels, not verified accounts.
 // They must remain local unless the user deliberately acts on them.

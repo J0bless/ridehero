@@ -5,6 +5,8 @@
   var loadingParkId = null;
   var modeWorkflowTimers = [];
   var modePullCleanup = null;
+  var GUEST_SESSION_KEY = 'ridehero.auth.guest.v1';
+  var entryAccountActive = false;
   var recent = global.RideHeroState.get().recent || {};
   var appState = {
     planningMode: normalizePlanningMode(recent.planningMode),
@@ -30,6 +32,37 @@
   function modeName() { return appState.planningMode === 'full' ? 'Maximize My Day' : 'Quick Route'; }
   function modeSummary() { return appState.planningMode === 'full' ? 'Full-day strategy' : 'Nearby rides only'; }
   function rememberContext(context) { recent = Object.assign({}, recent, context || {}); global.RideHeroState.rememberContext(context); }
+  function guestSessionSelected() {
+    try { return !!(global.sessionStorage && global.sessionStorage.getItem(GUEST_SESSION_KEY) === '1'); }
+    catch (error) { return false; }
+  }
+  function rememberGuestSession() {
+    try { if (global.sessionStorage) global.sessionStorage.setItem(GUEST_SESSION_KEY, '1'); }
+    catch (error) { /* Guest planning must still work when storage is unavailable. */ }
+  }
+  function clearGuestSession() {
+    try { if (global.sessionStorage) global.sessionStorage.removeItem(GUEST_SESSION_KEY); }
+    catch (error) { /* Authentication remains valid without session storage. */ }
+  }
+  function continueAsGuest() {
+    rememberGuestSession();
+    entryAccountActive = false;
+    if (typeof showScreen === 'function') showScreen('setup');
+    go(['mode'], true);
+  }
+  function finishAuthenticatedEntry(state) {
+    if (!state || !state.authenticated) return;
+    clearGuestSession();
+    if (!entryAccountActive) return;
+    entryAccountActive = false;
+    if (currentRoute()[0] === 'account') go(['mode'], true);
+  }
+  function initializeEntryAuth() {
+    if (!global.RideHeroAuth || typeof global.RideHeroAuth.initialize !== 'function') return;
+    global.RideHeroAuth.initialize().then(finishAuthenticatedEntry).catch(function() {
+      /* The Account page keeps a usable guest path when auth is offline. */
+    });
+  }
   function friendsButton() {
     return '<button class="friends-trigger catalog-friends-trigger" type="button" data-action="friends" aria-label="Friends and route sharing"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 11.2a3.1 3.1 0 1 0 0-6.2 3.1 3.1 0 0 0 0 6.2Z"></path><path d="M3.5 19c.3-3.1 2-4.8 5-4.8s4.7 1.7 5 4.8"></path><path d="M16.5 10a2.4 2.4 0 1 0 0-4.8"></path><path d="M15.2 14.4c3.2-.5 5.1 1 5.3 4.1"></path></svg><span class="friends-trigger-count" data-friends-count hidden>0</span></button>';
   }
@@ -159,7 +192,10 @@
 
   function renderAccount() {
     var fallback = appState.planningMode ? routeFor(['brands']) : routeFor(['mode']);
-    root.innerHTML = '<div class="auth-route-shell"><header class="auth-route-header"><button class="catalog-icon-btn" type="button" data-action="back" data-fallback-route="' + esc(fallback) + '" aria-label="Go back">&lsaquo;</button><span>Account &amp; Friends</span><span aria-hidden="true"></span></header><main id="ridehero-auth-page-root"></main></div>';
+    var backControl = entryAccountActive
+      ? '<span aria-hidden="true"></span>'
+      : '<button class="catalog-icon-btn" type="button" data-action="back" data-fallback-route="' + esc(fallback) + '" aria-label="Go back">&lsaquo;</button>';
+    root.innerHTML = '<div class="auth-route-shell"><header class="auth-route-header">' + backControl + '<span>Account &amp; Friends</span><span aria-hidden="true"></span></header><main id="ridehero-auth-page-root"></main></div>';
     var accountRoot = root.querySelector('#ridehero-auth-page-root');
     if (global.RideHeroAuthUI && accountRoot) global.RideHeroAuthUI.render(accountRoot);
   }
@@ -469,7 +505,11 @@
   function activeScreenIdSafe() { return typeof activeScreenId === 'function' ? activeScreenId() : ''; }
   global.RideHeroAppState = appState;
   global.openRideHeroAccount = openAccount;
-  global.RideHeroMultiResort = { render: render, choosePark: activatePark, selectPlanningMode: selectPlanningMode, goHome: goHome, openAccount: openAccount, changePark: openParkSwitcher, changeMode: function(){ showScreen('setup'); go(['mode']); }, updateChangeParkAction: updateContextActions, getState: function(){ return Object.assign({}, appState); } };
+  global.RideHeroMultiResort = { render: render, choosePark: activatePark, selectPlanningMode: selectPlanningMode, goHome: goHome, openAccount: openAccount, continueAsGuest: continueAsGuest, changePark: openParkSwitcher, changeMode: function(){ showScreen('setup'); go(['mode']); }, updateChangeParkAction: updateContextActions, getState: function(){ return Object.assign({}, appState); } };
   global.addEventListener('hashchange', render);
-  if (!location.hash || location.hash === '#/' || location.hash === '#') go(['mode'], true); else render();
+  if (!location.hash || location.hash === '#/' || location.hash === '#') {
+    if (guestSessionSelected()) go(['mode'], true);
+    else { entryAccountActive = true; go(['account'], true); }
+    initializeEntryAuth();
+  } else render();
 })(window);

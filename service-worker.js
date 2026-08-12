@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ridehero-shell-v18';
+const CACHE_NAME = 'ridehero-shell-v19';
 const APP_SHELL = [
   './',
   './index.html',
@@ -6,7 +6,7 @@ const APP_SHELL = [
   './css/multi-resort.css?v=1',
   './css/onboarding.css?v=8',
   './css/growth-engine.css?v=2',
-  './css/auth.css?v=1',
+  './css/auth.css?v=2',
   './css/friends.css?v=2',
   './css/park-map.css?v=1',
   './data/park-catalog.js?v=1',
@@ -24,11 +24,11 @@ const APP_SHELL = [
   './js/data-health.js?v=1',
   './js/supabase-config.js?v=2',
   './js/auth-client.js?v=1',
-  './js/auth-ui.js?v=1',
+  './js/auth-ui.js?v=2',
   './js/account-friends.js?v=1',
   './js/friends-store.js?v=1',
   './js/friends-ui.js?v=2',
-  './js/navigation.js?v=9',
+  './js/navigation.js?v=10',
   './js/pwa-install.js?v=1',
   './js/growth-loader.js?v=2',
   './icons/ridehero-180.png',
