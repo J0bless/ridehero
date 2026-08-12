@@ -28,14 +28,16 @@ assert.match(onboardingCss, /@media \(prefers-reduced-motion:reduce\)/, 'onboard
 assert.match(onboardingCss, /\.catalog-view-brands \.brand-card-grid\{grid-template-columns:repeat\(3,minmax\(0,1fr\)\);max-width:none/, 'the destination dashboard must show three compact visual cards without horizontal scrolling');
 assert.match(onboardingCss, /\.brand-card-visual \.catalog-card-icon\{[^}]*width:50px;height:50px[^}]*border-radius:50%/, 'destination letter tiles must use compact circular geometry');
 assert.match(onboardingCss, /@media \(max-width:330px\)[\s\S]*\.catalog-view-brands \.brand-card-grid\{gap:6px\}/, '320px screens must receive explicit compact destination-card spacing');
-assert.match(onboardingCss, /\.app-nav\{left:12px!important;right:12px!important;bottom:8px!important[^}]*border-radius:28px!important/, 'the shared Home and Route navigation must use the floating native-app shell');
+assert.match(onboardingCss, /\.app-nav\{left:12px!important;right:12px!important;bottom:4px!important[^}]*padding:4px 8px calc\(4px \+ env\(safe-area-inset-bottom\)\)!important[^}]*border-radius:22px!important/, 'the shared Home and Route navigation must use the compact floating shell');
+assert.match(onboardingCss, /\.app-nav-btn\{[^}]*min-height:46px!important[^}]*padding:4px 8px!important/, 'compact navigation must retain touch-friendly controls');
 assert.match(growthCss, /aspect-ratio:\s*1\s*\/\s*1/, 'share cards must retain a social-friendly square layout');
 assert.match(growthCss, /@media\s*\(max-width:\s*350px\)/, 'growth screens need an explicit 320px containment rule');
 assert.match(growthCss, /min-height:\s*52px/, 'growth sharing controls must remain touch friendly');
 assert.match(growthCss, /@media\s*\(prefers-reduced-motion:\s*reduce\)/, 'completion animation must respect reduced motion');
 assert.match(onboardingCss, /\.catalog-step-progress\{display:grid;grid-template-columns:repeat\(3,minmax\(0,1fr\)\) auto/, 'destination workflow progress must remain responsive and explicit');
 assert.match(onboardingCss, /\.journey-open\.journey-primary\{[^}]*min-height:50px[^}]*border-radius:17px/, 'the real recent-park action must remain a large touch-friendly primary button');
-assert.match(onboardingCss, /\.app-nav-btn svg\{[^}]*width:21px;height:21px/, 'bottom navigation must use crisp line icons rather than text glyphs');
+assert.match(onboardingCss, /\.app-nav-btn svg\{[^}]*width:18px;height:18px/, 'bottom navigation must use compact crisp line icons rather than text glyphs');
+assert.match(onboardingCss, /\.catalog-context-action\{[^}]*bottom:calc\(78px \+ env\(safe-area-inset-bottom\)\)/, 'Change Mode and Change Park must remain visibly separated above the compact footer');
 assert.match(html, /btn\.setAttribute\('aria-current', 'page'\)/, 'bottom navigation must expose the current page to assistive technology');
 assert.match(onboardingCss, /\.catalog-heading\[tabindex="-1"\]:focus[^}]*outline:0!important;box-shadow:none!important/, 'page headings must not render grey focus boundaries');
 assert.match(onboardingCss, /\.mode-catalog-page \.catalog-heading\{[^}]*align-items:center[^}]*text-align:center/, 'the planning-mode question must be centered');
