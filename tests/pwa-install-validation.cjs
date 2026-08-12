@@ -38,10 +38,10 @@ const wordmark = fs.readFileSync(path.join(root, 'icons', 'ridehero-wordmark.png
 assert.equal(wordmark.readUInt32BE(16), 935, 'incorrect RideHero wordmark width');
 assert.equal(wordmark.readUInt32BE(20), 167, 'incorrect RideHero wordmark height');
 assert.equal(wordmark[25], 6, 'RideHero wordmark must retain transparent RGBA pixels');
-assert.match(worker, /const CACHE_NAME = 'ridehero-shell-v22'/);
-assert.match(html, /css\/onboarding\.css\?v=8/, 'the onboarding stylesheet must use the current cache-busting version');
+assert.match(worker, /const CACHE_NAME = 'ridehero-shell-v23'/);
+assert.match(html, /css\/onboarding\.css\?v=9/, 'the onboarding stylesheet must use the current cache-busting version');
 assert.match(html, /js\/navigation\.js\?v=10/, 'the navigation script must use the current cache-busting version');
-assert.match(worker, /\.\/css\/onboarding\.css\?v=8/, 'the service worker must precache the current onboarding stylesheet');
+assert.match(worker, /\.\/css\/onboarding\.css\?v=9/, 'the service worker must precache the current onboarding stylesheet');
 assert.match(worker, /\.\/js\/navigation\.js\?v=10/, 'the service worker must precache the current navigation script');
 assert.match(worker, /\.\/css\/auth\.css\?v=2/);
 assert.match(worker, /\.\/css\/friends\.css\?v=2/);
