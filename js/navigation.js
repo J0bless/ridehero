@@ -157,18 +157,28 @@
     if (global.RideHeroDataHealth) global.RideHeroDataHealth.render(root.querySelector('#data-health-root'));
   }
 
+  function renderAccount() {
+    var fallback = appState.planningMode ? routeFor(['brands']) : routeFor(['mode']);
+    root.innerHTML = '<div class="auth-route-shell"><header class="auth-route-header"><button class="catalog-icon-btn" type="button" data-action="back" data-fallback-route="' + esc(fallback) + '" aria-label="Go back">&lsaquo;</button><span>Account &amp; Friends</span><span aria-hidden="true"></span></header><main id="ridehero-auth-page-root"></main></div>';
+    var accountRoot = root.querySelector('#ridehero-auth-page-root');
+    if (global.RideHeroAuthUI && accountRoot) global.RideHeroAuthUI.render(accountRoot);
+  }
+
   function render() {
     if (!root) return;
     root.classList.add('active');
     document.querySelectorAll('.screen').forEach(function(screen){ if (screen !== root) screen.classList.remove('active'); });
     var parts = currentRoute();
+    if (parts[0] === 'account') document.body.classList.add('auth-screen-active');
+    else document.body.classList.remove('auth-screen-active');
     if (!parts.length || parts[0] === 'mode') {
       document.body.classList.remove('mode-quick', 'mode-strategic');
     } else if (appState.planningMode && typeof applyGuidanceMode === 'function') {
       applyGuidanceMode(legacyGuidanceMode());
     }
     var parkToActivate = null;
-    if (parts[0] === 'admin' && parts[1] === 'data-health') renderDataHealth();
+    if (parts[0] === 'account') renderAccount();
+    else if (parts[0] === 'admin' && parts[1] === 'data-health') renderDataHealth();
     else if (!parts.length || parts[0] === 'mode') renderMode();
     else if (!appState.planningMode) { go(['mode'], true); return; }
     else if (parts[0] === 'brands') renderBrands();
@@ -354,6 +364,7 @@
     });
     root.querySelectorAll('[data-recent-park]').forEach(function(button){ button.onclick = function(){ var park = catalog.parks[button.dataset.recentPark]; var destination = catalog.destinations[park.destinationId]; var brand = catalog.brands[park.brandId]; go(['parks', brand.slug, destination.slug, park.slug]); }; });
     if (global.RideHeroFriendsUI && global.RideHeroFriendsUI.syncTriggers) global.RideHeroFriendsUI.syncTriggers();
+    if (global.RideHeroAuthUI && global.RideHeroAuthUI.syncTriggers) global.RideHeroAuthUI.syncTriggers();
   }
 
   function selectPlanningMode(mode, button, pageAlreadyMoving) {
@@ -454,9 +465,11 @@
   }
 
   function goHome() { showScreen('setup'); go(appState.planningMode ? ['brands'] : ['mode']); }
+  function openAccount() { showScreen('setup'); go(['account']); }
   function activeScreenIdSafe() { return typeof activeScreenId === 'function' ? activeScreenId() : ''; }
   global.RideHeroAppState = appState;
-  global.RideHeroMultiResort = { render: render, choosePark: activatePark, selectPlanningMode: selectPlanningMode, goHome: goHome, changePark: openParkSwitcher, changeMode: function(){ showScreen('setup'); go(['mode']); }, updateChangeParkAction: updateContextActions, getState: function(){ return Object.assign({}, appState); } };
+  global.openRideHeroAccount = openAccount;
+  global.RideHeroMultiResort = { render: render, choosePark: activatePark, selectPlanningMode: selectPlanningMode, goHome: goHome, openAccount: openAccount, changePark: openParkSwitcher, changeMode: function(){ showScreen('setup'); go(['mode']); }, updateChangeParkAction: updateContextActions, getState: function(){ return Object.assign({}, appState); } };
   global.addEventListener('hashchange', render);
   if (!location.hash || location.hash === '#/' || location.hash === '#') go(['mode'], true); else render();
 })(window);

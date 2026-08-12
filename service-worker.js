@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ridehero-shell-v16';
+const CACHE_NAME = 'ridehero-shell-v17';
 const APP_SHELL = [
   './',
   './index.html',
@@ -6,7 +6,8 @@ const APP_SHELL = [
   './css/multi-resort.css?v=1',
   './css/onboarding.css?v=8',
   './css/growth-engine.css?v=2',
-  './css/friends.css?v=1',
+  './css/auth.css?v=1',
+  './css/friends.css?v=2',
   './css/park-map.css?v=1',
   './data/park-catalog.js?v=1',
   './data/ride-aliases.js?v=1',
@@ -21,9 +22,13 @@ const APP_SHELL = [
   './js/route-session.js?v=1',
   './js/walking-network.js?v=1',
   './js/data-health.js?v=1',
+  './js/supabase-config.js?v=1',
+  './js/auth-client.js?v=1',
+  './js/auth-ui.js?v=1',
+  './js/account-friends.js?v=1',
   './js/friends-store.js?v=1',
-  './js/friends-ui.js?v=1',
-  './js/navigation.js?v=8',
+  './js/friends-ui.js?v=2',
+  './js/navigation.js?v=9',
   './js/pwa-install.js?v=1',
   './js/growth-loader.js?v=2',
   './icons/ridehero-180.png',
@@ -81,6 +86,10 @@ self.addEventListener('fetch', function(event) {
   if (request.method !== 'GET') return;
   var url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
+  var sensitiveAuthQuery = ['code', 'access_token', 'refresh_token', 'error', 'error_code', 'error_description'].some(function(key) {
+    return url.searchParams.has(key);
+  });
+  if (url.pathname.indexOf('/auth/') === 0 || sensitiveAuthQuery || request.headers.has('authorization')) return;
   if (url.pathname.indexOf('/api/') === 0 || url.pathname.indexOf('/waittimes') === 0) return;
   if (request.mode === 'navigate') {
     event.respondWith(networkFirst(request));
