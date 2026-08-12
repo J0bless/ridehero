@@ -30,6 +30,9 @@
   function modeName() { return appState.planningMode === 'full' ? 'Maximize My Day' : 'Quick Route'; }
   function modeSummary() { return appState.planningMode === 'full' ? 'Full-day strategy' : 'Nearby rides only'; }
   function rememberContext(context) { recent = Object.assign({}, recent, context || {}); global.RideHeroState.rememberContext(context); }
+  function friendsButton() {
+    return '<button class="friends-trigger catalog-friends-trigger" type="button" data-action="friends" aria-label="Friends and route sharing"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 11.2a3.1 3.1 0 1 0 0-6.2 3.1 3.1 0 0 0 0 6.2Z"></path><path d="M3.5 19c.3-3.1 2-4.8 5-4.8s4.7 1.7 5 4.8"></path><path d="M16.5 10a2.4 2.4 0 1 0 0-4.8"></path><path d="M15.2 14.4c3.2-.5 5.1 1 5.3 4.1"></path></svg><span class="friends-trigger-count" data-friends-count hidden>0</span></button>';
+  }
 
   function shell(title, eyebrow, body, backRoute, crumbs, options) {
     options = options || {};
@@ -39,8 +42,8 @@
     return '<div class="catalog-page' + (options.modePage ? ' mode-catalog-page' : '') + viewClass + '" data-catalog-page>' +
       '<header class="catalog-header"><div class="catalog-nav-row">' +
       (backRoute ? '<button class="catalog-icon-btn" type="button" data-action="back" data-fallback-route="' + esc(backRoute) + '" aria-label="Go back">&lsaquo;</button>' : '<span></span>') +
-      '<button class="catalog-wordmark" type="button" data-action="home" aria-label="RideHero home"><span class="catalog-wordmark-mark" aria-hidden="true">&#10022;</span><span class="catalog-wordmark-text"><span>Ride</span><strong>Hero</strong></span></button>' +
-      modeAction + '</div>' +
+      '<button class="catalog-wordmark" type="button" data-action="home" aria-label="RideHero home"><img class="catalog-wordmark-image" src="icons/ridehero-wordmark.png" alt="" aria-hidden="true" width="935" height="167"/></button>' +
+      '<div class="catalog-header-actions">' + modeAction + friendsButton() + '</div></div>' +
       (crumbs && crumbs.length ? '<nav class="catalog-breadcrumbs" aria-label="Breadcrumb">' + crumbs.map(function(item, i){ return '<button type="button" data-route="' + esc(item.route) + '"' + (i === crumbs.length - 1 ? ' aria-current="page"' : '') + '>' + esc(item.label) + '</button>'; }).join('<span aria-hidden="true">&rsaquo;</span>') + '</nav>' : '') +
       '<div class="catalog-heading" tabindex="-1"><span>' + esc(eyebrow) + '</span><h1>' + esc(title) + '</h1>' + (options.description ? '<p>' + esc(options.description) + '</p>' : '') + '</div>' + stepProgress + '</header>' +
       '<main class="catalog-content">' + body + '</main></div>';
@@ -339,6 +342,7 @@
 
   function bind() {
     root.querySelectorAll('[data-action="home"]').forEach(function(button){ button.onclick = goHome; });
+    root.querySelectorAll('[data-action="friends"]').forEach(function(button){ button.onclick = function(){ if (global.openRideHeroFriends) global.openRideHeroFriends(); }; });
     root.querySelectorAll('[data-action="back"]').forEach(function(button){ button.onclick = function(){ if (global.history.length > 1) history.back(); else location.hash = button.dataset.fallbackRoute; }; });
     root.querySelectorAll('[data-route]').forEach(function(button){ button.onclick = function(){ location.hash = button.dataset.route; }; });
     root.querySelectorAll('[data-planning-mode]').forEach(function(button){ button.onclick = function(){ selectPlanningMode(button.dataset.planningMode, button); }; });
@@ -349,6 +353,7 @@
       button.addEventListener('pointerenter', function(){ global.RideHeroParkData.load(button.dataset.park).catch(function(){}); }, { once: true });
     });
     root.querySelectorAll('[data-recent-park]').forEach(function(button){ button.onclick = function(){ var park = catalog.parks[button.dataset.recentPark]; var destination = catalog.destinations[park.destinationId]; var brand = catalog.brands[park.brandId]; go(['parks', brand.slug, destination.slug, park.slug]); }; });
+    if (global.RideHeroFriendsUI && global.RideHeroFriendsUI.syncTriggers) global.RideHeroFriendsUI.syncTriggers();
   }
 
   function selectPlanningMode(mode, button, pageAlreadyMoving) {

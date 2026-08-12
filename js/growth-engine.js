@@ -119,7 +119,9 @@
     back.setAttribute('aria-label', options.backLabel || 'Go back');
     back.addEventListener('click', options.onBack || function(){ bridge.openRoute(); });
     var mark = el('div', 'growth-wordmark');
-    append(mark, document.createTextNode('Ride'), el('strong', '', 'Hero'));
+    var logo = el('img', 'growth-wordmark-image');
+    logo.src = '/icons/ridehero-wordmark.png'; logo.alt = 'RideHero'; logo.width = 935; logo.height = 167;
+    mark.appendChild(logo);
     append(header, back, mark, el('span', 'growth-header-spacer'));
     append(wrap, header);
     return wrap;
@@ -227,8 +229,11 @@
       context.fillStyle = gradient; context.fillRect(0, 0, 1080, 1080);
       context.strokeStyle = 'rgba(90,152,217,.45)'; context.lineWidth = 24; context.beginPath(); context.arc(960, 90, 285, 0, Math.PI * 2); context.stroke();
       context.strokeStyle = '#D62828'; context.lineWidth = 8; context.beginPath(); context.moveTo(60, 760); context.bezierCurveTo(300, 630, 640, 900, 1030, 670); context.stroke();
-      context.fillStyle = '#fff'; context.font = '900 58px system-ui, sans-serif'; context.fillText('RIDE', 70, 105);
-      context.fillStyle = '#ff6262'; context.fillText('HERO', 232, 105);
+      context.fillStyle = 'rgba(248,250,252,.97)'; context.fillRect(54, 34, 398, 96);
+      context.fillStyle = '#D62828'; context.beginPath(); context.moveTo(72, 56); context.bezierCurveTo(108, 20, 153, 46, 188, 38); context.bezierCurveTo(153, 73, 112, 49, 72, 70); context.closePath(); context.fill();
+      context.fillStyle = '#0D1B4C'; context.font = 'italic 900 58px system-ui, sans-serif'; context.fillText('Ride', 70, 111);
+      context.fillStyle = '#D62828'; context.fillText('Hero', 198, 111);
+      context.beginPath(); context.moveTo(422, 54); context.lineTo(429, 68); context.lineTo(442, 74); context.lineTo(429, 81); context.lineTo(422, 96); context.lineTo(415, 81); context.lineTo(402, 74); context.lineTo(415, 68); context.closePath(); context.fill();
       var cardHeading = summary && summary.meaningfulProgress ? 'RIDEHERO DAY COMPLETE' : (source.status === 'active' ? 'RIDEHERO ACTIVE ROUTE' : 'RIDEHERO ROUTE RECAP');
       context.fillStyle = '#cbd9ea'; context.font = '800 27px system-ui, sans-serif'; context.fillText(cardHeading, 70, 198);
       context.fillStyle = '#fff'; context.font = '900 72px system-ui, sans-serif';
@@ -350,7 +355,7 @@
 
   function shareCard(source, summary) {
     var card = el('section', 'growth-share-card'); card.setAttribute('aria-label', summary && summary.meaningfulProgress ? 'RideHero Day Complete share card' : 'RideHero route recap share card');
-    var brand = el('div', 'share-card-brand'); append(brand, document.createTextNode('Ride'), el('strong', '', 'Hero'));
+    var brand = el('div', 'share-card-brand'); var brandImage = el('img', 'share-card-brand-image'); brandImage.src = '/icons/ridehero-wordmark.png'; brandImage.alt = 'RideHero'; brandImage.width = 935; brandImage.height = 167; brand.appendChild(brandImage);
     var heading = el('div'); append(heading, el('div', 'share-card-kicker', summary && summary.meaningfulProgress ? 'RideHero day complete' : 'RideHero route recap'), el('h2', 'share-card-park', bridge.parkName(source.parkId)));
     var metrics = el('div', 'share-card-metrics');
     if (summary && summary.completedRides > 0) append(metrics, shareCardMetric(summary.completedRides, 'Rides completed'));

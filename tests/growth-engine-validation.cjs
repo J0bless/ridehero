@@ -61,6 +61,8 @@ assert.match(growth, /shareActions\.share/);
 assert.match(shareActions, /navigatorApi\.share/);
 assert.match(growth, /navigator\.clipboard/);
 assert.match(growth, /canvas\.toBlob/);
+assert.match(growth, /context\.fillText\('Ride'[\s\S]*#D62828[\s\S]*context\.fillText\('Hero'/, 'downloaded cards must use the current RideHero wordmark colors');
+assert.doesNotMatch(growth, /#ff6262/i, 'downloaded cards must not retain the old logo red');
 assert.match(growth, /download = 'ridehero-'[\s\S]*source\.parkId[\s\S]*\.png'/, 'share cards must support an explicit image download');
 assert.match(growth, /textContent = String\(text\)/, 'shared display text must render through textContent');
 assert.match(css, /aspect-ratio:\s*1\s*\/\s*1/);

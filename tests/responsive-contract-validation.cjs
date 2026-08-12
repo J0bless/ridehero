@@ -6,6 +6,8 @@ const root = path.join(__dirname, '..');
 const css = fs.readFileSync(path.join(root, 'css', 'multi-resort.css'), 'utf8');
 const onboardingCss = fs.readFileSync(path.join(root, 'css', 'onboarding.css'), 'utf8');
 const growthCss = fs.readFileSync(path.join(root, 'css', 'growth-engine.css'), 'utf8');
+const friendsCss = fs.readFileSync(path.join(root, 'css', 'friends.css'), 'utf8');
+const mapCss = fs.readFileSync(path.join(root, 'css', 'park-map.css'), 'utf8');
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 
 assert.match(css, /grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/, 'wide cards must use shrink-safe grid tracks');
@@ -37,5 +39,10 @@ assert.match(onboardingCss, /\.app-nav-btn svg\{[^}]*width:21px;height:21px/, 'b
 assert.match(html, /btn\.setAttribute\('aria-current', 'page'\)/, 'bottom navigation must expose the current page to assistive technology');
 assert.match(onboardingCss, /\.catalog-heading\[tabindex="-1"\]:focus[^}]*outline:0!important;box-shadow:none!important/, 'page headings must not render grey focus boundaries');
 assert.match(onboardingCss, /\.mode-catalog-page \.catalog-heading\{[^}]*align-items:center[^}]*text-align:center/, 'the planning-mode question must be centered');
+assert.match(onboardingCss, /@media \(max-width:600px\)[\s\S]*\.catalog-mode-action\{width:48px/, 'the mode and Friends header actions must compact across phones and small tablets');
+assert.match(onboardingCss, /grid-template-columns:minmax\(0,1fr\) auto minmax\(0,1fr\)/, 'the wordmark must remain centered between balanced header tracks');
+assert.match(friendsCss, /\.friends-trigger\s*\{[\s\S]*min-width:\s*44px[\s\S]*height:\s*44px/, 'the Friends shortcut must remain touch friendly');
+assert.match(mapCss, /height:clamp\(280px,66vw,390px\)/, 'live maps must use a bounded responsive viewport');
+assert.match(mapCss, /@media\(max-width:350px\)/, 'live maps need an explicit 320px layout rule');
 
 console.log('Responsive contract validation passed for 320/360/390/430px, tablet, and desktop CSS breakpoints.');
