@@ -5,6 +5,7 @@ const path = require('node:path');
 const root = path.join(__dirname, '..');
 const css = fs.readFileSync(path.join(root, 'css', 'multi-resort.css'), 'utf8');
 const onboardingCss = fs.readFileSync(path.join(root, 'css', 'onboarding.css'), 'utf8');
+const growthCss = fs.readFileSync(path.join(root, 'css', 'growth-engine.css'), 'utf8');
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 
 assert.match(css, /grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/, 'wide cards must use shrink-safe grid tracks');
@@ -26,7 +27,10 @@ assert.match(onboardingCss, /\.catalog-view-brands \.brand-card-grid\{grid-templ
 assert.match(onboardingCss, /\.brand-card-visual \.catalog-card-icon\{[^}]*width:50px;height:50px[^}]*border-radius:50%/, 'destination letter tiles must use compact circular geometry');
 assert.match(onboardingCss, /@media \(max-width:330px\)[\s\S]*\.catalog-view-brands \.brand-card-grid\{gap:6px\}/, '320px screens must receive explicit compact destination-card spacing');
 assert.match(onboardingCss, /\.app-nav\{left:12px!important;right:12px!important;bottom:8px!important[^}]*border-radius:28px!important/, 'the shared Home and Route navigation must use the floating native-app shell');
-assert.match(onboardingCss, /\.catalog-health-grid\{display:grid;grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/, 'park data coverage must use three compact non-scrolling cards');
+assert.match(growthCss, /aspect-ratio:\s*1\s*\/\s*1/, 'share cards must retain a social-friendly square layout');
+assert.match(growthCss, /@media\s*\(max-width:\s*350px\)/, 'growth screens need an explicit 320px containment rule');
+assert.match(growthCss, /min-height:\s*52px/, 'growth sharing controls must remain touch friendly');
+assert.match(growthCss, /@media\s*\(prefers-reduced-motion:\s*reduce\)/, 'completion animation must respect reduced motion');
 assert.match(onboardingCss, /\.catalog-step-progress\{display:grid;grid-template-columns:repeat\(3,minmax\(0,1fr\)\) auto/, 'destination workflow progress must remain responsive and explicit');
 assert.match(onboardingCss, /\.journey-open\.journey-primary\{[^}]*min-height:50px[^}]*border-radius:17px/, 'the real recent-park action must remain a large touch-friendly primary button');
 assert.match(onboardingCss, /\.app-nav-btn svg\{[^}]*width:21px;height:21px/, 'bottom navigation must use crisp line icons rather than text glyphs');
