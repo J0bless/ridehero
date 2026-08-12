@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="css/growth-engine.css?v=2"/>
 <link rel="stylesheet" href="css/auth.css?v=2"/>
 <link rel="stylesheet" href="css/friends.css?v=2"/>
-<link rel="stylesheet" href="css/park-map.css?v=1"/>
+<link rel="stylesheet" href="css/park-map.css?v=2"/>
 <title>RideHero — Plan less. Ride more.</title>
 <!-- RideHero cleaned runtime build 2026-06-25 -->
 <!-- RideHero debug patch 2026-06-25: preserve source chip + fixed Select/Deselect All targeting -->
@@ -3109,7 +3109,7 @@ body{
 </style>
 <link rel="stylesheet" href="css/onboarding.css?v=9"/>
 <link rel="stylesheet" href="css/smart-entry.css?v=1"/>
-<link rel="stylesheet" href="css/ride-intelligence.css?v=2"/>
+<link rel="stylesheet" href="css/ride-intelligence.css?v=3"/>
 </head>
 <body>
 
@@ -3367,7 +3367,7 @@ body{
 <script src="js/smart-entry.js?v=1"></script>
 <script src="js/ride-intelligence.js?v=1"></script>
 <script src="js/location-service.js?v=2"></script>
-<script src="js/park-map.js?v=1"></script>
+<script src="js/park-map.js?v=2"></script>
 <script src="js/storage-migration.js?v=2"></script>
 <script src="js/route-engine.js?v=1"></script>
 <script src="js/route-session.js?v=2"></script>
@@ -4819,6 +4819,21 @@ function quickRouteListRowMarkup(ride, state, fallbackIndex, status) {
   return '<div class="rh-up-next-row"><span class="rh-up-next-number">' + sequence + '</span><strong>' + escHTML(ride.name || 'RideHero ride') + '</strong><span class="rh-up-next-wait">' + escHTML(label) + '</span></div>';
 }
 
+function quickRoutePreviewRowMarkup(ride, state, fallbackIndex) {
+  var sequence = routeSequenceNumberForRide(ride, state, fallbackIndex);
+  return '<button class="rh-up-next-row rh-up-next-button" type="button" data-rh-preview-route aria-label="View ' + escAttr(ride.name || 'upcoming ride') + ' in the full route"><span class="rh-up-next-number">' + sequence + '</span><strong>' + escHTML(ride.name || 'RideHero ride') + '</strong><span class="rh-up-next-wait">' + escHTML(waitLabel(ride, true)) + '</span><span class="rh-up-next-arrow" aria-hidden="true">›</span></button>';
+}
+
+function setQuickFullRouteOpen(open) {
+  var itinerary = document.getElementById('rh-route-full-itinerary');
+  var fullRouteButton = document.querySelector('[data-rh-view-full-route]');
+  if (!itinerary || !fullRouteButton) return;
+  itinerary.hidden = !open;
+  fullRouteButton.setAttribute('aria-expanded', open ? 'true' : 'false');
+  fullRouteButton.firstChild.nodeValue = open ? 'Hide full route ' : 'View full route ';
+  if (open) itinerary.focus({ preventScroll:true });
+}
+
 function renderRouteContext(routeStops, options) {
   options = options || {};
   var context = document.getElementById('route-context');
@@ -4838,12 +4853,7 @@ function renderRouteContext(routeStops, options) {
       '<h1 id="rh-route-page-title" tabindex="-1">Your Route</h1>' +
       '<div class="rh-route-park"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s7-6.3 7-13a7 7 0 1 0-14 0c0 6.7 7 13 7 13Z"></path><circle cx="12" cy="9" r="2.4"></circle></svg><span id="rh-route-park-name">' + escHTML(meta.name) + '</span></div>' +
       '<div class="rh-route-meta"><span class="rh-route-progress" id="rh-route-progress"><strong>Quick Route</strong><i aria-hidden="true">•</i>' + state.completedCount + ' of ' + state.totalCount + ' complete</span><span class="rh-route-location' + (live ? ' is-live' : ' is-fallback') + '" id="rh-route-location-source"><i aria-hidden="true"></i>' + escHTML(locationCopy) + '</span></div>' +
-      '<div class="rh-route-context-actions"><button type="button" data-rh-change-mode>Change Mode</button><button type="button" data-rh-change-park>Change Park</button></div>' +
     '</div>';
-  var changeMode = context.querySelector('[data-rh-change-mode]');
-  if (changeMode) changeMode.onclick = function(){ if (window.RideHeroMultiResort) window.RideHeroMultiResort.changeMode(); };
-  var changePark = context.querySelector('[data-rh-change-park]');
-  if (changePark) changePark.onclick = function(){ if (window.RideHeroMultiResort) window.RideHeroMultiResort.changePark(); };
   if (options.focusHeading) {
     setTimeout(function(){
       var heading = document.getElementById('rh-route-page-title');
@@ -4862,7 +4872,10 @@ function renderQuickRouteLists(routeStops) {
   });
   var previewHost = document.getElementById('rh-up-next-list');
   if (previewHost) {
-    previewHost.innerHTML = remaining.length ? remaining.slice(0, 2).map(function(ride, index){ return quickRouteListRowMarkup(ride, state, index + 1); }).join('') : '<p class="rh-up-next-empty">This is the final ride in your current route.</p>';
+    previewHost.innerHTML = remaining.length ? remaining.slice(0, 2).map(function(ride, index){ return quickRoutePreviewRowMarkup(ride, state, index + 1); }).join('') : '<p class="rh-up-next-empty">This is the final ride in your current route.</p>';
+    previewHost.querySelectorAll('[data-rh-preview-route]').forEach(function(button){
+      button.onclick = function(){ setQuickFullRouteOpen(true); };
+    });
   }
   var fullHost = document.getElementById('rh-route-full-list');
   if (fullHost) {
@@ -4875,6 +4888,13 @@ function renderQuickRouteLists(routeStops) {
       return quickRouteListRowMarkup(ride, state, index, status);
     }).join('');
   }
+  var mapChip = document.getElementById('rh-map-walk-chip');
+  var currentRide = rollingQueue && rollingQueue[0] ? resolveRouteStop(rollingQueue[0]) : null;
+  if (mapChip && currentRide) {
+    var insight = recommendationInsightForRide(currentRide);
+    mapChip.hidden = insight.walkMinutes == null;
+    mapChip.innerHTML = insight.walkMinutes == null ? '' : '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="13" cy="4" r="2"></circle><path d="m10 22 2-6-3-3 2-5 4 3 3 1"></path><path d="m14 14 3 3v5M9 13l-3 4"></path></svg><span>' + escHTML(insight.walkText) + '</span>';
+  } else if (mapChip) mapChip.hidden = true;
 }
 
 function bindQuickRoutePageActions(routeStops) {
@@ -4882,9 +4902,12 @@ function bindQuickRoutePageActions(routeStops) {
   if (mapButton) mapButton.onclick = function(){
     var target = document.getElementById('rh-route-map-card');
     if (target) {
+      var expanded = target.classList.toggle('is-map-active');
+      mapButton.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+      if (activeParkMapController && typeof activeParkMapController.setCompact === 'function') activeParkMapController.setCompact(!expanded);
       target.scrollIntoView({ behavior:(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) ? 'auto' : 'smooth', block:'start' });
       var heading = document.getElementById('rh-route-map-title');
-      if (heading) heading.focus({ preventScroll:true });
+      if (expanded && heading) heading.focus({ preventScroll:true });
     }
   };
   var reoptimizeButton = document.querySelector('[data-rh-reoptimize-route]');
@@ -4892,12 +4915,7 @@ function bindQuickRoutePageActions(routeStops) {
   var fullRouteButton = document.querySelector('[data-rh-view-full-route]');
   if (fullRouteButton) fullRouteButton.onclick = function(){
     var itinerary = document.getElementById('rh-route-full-itinerary');
-    if (!itinerary) return;
-    var willOpen = itinerary.hidden;
-    itinerary.hidden = !willOpen;
-    fullRouteButton.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
-    fullRouteButton.textContent = willOpen ? 'Hide full route' : 'View full route';
-    if (willOpen) itinerary.focus({ preventScroll:true });
+    if (itinerary) setQuickFullRouteOpen(itinerary.hidden);
   };
   renderQuickRouteLists(routeStops);
 }
@@ -4910,11 +4928,12 @@ function renderQuickRoutePage(routeStops, options) {
   routeBody.innerHTML =
     '<section class="rh-route-map-card map-section" id="rh-route-map-card" aria-labelledby="rh-route-map-title">' +
       '<div class="rh-route-map-heading"><h2 id="rh-route-map-title" tabindex="-1">Route map</h2><span>Park route view</span></div>' +
+      '<span class="rh-map-walk-chip" id="rh-map-walk-chip" hidden></span>' +
       '<div class="map-wrap" id="map-container"></div>' +
-      '<section class="rh-up-next" aria-labelledby="rh-up-next-title"><div class="rh-up-next-heading"><h2 id="rh-up-next-title">Up Next</h2><button type="button" data-rh-view-full-route aria-expanded="false" aria-controls="rh-route-full-itinerary">View full route</button></div><div class="rh-up-next-list" id="rh-up-next-list"></div></section>' +
+      '<section class="rh-up-next" aria-labelledby="rh-up-next-title"><div class="rh-up-next-heading"><h2 id="rh-up-next-title">Up Next</h2><button type="button" data-rh-view-full-route aria-expanded="false" aria-controls="rh-route-full-itinerary">View full route <span aria-hidden="true">›</span></button></div><div class="rh-up-next-list" id="rh-up-next-list"></div></section>' +
       '<section class="rh-route-full-itinerary" id="rh-route-full-itinerary" tabindex="-1" aria-label="Full route order" hidden><div id="rh-route-full-list"></div></section>' +
     '</section>' +
-    '<nav class="rh-route-utility-actions" aria-label="Route actions"><button type="button" data-rh-open-map><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 6 5-2 8 3 5-2v13l-5 2-8-3-5 2Z"></path><path d="M8 4v13M16 7v13"></path></svg><span>Map</span></button><button type="button" data-rh-reoptimize-route><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7h-5V2"></path><path d="M19 5a8 8 0 1 0 1 9"></path></svg><span>Re-optimize</span></button></nav>';
+    '<nav class="rh-route-utility-actions" aria-label="Route actions"><button type="button" data-rh-open-map aria-expanded="false" aria-controls="rh-route-map-card"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 6 5-2 8 3 5-2v13l-5 2-8-3-5 2Z"></path><path d="M8 4v13M16 7v13"></path></svg><span>Map</span></button><button type="button" data-rh-reoptimize-route><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7h-5V2"></path><path d="M19 5a8 8 0 1 0 1 9"></path></svg><span>Re-optimize</span></button></nav>';
   renderRouteContext(routeStops, { focusHeading:options.focusHeading === true });
   bindQuickRoutePageActions(routeStops);
   ensureRouteStartControls();
@@ -4926,6 +4945,69 @@ function refreshQuickRoutePage(routeStops) {
   routeStops = Array.isArray(routeStops) && routeStops.length ? routeStops : activeRouteStops;
   renderRouteContext(routeStops, { focusHeading:false });
   renderQuickRouteLists(routeStops);
+  if (activeParkMapController && typeof activeParkMapController.setStops === 'function') {
+    activeParkMapController.setStops(routeStops, { highlightRideId:rollingQueue && rollingQueue[0] ? stopKey(rollingQueue[0]) : '' });
+  }
+}
+
+function openQuickRouteOptions() {
+  if (!rollingQueue || !rollingQueue.length || currentMode !== 'quick') return;
+  var current = resolveRouteStop(rollingQueue[0]);
+  if (!current) return;
+  var openedRideId = stopKey(current);
+  var insight = recommendationInsightForRide(current);
+  var freshness = insight.freshness || currentWaitFreshness(current);
+  var explanations = Array.isArray(insight.explanations) && insight.explanations.length ? insight.explanations.slice(0, 2) : [];
+  var dialog = document.getElementById('rh-route-options-dialog');
+  if (!dialog) {
+    dialog = document.createElement('dialog');
+    dialog.id = 'rh-route-options-dialog';
+    dialog.className = 'rh-route-options-dialog';
+    document.body.appendChild(dialog);
+  }
+  dialog.setAttribute('aria-labelledby', 'rh-route-options-title');
+  dialog.innerHTML =
+    '<div class="rh-route-options-sheet">' +
+      '<div class="rh-route-options-head"><span>Route options</span><button type="button" data-rh-options-close aria-label="Close route options">×</button></div>' +
+      '<h2 id="rh-route-options-title" tabindex="-1">Why ' + escHTML(current.name || 'this ride') + '?</h2>' +
+      '<p class="rh-route-options-freshness">' + escHTML(waitFreshnessCopy(freshness)) + '</p>' +
+      '<ul class="rh-route-options-reasons">' +
+        '<li>' + escHTML(insight.walkText) + '</li>' +
+        (explanations.length ? explanations.map(function(reason){ return '<li>' + escHTML(reason.text) + '</li>'; }).join('') : '<li>RideHero has limited live evidence, so this uses the safest available route inputs.</li>') +
+      '</ul>' +
+      '<div class="rh-route-options-primary"><button type="button" data-rh-options-complete>Mark complete</button><button type="button" data-rh-options-skip>Skip</button></div>' +
+      '<div class="rh-route-options-list">' +
+        '<button type="button" data-rh-options-map>Map controls</button>' +
+        '<button type="button" data-rh-options-share>Share Route</button>' +
+        '<button type="button" data-rh-options-friends>Friends</button>' +
+        '<button type="button" data-rh-options-mode>Change Mode</button>' +
+        '<button type="button" data-rh-options-park>Change Park</button>' +
+        '<button type="button" class="is-danger" data-rh-options-end>End Route</button>' +
+      '</div>' +
+    '</div>';
+  var close = function(){ if (dialog.open && typeof dialog.close === 'function') dialog.close(); else dialog.removeAttribute('open'); };
+  var closeButton = dialog.querySelector('[data-rh-options-close]');
+  if (closeButton) closeButton.onclick = close;
+  var complete = dialog.querySelector('[data-rh-options-complete]');
+  if (complete) complete.onclick = function(){ close(); if (rollingQueue && rollingQueue[0] && stopKey(rollingQueue[0]) === openedRideId) manualClearCurrentStop(); else setRouteIntelligenceNotice('Route changed', 'Review the new next ride before marking it complete.', 'info', false); };
+  var skip = dialog.querySelector('[data-rh-options-skip]');
+  if (skip) skip.onclick = function(){ close(); if (rollingQueue && rollingQueue[0] && stopKey(rollingQueue[0]) === openedRideId) skipCurrentRide(); else setRouteIntelligenceNotice('Route changed', 'Review the new next ride before skipping it.', 'info', false); };
+  var map = dialog.querySelector('[data-rh-options-map]');
+  if (map) map.onclick = function(){ close(); var button = document.querySelector('[data-rh-open-map]'); if (button) button.click(); };
+  var share = dialog.querySelector('[data-rh-options-share]');
+  if (share) share.onclick = function(){ close(); if (typeof openRouteShare === 'function') openRouteShare(); };
+  var friends = dialog.querySelector('[data-rh-options-friends]');
+  if (friends) friends.onclick = function(){ close(); if (typeof openRideHeroFriends === 'function') openRideHeroFriends(); };
+  var mode = dialog.querySelector('[data-rh-options-mode]');
+  if (mode) mode.onclick = function(){ close(); if (window.RideHeroMultiResort) window.RideHeroMultiResort.changeMode(); };
+  var park = dialog.querySelector('[data-rh-options-park]');
+  if (park) park.onclick = function(){ close(); if (window.RideHeroMultiResort) window.RideHeroMultiResort.changePark(); };
+  var end = dialog.querySelector('[data-rh-options-end]');
+  if (end) end.onclick = function(){ close(); if (typeof endRideHeroRoute === 'function') endRideHeroRoute(); };
+  routeAnalytics('recommendation_reason_viewed', { parkId:currentPark, planningMode:'quick', reasonCode:insight.primaryCode });
+  if (typeof dialog.showModal === 'function') dialog.showModal(); else dialog.setAttribute('open', '');
+  var title = document.getElementById('rh-route-options-title');
+  if (title) title.focus({ preventScroll:true });
 }
 
 function renderRollingQueue() {
@@ -4941,7 +5023,9 @@ function renderRollingQueue() {
     }) && !monitoringUnavailable;
     var emptyTitle = monitoringUnavailable ? 'No available next ride' : (allDone ? 'Route complete' : 'No next stop');
     var emptyMessage = monitoringUnavailable ? 'RideHero is monitoring temporarily unavailable rides and will update if one reopens.' : (allDone ? 'Your RideHero Day Summary is ready.' : 'RideHero will show the next available route stop here.');
-    wrap.innerHTML = '<div class="rolling-queue-card complete"><div class="rolling-kicker">' + (quickOnly ? 'Ride queue' : 'Route queue') + '</div><div class="rolling-title">' + emptyTitle + '</div><div class="rolling-sub">' + emptyMessage + '</div></div>';
+    wrap.innerHTML = '<div class="rolling-queue-card complete"><div class="rolling-kicker">' + (quickOnly ? 'Ride queue' : 'Route queue') + '</div><div class="rolling-title">' + emptyTitle + '</div><div class="rolling-sub">' + emptyMessage + '</div>' + (quickOnly ? '<button class="rh-empty-route-options" type="button" data-rh-empty-route-options>Route options</button>' : '') + '</div>';
+    var emptyOptions = wrap.querySelector('[data-rh-empty-route-options]');
+    if (emptyOptions) emptyOptions.onclick = openQuickEmptyRouteOptions;
     return;
   }
 
@@ -4949,8 +5033,9 @@ function renderRollingQueue() {
   var insight = recommendationInsightForRide(current);
   currentRecommendationMeta = insight;
   var freshness = insight.freshness;
-  var freshnessClass = freshness.freshness === 'aging' ? ' is-aging' : freshness.freshness === 'stale' ? ' is-stale' : freshness.availability === 'unavailable' ? ' is-unavailable' : '';
   var reasonText = insight.explanations && insight.explanations[0] ? insight.explanations[0].text : 'RideHero has limited live evidence, so this uses the safest available route inputs.';
+  var waitMetricMarkup = freshness.waitMinutes == null ? '<strong>Unavailable</strong>' : '<span class="rh-next-metric"><strong>' + escHTML(freshness.waitMinutes) + '</strong><span>min</span></span>';
+  var walkMetricMarkup = insight.walkMinutes == null ? '<strong>Unavailable</strong>' : '<span class="rh-next-metric" aria-label="' + escAttr(insight.walkMetricValue) + '">' + (insight.walkApproximate ? '<i>About</i>' : '') + '<strong>' + escHTML(insight.walkMinutes) + '</strong><span>min</span></span>';
 
   var sequenceNumber = 1;
   if (routeOrder && routeOrder.length) {
@@ -4965,24 +5050,34 @@ function renderRollingQueue() {
   wrap.innerHTML = quickOnly ?
     '<article class="rh-next-card ride-intelligence-card" aria-labelledby="rh-next-title">' +
       '<div class="rh-next-head"><span class="rh-next-kicker">Next Up</span></div>' +
+      '<button class="rh-next-star" type="button" data-rh-route-options aria-label="Why this ride? Open route options for ' + escAttr(current.name || 'this ride') + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9Z"></path></svg></button>' +
       '<h2 class="rh-next-title" id="rh-next-title">' + escHTML(current.name || 'Next ride') + '</h2>' +
-      '<div class="rh-next-stats"><div class="rh-next-stat' + (freshness.waitMinutes == null ? ' is-unavailable' : '') + '"><span class="rh-next-stat-icon is-wait" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg></span><span><strong>' + (freshness.waitMinutes == null ? 'Unavailable' : escHTML(freshness.waitMinutes + ' min')) + '</strong><small>wait</small></span></div><div class="rh-next-stat' + (insight.walkApproximate ? ' is-approximate' : '') + (insight.walkMinutes == null ? ' is-unavailable' : '') + '"><span class="rh-next-stat-icon is-walk" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="13" cy="4" r="2"></circle><path d="m10 22 2-6-3-3 2-5 4 3 3 1"></path><path d="m14 14 3 3v5M9 13l-3 4"></path></svg></span><span><strong>' + escHTML(insight.walkMetricValue) + '</strong><small>' + escHTML(insight.walkMetricLabel) + '</small></span></div></div>' +
-      '<div class="rh-next-freshness-line"><span class="rh-next-freshness' + freshnessClass + '">' + escHTML(waitFreshnessCopy(freshness)) + '</span></div>' +
+      '<div class="rh-next-stats"><div class="rh-next-stat' + (freshness.waitMinutes == null ? ' is-unavailable' : '') + '"><span class="rh-next-stat-icon is-wait" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg></span><span>' + waitMetricMarkup + '<small>wait</small></span></div><div class="rh-next-stat' + (insight.walkApproximate ? ' is-approximate' : '') + (insight.walkMinutes == null ? ' is-unavailable' : '') + '"><span class="rh-next-stat-icon is-walk" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="13" cy="4" r="2"></circle><path d="m10 22 2-6-3-3 2-5 4 3 3 1"></path><path d="m14 14 3 3v5M9 13l-3 4"></path></svg></span><span>' + walkMetricMarkup + '<small>' + escHTML(insight.walkMetricLabel) + '</small></span></div></div>' +
       '<div class="rh-next-reason"><span>' + escHTML(reasonText) + '</span></div>' +
-      whyRecommendationMarkup(current, insight) +
-      '<div class="rh-next-actions"><button class="rh-next-primary" type="button" data-rh-start-walking><span>Start Walking</span><span aria-hidden="true">→</span></button><div class="rh-next-secondary-actions"><button class="rh-next-secondary" type="button" data-rh-complete>Mark complete</button><button class="rh-next-secondary" type="button" data-rh-skip>Skip</button></div></div>' +
+      '<div class="rh-next-actions"><button class="rh-next-primary" type="button" data-rh-start-walking><span>Start Walking</span><span aria-hidden="true">→</span></button></div>' +
     '</article>' :
     '<div class="rolling-queue-card single-next-stop"><div class="rolling-kicker">Next stop in sequence</div><div class="rolling-sequence-badge">Stop ' + sequenceNumber + '</div><div class="rolling-title">' + escHTML(current.name || 'Next stop') + '</div><div class="rolling-actions"><button class="rolling-clear-btn" type="button" data-rh-complete>Mark stop complete</button></div></div>';
 
-  var complete = wrap.querySelector('[data-rh-complete]');
-  if (complete) complete.onclick = manualClearCurrentStop;
-  var skip = wrap.querySelector('[data-rh-skip]');
-  if (skip) skip.onclick = skipCurrentRide;
   var startWalking = wrap.querySelector('[data-rh-start-walking]');
   if (startWalking) startWalking.onclick = startWalkingToCurrentRide;
-  var why = wrap.querySelector('.rh-why-details');
-  if (why) why.ontoggle = function(){ if (why.open) routeAnalytics('recommendation_reason_viewed', { parkId:currentPark, planningMode:publicPlanningMode(), reasonCode:insight.primaryCode }); };
+  var optionsButton = wrap.querySelector('[data-rh-route-options]');
+  if (optionsButton) optionsButton.onclick = openQuickRouteOptions;
   if (quickOnly) routeAnalytics('ride_recommended', { parkId:currentPark, planningMode:'quick', reasonCode:insight.primaryCode, routeCount:activeRouteStops.length });
+}
+
+function openQuickEmptyRouteOptions() {
+  var dialog = document.getElementById('rh-empty-route-options-dialog');
+  if (!dialog) { dialog = document.createElement('dialog'); dialog.id = 'rh-empty-route-options-dialog'; dialog.className = 'rh-route-options-dialog'; document.body.appendChild(dialog); }
+  dialog.setAttribute('aria-labelledby', 'rh-empty-route-options-title');
+  dialog.innerHTML = '<div class="rh-route-options-sheet"><div class="rh-route-options-head"><span>Route options</span><button type="button" data-rh-empty-close aria-label="Close route options">×</button></div><h2 id="rh-empty-route-options-title" tabindex="-1">What would you like to do?</h2><div class="rh-route-options-list"><button type="button" data-rh-empty-share>Share Route</button><button type="button" data-rh-empty-mode>Change Mode</button><button type="button" data-rh-empty-park>Change Park</button><button type="button" class="is-danger" data-rh-empty-end>End Route</button></div></div>';
+  var close = function(){ if (dialog.open && typeof dialog.close === 'function') dialog.close(); else dialog.removeAttribute('open'); };
+  dialog.querySelector('[data-rh-empty-close]').onclick = close;
+  dialog.querySelector('[data-rh-empty-share]').onclick = function(){ close(); if (typeof openRouteShare === 'function') openRouteShare(); };
+  dialog.querySelector('[data-rh-empty-mode]').onclick = function(){ close(); if (window.RideHeroMultiResort) window.RideHeroMultiResort.changeMode(); };
+  dialog.querySelector('[data-rh-empty-park]').onclick = function(){ close(); if (window.RideHeroMultiResort) window.RideHeroMultiResort.changePark(); };
+  dialog.querySelector('[data-rh-empty-end]').onclick = function(){ close(); if (typeof endRideHeroRoute === 'function') endRideHeroRoute(); };
+  if (typeof dialog.showModal === 'function') dialog.showModal(); else dialog.setAttribute('open', '');
+  dialog.querySelector('h2').focus({ preventScroll:true });
 }
 
 function publicPlanningMode() {
@@ -6238,11 +6333,17 @@ function renderRouteMapSafely(order) {
     window.RideHeroParkMap.mount(host, {
       park:catalogPark,
       stops:routeStops,
+      compact:currentMode === 'quick',
+      highlightRideId:currentMode === 'quick' && rollingQueue && rollingQueue[0] ? stopKey(rollingQueue[0]) : '',
       userLocation:liveMapPosition || (routeLivePosition ? {latitude:routeLivePosition.lat, longitude:routeLivePosition.lng, accuracy:routeLivePosition.accuracy} : null),
       onRequestLocation:requestParkMapLocation
     }).then(function(controller) {
       if (generation !== mapRenderGeneration || !document.body.contains(host) || !host.closest('#screen-route.active') || routeMapView !== 'live') { controller.destroy(); return; }
       activeParkMapController = controller;
+      if (currentMode === 'quick' && typeof controller.setCompact === 'function') {
+        var mapCard = document.getElementById('rh-route-map-card');
+        controller.setCompact(!(mapCard && mapCard.classList.contains('is-map-active')));
+      }
       if (liveMapPosition) startMapLocationWatch();
     }).catch(function(err) {
       if (generation !== mapRenderGeneration) return;

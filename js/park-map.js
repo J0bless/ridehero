@@ -81,6 +81,7 @@
     var center = { latitude:Number(park.latitude), longitude:Number(park.longitude) };
     var zoom = clamp(Number(options.zoom) || 15, config.minZoom, config.maxZoom);
     var stops = Array.isArray(options.stops) ? options.stops.slice() : [];
+    var highlightRideId = options.highlightRideId == null ? '' : String(options.highlightRideId);
     var userLocation = validLocation(options.userLocation) ? Object.assign({}, options.userLocation) : null;
     var route = canDrawRoute(options.route) ? options.route : null;
     var tileNodes = Object.create(null);
@@ -91,6 +92,7 @@
     container.textContent = '';
     var shell = root.document.createElement('section'); shell.className = 'rh-park-map'; shell.setAttribute('aria-label', (park.shortName || park.officialName || 'Park') + ' live map');
     var viewport = root.document.createElement('div'); viewport.className = 'rh-park-map-viewport'; viewport.tabIndex = 0; viewport.setAttribute('role', 'region'); viewport.setAttribute('aria-label', 'Interactive park map. Swipe sideways or use arrow keys to pan, and use the map controls to zoom.');
+    if (options.compact === true) { viewport.tabIndex = -1; viewport.setAttribute('aria-label', 'Route map preview. Use the Map button below to open interactive controls.'); }
     var tiles = root.document.createElement('div'); tiles.className = 'rh-park-map-tiles'; tiles.setAttribute('aria-hidden', 'true');
     var overlay = root.document.createElement('div'); overlay.className = 'rh-park-map-overlay';
     var controls = root.document.createElement('div'); controls.className = 'rh-park-map-controls';
@@ -136,7 +138,11 @@
         var location=rideLocation(ride); if (!location) return;
         markerCount += 1;
         var point=screenPoint(location.latitude,location.longitude);
-        var marker=root.document.createElement('span'); marker.className='rh-park-map-stop'; marker.style.transform='translate3d('+Math.round(point.x)+'px,'+Math.round(point.y)+'px,0)'; marker.textContent=String(index+1); marker.setAttribute('role','img'); marker.setAttribute('aria-label',(index+1)+'. '+String(ride.name||'Route stop')+'. '+location.label+'.'); marker.title=String(ride.name||'Route stop')+' — '+location.label; overlay.appendChild(marker);
+        var marker=root.document.createElement('span'); marker.className='rh-park-map-stop'; marker.style.transform='translate3d('+Math.round(point.x)+'px,'+Math.round(point.y)+'px,0)';
+        var isNext = highlightRideId && String(ride.id || '') === highlightRideId;
+        if (isNext) { marker.classList.add('is-next'); marker.textContent='★'; }
+        else marker.textContent=String(index+1);
+        marker.setAttribute('role','img'); marker.setAttribute('aria-label',(isNext ? 'Next ride. ' : (index+1)+'. ')+String(ride.name||'Route stop')+'. '+location.label+'.'); marker.title=String(ride.name||'Route stop')+' — '+location.label; overlay.appendChild(marker);
       });
       if (userLocation) drawUserLocation(userLocation);
       var missing=Math.max(0,stops.length-markerCount);
@@ -186,9 +192,10 @@
     if (typeof root.ResizeObserver === 'function') { resizeObserver=new root.ResizeObserver(render); resizeObserver.observe(viewport); }
     fitContent();
     return Promise.resolve(Object.freeze({
-      setStops:function(value){stops=Array.isArray(value)?value.slice():[];renderOverlay();},
+      setStops:function(value,settings){stops=Array.isArray(value)?value.slice():[];if(settings&&settings.highlightRideId!=null)highlightRideId=String(settings.highlightRideId);renderOverlay();},
       setRoute:function(value){route=canDrawRoute(value)?value:null;renderOverlay();return !!route;},
       setUserLocation:function(value){userLocation=validLocation(value)?Object.assign({},value):null;renderOverlay();},
+      setCompact:function(value){var compact=value===true;viewport.tabIndex=compact?-1:0;viewport.setAttribute('aria-label',compact?'Route map preview. Use the Map button below to open interactive controls.':'Interactive park map. Swipe sideways or use arrow keys to pan, and use the map controls to zoom.');},
       fit:fitContent,
       destroy:function(){destroyed=true;if(resizeObserver)resizeObserver.disconnect();if(shell.parentNode)shell.parentNode.removeChild(shell);},
       getState:function(){return{center:Object.assign({},center),zoom:zoom,stopCount:stops.length,hasUserLocation:!!userLocation,routeDrawn:!!route};}
