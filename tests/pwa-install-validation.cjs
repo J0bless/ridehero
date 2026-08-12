@@ -34,11 +34,15 @@ manifest.icons.forEach(function(icon) {
 const appleTouchIcon = fs.readFileSync(path.join(root, 'icons', 'ridehero-180.png'));
 assert.equal(appleTouchIcon.readUInt32BE(16), 180, 'incorrect Apple touch icon width');
 assert.equal(appleTouchIcon.readUInt32BE(20), 180, 'incorrect Apple touch icon height');
-assert.match(worker, /const CACHE_NAME = 'ridehero-shell-v14'/);
+assert.match(worker, /const CACHE_NAME = 'ridehero-shell-v15'/);
 assert.match(html, /css\/onboarding\.css\?v=7/, 'the onboarding stylesheet must use the current cache-busting version');
-assert.match(html, /js\/navigation\.js\?v=6/, 'the navigation script must use the current cache-busting version');
+assert.match(html, /js\/navigation\.js\?v=7/, 'the navigation script must use the current cache-busting version');
 assert.match(worker, /\.\/css\/onboarding\.css\?v=7/, 'the service worker must precache the current onboarding stylesheet');
-assert.match(worker, /\.\/js\/navigation\.js\?v=6/, 'the service worker must precache the current navigation script');
+assert.match(worker, /\.\/js\/navigation\.js\?v=7/, 'the service worker must precache the current navigation script');
+assert.match(worker, /\.\/js\/route-session\.js\?v=1/, 'the lightweight route session must be available offline');
+assert.match(worker, /\.\/js\/growth-loader\.js\?v=1/, 'the lightweight growth loader must be available offline');
+assert.doesNotMatch(worker, /\.\/js\/growth-engine\.js/, 'the full sharing engine must remain lazy rather than app-shell precached');
+assert.doesNotMatch(worker, /\.\/js\/share-model\.js/, 'the share model must remain lazy rather than app-shell precached');
 assert.match(worker, /\.\/icons\/ridehero-180\.png/);
 assert.match(worker, /request\.mode === 'navigate'[\s\S]*networkFirst/);
 assert.match(worker, /css\|js\|webmanifest[\s\S]*networkFirst/, 'version-sensitive app code must update from the network before using cache');
