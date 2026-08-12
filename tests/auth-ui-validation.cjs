@@ -32,6 +32,9 @@ assert.match(ui, /element\('dialog', 'auth-dialog'\)|createSurface\('dialog'\)/,
 assert.match(ui, /Email me a sign-in link/);
 assert.match(ui, /Continue with Google/);
 assert.match(ui, /Continue with Facebook/);
+assert.match(ui, /Continue as guest/);
+assert.match(ui, /RideHeroMultiResort\.continueAsGuest/,
+  'the first Account page must provide a real non-blocking path into planning');
 assert.match(ui, /Finish account setup/);
 assert.match(ui, /handle\.pattern = '\[a-z\]\[a-z0-9_\]\{2,23\}'/,
   'profile setup must enforce the same letter-first handle contract as the database');

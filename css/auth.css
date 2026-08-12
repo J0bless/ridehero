@@ -190,6 +190,7 @@
 .auth-email { font-size: 12px; }
 .auth-ready { margin: 14px 0; font-size: 14px; }
 .auth-secondary { width: 100%; padding: 0 16px; border: 1px solid var(--auth-line); color: var(--auth-navy); background: #fff; }
+.auth-guest-continue { margin-top: 12px; }
 .auth-friends-open { margin-top: 0; }
 .auth-signout { margin-top: 9px; }
 .auth-delete-open { width: 100%; margin-top: 10px; border: 0; color: #a52222; background: transparent; }

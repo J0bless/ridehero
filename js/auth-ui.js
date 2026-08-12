@@ -171,9 +171,20 @@
       providerButton('facebook', facebookEnabled, content, status)
     );
 
+    var guest = element('button', 'auth-secondary auth-guest-continue', 'Continue as guest');
+    guest.type = 'button';
+    guest.addEventListener('click', function() {
+      status.textContent = 'Continuing without an account...';
+      if (global.RideHeroMultiResort && typeof global.RideHeroMultiResort.continueAsGuest === 'function') {
+        global.RideHeroMultiResort.continueAsGuest();
+      } else if (global.location) {
+        global.location.hash = '#/mode';
+      }
+    });
+
     var privacy = element('p', 'auth-privacy', 'RideHero uses your account for sign-in, friends, and routes you choose to share. Precise GPS history is not stored in your account.');
     privacy.id = 'ridehero-auth-privacy';
-    append(content, intro, form, divider, providers, privacy);
+    append(content, intro, form, divider, providers, guest, privacy);
     if (!configured) {
       var unavailable = element('div', 'auth-unavailable', 'Account setup is not connected in this environment yet. You can keep planning without signing in.');
       unavailable.setAttribute('role', 'note');
