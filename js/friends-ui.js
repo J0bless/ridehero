@@ -3,19 +3,7 @@
 
   var activeDialog = null;
   var previousFocus = null;
-
-  function syncTriggers() {
-    if (!global.document || !global.RideHeroFriendsStore) return;
-    var count = global.RideHeroFriendsStore.listFriends().length;
-    global.document.querySelectorAll('.friends-trigger').forEach(function(button) {
-      button.setAttribute('aria-label', count ? 'Friends, ' + count + ' saved' : 'Friends and route sharing');
-      button.setAttribute('aria-haspopup', 'dialog');
-      var badge = button.querySelector('[data-friends-count]');
-      if (!badge) return;
-      badge.textContent = String(count);
-      badge.hidden = count === 0;
-    });
-  }
+  var loadedAccountUserId = '';
 
   function element(tagName, className, text) {
     var node = global.document.createElement(tagName);
@@ -31,11 +19,62 @@
     return parent;
   }
 
-  function announceChange(count) {
+  function removeChildren(node) {
+    while (node && node.firstChild) node.removeChild(node.firstChild);
+  }
+
+  function getAuthState() {
+    try {
+      return global.RideHeroAuth && typeof global.RideHeroAuth.getState === 'function'
+        ? global.RideHeroAuth.getState()
+        : null;
+    } catch (error) { return null; }
+  }
+
+  function currentAccountId() {
+    var state = getAuthState();
+    return state && state.authenticated && state.profileComplete && state.user
+      ? String(state.user.id || '')
+      : '';
+  }
+
+  function legacyFriends() {
+    try {
+      return global.RideHeroFriendsStore && typeof global.RideHeroFriendsStore.listFriends === 'function'
+        ? global.RideHeroFriendsStore.listFriends()
+        : [];
+    } catch (error) { return []; }
+  }
+
+  function connectedAccountCount() {
+    var accountId = currentAccountId();
+    if (!accountId || loadedAccountUserId !== accountId) return 0;
+    try {
+      var state = global.RideHeroAccountFriends && global.RideHeroAccountFriends.getState();
+      return state && Array.isArray(state.rows) ? state.rows.filter(function(row) {
+        return row && row.state === 'friend';
+      }).length : 0;
+    } catch (error) { return 0; }
+  }
+
+  function syncTriggers() {
+    if (!global.document) return;
+    var count = connectedAccountCount() + legacyFriends().length;
+    global.document.querySelectorAll('.friends-trigger').forEach(function(button) {
+      button.setAttribute('aria-label', count ? 'Friends, ' + count + ' connected or saved' : 'Friends and route sharing');
+      button.setAttribute('aria-haspopup', 'dialog');
+      var badge = button.querySelector('[data-friends-count]');
+      if (!badge) return;
+      badge.textContent = String(count);
+      badge.hidden = count === 0;
+    });
+  }
+
+  function announceLegacyChange() {
     if (!global.document || typeof global.CustomEvent !== 'function') return;
     syncTriggers();
     global.document.dispatchEvent(new global.CustomEvent('ridehero:friends-changed', {
-      detail: { count: count }
+      detail: { count: legacyFriends().length }
     }));
   }
 
@@ -52,34 +91,97 @@
     previousFocus = null;
   }
 
+  function openAccountAuth() {
+    closeDialog();
+    if (typeof global.openRideHeroAccount === 'function') {
+      global.openRideHeroAccount();
+      return null;
+    }
+    if (global.RideHeroAuthUI && typeof global.RideHeroAuthUI.open === 'function') {
+      return global.RideHeroAuthUI.open();
+    }
+    if (typeof global.openRideHeroAuth === 'function') return global.openRideHeroAuth();
+    return null;
+  }
+
+  function safeFriendsMessage(error) {
+    var code = error && error.code;
+    if (code === 'AUTH_REQUIRED') return 'Sign in to manage account friends.';
+    if (code === 'HANDLE_INVALID') return 'Enter an exact RideHero handle using 3-24 lowercase letters, numbers, or underscores.';
+    if (code === 'FRIEND_ID_INVALID' || code === 'RESPONSE_INVALID') return 'That friend request is no longer available.';
+    return 'Account friends are temporarily unavailable. Please try again.';
+  }
+
   function openRouteShare(status) {
     var loader = global.RideHeroGrowthLoader;
     if (!loader || typeof loader.openRouteShare !== 'function') {
       status.textContent = 'Route sharing is temporarily unavailable.';
       return;
     }
-    status.textContent = 'Opening RideHero route sharing…';
+    status.textContent = 'Opening RideHero route sharing...';
     closeDialog();
-    // Friend records are intentionally not supplied to the share payload.
+    // Account and legacy friend identities never enter the share payload.
     loader.openRouteShare();
   }
 
   function hasShareableRoute() {
     try {
-      return !!(global.RideHeroGrowthBridge && typeof global.RideHeroGrowthBridge.hasActiveRoute === 'function' && global.RideHeroGrowthBridge.hasActiveRoute());
+      return !!(global.RideHeroGrowthBridge
+        && typeof global.RideHeroGrowthBridge.hasActiveRoute === 'function'
+        && global.RideHeroGrowthBridge.hasActiveRoute());
     } catch (error) { return false; }
+  }
+
+  function setBusy(dialog, busy) {
+    if (!dialog) return;
+    var panel = dialog.querySelector('.friends-panel');
+    if (panel) panel.setAttribute('aria-busy', busy ? 'true' : 'false');
+    dialog.querySelectorAll('[data-friends-action]').forEach(function(control) {
+      control.disabled = busy || control.dataset.baseDisabled === 'true';
+    });
+  }
+
+  function relationshipSection(titleText, emptyText) {
+    var section = element('section', 'friends-relationship-section');
+    var heading = element('h3', 'friends-section-title', titleText);
+    var empty = element('p', 'friends-empty', emptyText);
+    var list = element('ul', 'friends-list');
+    append(section, heading, empty, list);
+    return { section: section, empty: empty, list: list };
+  }
+
+  function relationshipIdentity(row) {
+    var identity = element('span', 'friends-identity');
+    var marker = row.displayName || row.handle || '?';
+    var avatar = element('span', 'friends-avatar', Array.from(marker)[0].toLocaleUpperCase());
+    avatar.setAttribute('aria-hidden', 'true');
+    var copy = element('span', 'friends-identity-copy');
+    var name = element('strong', 'friends-name', row.displayName || '@' + row.handle);
+    var handle = element('span', 'friends-handle', '@' + row.handle);
+    append(copy, name, handle);
+    append(identity, avatar, copy);
+    return identity;
   }
 
   function openFriends() {
     var document = global.document;
-    var store = global.RideHeroFriendsStore;
-    if (!document || !document.body || !store) return null;
+    var authState = getAuthState();
+    var account = global.RideHeroAccountFriends;
+    if (!document || !document.body) return null;
+
+    // The account screen owns sign-in, unconfigured messaging, and profile setup.
+    if (!authState || !authState.configured || !authState.authenticated || !authState.profileComplete) {
+      return openAccountAuth();
+    }
+    if (!account || typeof account.load !== 'function') return openAccountAuth();
+
     if (activeDialog) {
-      var existingInput = activeDialog.querySelector('[data-friend-name]');
+      var existingInput = activeDialog.querySelector('[data-friend-handle]');
       if (existingInput) existingInput.focus({ preventScroll: true });
       return activeDialog;
     }
 
+    var actorId = String(authState.user && authState.user.id || '');
     previousFocus = document.activeElement;
     var dialog = element('dialog', 'friends-dialog');
     dialog.id = 'ridehero-friends-dialog';
@@ -89,39 +191,58 @@
     var panel = element('div', 'friends-panel');
     var headingRow = element('div', 'friends-heading-row');
     var headingCopy = element('div', 'friends-heading-copy');
-    var eyebrow = element('span', 'friends-eyebrow', 'DEVICE-ONLY FRIENDS');
+    var eyebrow = element('span', 'friends-eyebrow', 'ACCOUNT FRIENDS');
     var title = element('h2', 'friends-title', 'Friends & route sharing');
     title.id = 'ridehero-friends-title';
     append(headingCopy, eyebrow, title);
-    var close = element('button', 'friends-close', '×');
+    var close = element('button', 'friends-close', 'x');
     close.type = 'button';
     close.setAttribute('aria-label', 'Close friends');
     close.addEventListener('click', closeDialog);
     append(headingRow, headingCopy, close);
 
-    var privacy = element('p', 'friends-privacy', "Display names stay on this device. RideHero doesn't create friend accounts, access contacts, send invitations, or sync routes in real time.");
+    var privacy = element('p', 'friends-privacy', 'Add friends by their exact RideHero handle. RideHero never exposes friend email addresses or includes friend identity in route links or analytics.');
     privacy.id = 'ridehero-friends-privacy';
 
     var form = element('form', 'friends-add-form');
-    var label = element('label', 'friends-label', 'Friend display name');
-    label.htmlFor = 'ridehero-friend-name';
+    var label = element('label', 'friends-label', 'Exact RideHero handle');
+    label.htmlFor = 'ridehero-friend-handle';
     var fieldRow = element('div', 'friends-field-row');
-    var input = element('input', 'friends-input');
-    input.id = 'ridehero-friend-name';
+    var handleField = element('div', 'friends-handle-field');
+    var prefix = element('span', 'friends-handle-prefix', '@');
+    prefix.setAttribute('aria-hidden', 'true');
+    var input = element('input', 'friends-input friends-handle-input');
+    input.id = 'ridehero-friend-handle';
     input.type = 'text';
-    input.maxLength = store.MAX_DISPLAY_NAME_LENGTH || 40;
+    input.minLength = 3;
+    input.maxLength = 24;
+    input.pattern = '[a-z][a-z0-9_]{2,23}';
+    input.required = true;
     input.autocomplete = 'off';
+    input.autocapitalize = 'none';
     input.spellcheck = false;
-    input.dataset.friendName = 'true';
-    input.setAttribute('enterkeyhint', 'done');
-    var add = element('button', 'friends-add', 'Add');
+    input.dataset.friendHandle = 'true';
+    input.dataset.friendsAction = 'true';
+    input.setAttribute('enterkeyhint', 'send');
+    append(handleField, prefix, input);
+    var add = element('button', 'friends-add', 'Add friend');
     add.type = 'submit';
-    append(fieldRow, input, add);
-    append(form, label, fieldRow);
+    add.dataset.friendsAction = 'true';
+    append(fieldRow, handleField, add);
+    var addHelp = element('p', 'friends-help', 'Use the complete handle. For privacy, RideHero does not provide an account directory.');
+    append(form, label, fieldRow, addHelp);
 
-    var savedHeading = element('h3', 'friends-section-title', 'Saved on this device');
-    var list = element('ul', 'friends-list');
-    var empty = element('p', 'friends-empty', 'No friends added yet. Add a display name to keep it handy while planning.');
+    var incoming = relationshipSection('Friend requests', 'No incoming requests.');
+    var accepted = relationshipSection('Friends', 'No account friends yet. Add someone by their exact handle.');
+    var outgoing = relationshipSection('Sent requests', 'No pending sent requests.');
+
+    var legacySection = element('section', 'friends-legacy-section');
+    var legacyHeading = element('h3', 'friends-section-title', 'Saved on this device');
+    var legacyCopy = element('p', 'friends-legacy-copy', 'These are older local labels, not RideHero accounts. They were not uploaded, matched, or converted into friends.');
+    var legacyEmpty = element('p', 'friends-empty', 'No legacy device-only names saved.');
+    var legacyList = element('ul', 'friends-list friends-legacy-list');
+    append(legacySection, legacyHeading, legacyCopy, legacyEmpty, legacyList);
+
     var status = element('div', 'friends-status');
     status.setAttribute('role', 'status');
     status.setAttribute('aria-live', 'polite');
@@ -132,60 +253,148 @@
     var shareHeading = element('h3', 'friends-section-title', 'Share your current route');
     shareHeading.id = 'friends-share-heading';
     var routeAvailable = hasShareableRoute();
-    var shareCopy = element('p', 'friends-share-copy', routeAvailable ? 'Share Route opens RideHero sharing so you can choose how to send the link. Adding a friend here does not send anything or create a live group route.' : 'Build an active route first, then return here to share its private RideHero link.');
+    var shareCopy = element('p', 'friends-share-copy', routeAvailable
+      ? 'Open RideHero sharing and choose how to send the private route link.'
+      : 'Build an active route first, then return here to share its private RideHero link.');
     var share = element('button', 'friends-share-action', 'Share Route');
     share.type = 'button';
     share.disabled = !routeAvailable;
+    share.dataset.baseDisabled = routeAvailable ? 'false' : 'true';
+    share.dataset.friendsAction = 'true';
     share.addEventListener('click', function() { openRouteShare(status); });
     append(shareCard, shareHeading, shareCopy, share);
 
-    function renderFriends() {
-      while (list.firstChild) list.removeChild(list.firstChild);
-      var friends = store.listFriends();
-      empty.hidden = friends.length !== 0;
-      friends.forEach(function(displayName) {
+    function actorIsCurrent() {
+      return !!actorId && actorId === currentAccountId() && activeDialog === dialog;
+    }
+
+    function accountAction(actionFactory, pendingCopy, completedCopy) {
+      var promise;
+      setBusy(dialog, true);
+      status.textContent = pendingCopy;
+      try { promise = actionFactory(); }
+      catch (error) { promise = Promise.reject(error); }
+      return Promise.resolve(promise).then(function(state) {
+        if (!actorIsCurrent()) return false;
+        loadedAccountUserId = actorId;
+        renderAccountState(state);
+        status.textContent = completedCopy;
+        syncTriggers();
+        return true;
+      }).catch(function(error) {
+        if (!actorIsCurrent()) return false;
+        status.textContent = safeFriendsMessage(error);
+        return false;
+      }).then(function(succeeded) {
+        if (actorIsCurrent()) setBusy(dialog, false);
+        return succeeded;
+      });
+    }
+
+    function actionButton(className, copy, labelText, handler) {
+      var button = element('button', className, copy);
+      button.type = 'button';
+      button.dataset.friendsAction = 'true';
+      if (labelText) button.setAttribute('aria-label', labelText);
+      button.addEventListener('click', handler);
+      return button;
+    }
+
+    function renderAccountState(state) {
+      var rows = state && Array.isArray(state.rows) ? state.rows : [];
+      var incomingRows = rows.filter(function(row) { return row.state === 'incoming_request'; });
+      var friendRows = rows.filter(function(row) { return row.state === 'friend'; });
+      var outgoingRows = rows.filter(function(row) { return row.state === 'outgoing_request'; });
+      removeChildren(incoming.list);
+      removeChildren(accepted.list);
+      removeChildren(outgoing.list);
+      incoming.empty.hidden = incomingRows.length !== 0;
+      accepted.empty.hidden = friendRows.length !== 0;
+      outgoing.empty.hidden = outgoingRows.length !== 0;
+
+      incomingRows.forEach(function(row) {
         var item = element('li', 'friends-list-item');
-        var avatar = element('span', 'friends-avatar', Array.from(displayName)[0] || '?');
-        avatar.setAttribute('aria-hidden', 'true');
-        var name = element('span', 'friends-name', displayName);
         var actions = element('span', 'friends-row-actions');
-        var send = element('button', 'friends-send', 'Share');
-        send.type = 'button';
+        var accept = actionButton('friends-accept', 'Accept', 'Accept friend request', function() {
+          accountAction(function() { return account.acceptRequest(row.relationshipId); }, 'Updating friend request...', 'Friend request updated.');
+        });
+        var decline = actionButton('friends-decline', 'Decline', 'Decline friend request', function() {
+          accountAction(function() { return account.declineRequest(row.relationshipId); }, 'Updating friend request...', 'Friend request updated.');
+        });
+        append(actions, accept, decline);
+        append(item, relationshipIdentity(row), actions);
+        incoming.list.appendChild(item);
+      });
+
+      friendRows.forEach(function(row) {
+        var item = element('li', 'friends-list-item');
+        var actions = element('span', 'friends-row-actions');
+        var send = actionButton('friends-send', 'Share', 'Share the current route using your device share sheet', function() {
+          openRouteShare(status);
+        });
         send.disabled = !routeAvailable;
-        send.setAttribute('aria-label', 'Share the current route with ' + displayName + ' using your device share sheet');
-        send.addEventListener('click', function() { openRouteShare(status); });
-        var remove = element('button', 'friends-remove', 'Remove');
-        remove.type = 'button';
-        remove.setAttribute('aria-label', 'Remove ' + displayName);
-        remove.addEventListener('click', function() {
-          if (!store.removeFriend(displayName)) return;
-          renderFriends();
-          status.textContent = displayName + ' removed from this device.';
-          announceChange(store.listFriends().length);
-          input.focus({ preventScroll: true });
+        send.dataset.baseDisabled = routeAvailable ? 'false' : 'true';
+        var remove = actionButton('friends-remove', 'Remove', 'Remove friend', function() {
+          accountAction(function() { return account.removeFriend(row.userId); }, 'Removing friend...', 'Friend removed.');
         });
         append(actions, send, remove);
-        append(item, avatar, name, actions);
-        list.appendChild(item);
+        append(item, relationshipIdentity(row), actions);
+        accepted.list.appendChild(item);
+      });
+
+      outgoingRows.forEach(function(row) {
+        var item = element('li', 'friends-list-item');
+        var pending = element('span', 'friends-state-pill', 'Pending');
+        append(item, relationshipIdentity(row), pending);
+        outgoing.list.appendChild(item);
+      });
+    }
+
+    function renderLegacyFriends() {
+      removeChildren(legacyList);
+      var names = legacyFriends();
+      legacyEmpty.hidden = names.length !== 0;
+      names.forEach(function(displayName) {
+        var item = element('li', 'friends-list-item friends-legacy-item');
+        var nameWrap = element('span', 'friends-identity');
+        var avatar = element('span', 'friends-avatar friends-legacy-avatar', Array.from(displayName)[0] || '?');
+        avatar.setAttribute('aria-hidden', 'true');
+        var name = element('span', 'friends-name', displayName);
+        var local = element('span', 'friends-state-pill friends-local-pill', 'Local only');
+        append(nameWrap, avatar, name, local);
+        var remove = actionButton('friends-remove', 'Remove', 'Remove local name ' + displayName, function() {
+          var store = global.RideHeroFriendsStore;
+          if (!store || !store.removeFriend(displayName)) return;
+          renderLegacyFriends();
+          status.textContent = displayName + ' removed from this device.';
+          announceLegacyChange();
+        });
+        append(item, nameWrap, remove);
+        legacyList.appendChild(item);
       });
     }
 
     form.addEventListener('submit', function(event) {
       event.preventDefault();
-      try {
-        var displayName = store.addFriend(input.value);
+      var requestedHandle = input.value;
+      accountAction(function() { return account.sendRequest(requestedHandle); }, 'Processing friend request...', 'Request processed.').then(function(succeeded) {
+        if (!succeeded || !actorIsCurrent()) return;
         input.value = '';
-        renderFriends();
-        status.textContent = displayName + ' saved on this device.';
-        announceChange(store.listFriends().length);
         input.focus({ preventScroll: true });
-      } catch (error) {
-        status.textContent = error && error.message ? error.message : 'That display name could not be added.';
-        input.focus({ preventScroll: true });
-      }
+      });
     });
 
-    append(panel, headingRow, privacy, form, savedHeading, empty, list, shareCard, status);
+    append(panel,
+      headingRow,
+      privacy,
+      form,
+      incoming.section,
+      accepted.section,
+      outgoing.section,
+      legacySection,
+      shareCard,
+      status
+    );
     dialog.appendChild(panel);
     dialog.addEventListener('cancel', function(event) {
       event.preventDefault();
@@ -196,10 +405,10 @@
     });
     document.body.appendChild(dialog);
     activeDialog = dialog;
-    renderFriends();
-    if (!store.isPersistent()) {
-      status.textContent = 'This browser cannot save friend names right now; changes will last only for this page.';
-    }
+    renderAccountState({ rows: [] });
+    renderLegacyFriends();
+    setBusy(dialog, true);
+    status.textContent = 'Loading account friends...';
     if (typeof dialog.showModal === 'function') dialog.showModal();
     else {
       dialog.setAttribute('open', '');
@@ -207,6 +416,19 @@
       dialog.setAttribute('aria-modal', 'true');
     }
     input.focus({ preventScroll: true });
+
+    Promise.resolve().then(function() { return account.load(); }).then(function(state) {
+      if (!actorIsCurrent()) return;
+      loadedAccountUserId = actorId;
+      renderAccountState(state);
+      status.textContent = '';
+      setBusy(dialog, false);
+      syncTriggers();
+    }).catch(function(error) {
+      if (!actorIsCurrent()) return;
+      status.textContent = safeFriendsMessage(error);
+      setBusy(dialog, false);
+    });
     return dialog;
   }
 
@@ -216,5 +438,20 @@
     syncTriggers: syncTriggers
   });
   global.openRideHeroFriends = openFriends;
+
+  if (global.RideHeroAuth && typeof global.RideHeroAuth.subscribe === 'function') {
+    global.RideHeroAuth.subscribe(function(state) {
+      var accountId = state && state.authenticated && state.profileComplete && state.user
+        ? String(state.user.id || '')
+        : '';
+      if (!accountId || accountId !== loadedAccountUserId) loadedAccountUserId = '';
+      if (activeDialog && (!state.authenticated || !state.profileComplete)) closeDialog();
+      syncTriggers();
+    });
+  }
+  if (global.document) {
+    global.document.addEventListener('ridehero:account-friends-changed', syncTriggers);
+    global.document.addEventListener('ridehero:friends-changed', syncTriggers);
+  }
   syncTriggers();
 })(window);
