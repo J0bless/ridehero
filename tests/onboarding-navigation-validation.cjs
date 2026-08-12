@@ -101,14 +101,8 @@ assert.match(root.innerHTML, /catalog-wordmark-text[^>]*><span>Ride<\/span><stro
 assert.match(root.innerHTML, /Destination selection step 1 of 3/, 'the dashboard must expose real selection progress');
 assert.match(root.innerHTML, /journey-hero-card/, 'the selected planning mode must be carried in a prominent journey card');
 assert.match(root.innerHTML, /<small>Next step<\/small><strong>Choose a destination<\/strong>/, 'a new journey card must show the real next step without fake progress');
-assert.match(root.innerHTML, /catalog-health-card/, 'park data health must remain available as a real dashboard action');
-assert.match(root.innerHTML, /catalog-health-grid/, 'the dashboard must summarize real catalog coverage by operator');
 assert.ok(root.innerHTML.indexOf('destination-deck') < root.innerHTML.indexOf('journey-hero-card'), 'Destinations must appear before the recent park and planning card');
-assert.ok(root.innerHTML.indexOf('journey-hero-card') < root.innerHTML.indexOf('catalog-health-overview'), 'the recent park and planning card must remain above Park Data Health');
-assert.match(root.innerHTML, /Reviewed Aug 10/, 'catalog health must use the real reviewed date');
-assert.match(root.innerHTML, /1\/1 live waits/, 'catalog health must report objective live-wait capability counts');
-assert.match(root.innerHTML, /1\/1 detailed routes/, 'catalog health must report objective detailed-route counts');
-assert.doesNotMatch(root.innerHTML, /Updated just now|All systems normal|Healthy/i, 'catalog health must not fabricate live operational status');
+assert.doesNotMatch(root.innerHTML, /catalog-health|Park data health|Coverage snapshot|View park status details/i, 'internal Park Data Health must not appear on consumer destination screens');
 assert.equal(parkLoads, 0, 'the destination dashboard must not eagerly load every park dataset');
 assert.doesNotMatch(root.innerHTML, /2 of 6|Est\. Finish|Next Up|In Progress/i, 'the dashboard must not fabricate route progress or timing');
 assert.match(root.innerHTML, /data-brand="disney"/);
