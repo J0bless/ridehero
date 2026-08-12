@@ -21,6 +21,30 @@
     sfgam: park('sfgam', 'great-america', 'six-flags', 'six-flags-great-america', 'Six Flags Great America', 'Great America', 'Gurnee', 'Illinois', 'United States', 'America/Chicago', 42.367267555555564, -87.93380948888893, '15805a4d-4023-4702-b9f2-3d3cab2e0c1e', 'https://www.sixflags.com/greatamerica', 'sixflags-great-america', map(null, null, null, 'approximate'))
   };
 
+  /* OpenStreetMap provider boundaries are kept separate from RideHero's
+     approximate five-kilometre discovery circles. Only these sourced park
+     geofences may support a high-confidence in-park Smart Entry result. */
+  var providerGeofences = {
+    mk: geofence(28.4148969, 28.4232773, -81.5869975, -81.5758593, 'https://www.openstreetmap.org/way/297428432'),
+    ep: geofence(28.3662488, 28.3766564, -81.5544334, -81.5429857, 'https://www.openstreetmap.org/way/805298160'),
+    hs: geofence(28.3525322, 28.3620618, -81.5637875, -81.5563928, 'https://www.openstreetmap.org/way/806728401'),
+    ak: geofence(28.3526551, 28.3689118, -81.5981767, -81.5833743, 'https://www.openstreetmap.org/way/297441457')
+  };
+  Object.keys(providerGeofences).forEach(function(parkId) {
+    parks[parkId].geofence = providerGeofences[parkId];
+  });
+
+  function geofence(south, north, west, east, sourceUrl) {
+    return {
+      south: south, north: north, west: west, east: east,
+      dataConfidence: 'provider',
+      sourceName: 'OpenStreetMap contributors',
+      sourceUrl: sourceUrl,
+      license: 'ODbL',
+      lastVerified: verified
+    };
+  }
+
   function map(asset, width, height, routingQuality) {
     return { asset: asset, width: width, height: height, routingQuality: routingQuality };
   }
