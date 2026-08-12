@@ -52,8 +52,11 @@ assert.match(css, /focus-visible/);
 assert.match(css, /@media\s*\(max-width:\s*350px\)/);
 assert.match(css, /@media\s*\(prefers-reduced-motion:\s*reduce\)/);
 
-assert.match(config, /YOUR_PROJECT_REF/);
-assert.match(config, /sb_publishable_REPLACE_ME/);
+assert.match(config, /https:\/\/wiryzupgdfxftrvjvdzh\.supabase\.co/);
+assert.match(config, /sb_publishable_[A-Za-z0-9_-]+/);
+assert.match(config, /emailEnabled:\s*true/);
+assert.match(config, /enabledProviders:\s*Object\.freeze\(\[\]\)/,
+  'Google and Facebook must stay disabled until their Supabase providers are configured');
 assert.match(config, /deleteAccountFunction:\s*''/);
 assert.doesNotMatch(config, /clientSecret|serviceRole|service_role/i);
 
