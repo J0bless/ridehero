@@ -134,6 +134,51 @@ function route(overrides) {
   const loaded = load();
   const api = loaded.api;
   api.start(route());
+  api.updateRoute(route({
+    stops: [{ rideId: 'tower', name: 'Tower of Terror', experienceType: 'ride', postedWaitMinutes: 25 }],
+    legs: []
+  }), { reoptimization: true, retainRideIds: ['show'] });
+  assert.deepEqual(Array.from(api.getActive().stops, stop => stop.rideId), ['show', 'tower'], 'temporarily unavailable stops must remain resumable when explicitly retained');
+}
+
+{
+  const loaded = load();
+  const api = loaded.api;
+  api.start(route());
+  const skipped = api.skipStop('tower', { reason: 'user' });
+  assert.equal(skipped.rideId, 'tower', 'an explicit skip must be recorded separately from completion');
+  assert.equal(api.getActive().completed.length, 0, 'skipping must never count as completing a ride');
+  assert.deepEqual(Array.from(api.getActive().skipped, event => event.rideId), ['tower']);
+  api.updateRoute(route({
+    stops: [{ rideId: 'coaster', name: 'Rock n Roller Coaster', experienceType: 'ride', postedWaitMinutes: 20 }],
+    legs: []
+  }), { reoptimization: true });
+  const active = api.getActive();
+  assert.deepEqual(Array.from(active.skipped, event => event.rideId), ['tower'], 'intentional skips must survive re-optimization');
+  assert.deepEqual(Array.from(active.stops, stop => stop.rideId), ['tower', 'coaster'], 'skipped history must survive while the new route excludes that ride');
+  const summary = api.end('manual');
+  assert.equal(summary.completedStops, 0);
+  assert.equal(summary.skippedStops, 1);
+  assert.deepEqual(Array.from(summary.skippedRideIds), ['tower']);
+}
+
+{
+  const loaded = load();
+  const api = loaded.api;
+  api.start(route());
+  api.skipStop('tower', { reason: 'user' });
+  api.completeStop('show', { source: 'manual', postedWaitMinutes: 20 });
+  assert.equal(api.hasActive(), false, 'completing every non-skipped stop must finish the route');
+  const summary = api.getLatestSummary();
+  assert.equal(summary.reason, 'completed');
+  assert.equal(summary.completedStops, 1);
+  assert.equal(summary.skippedStops, 1);
+}
+
+{
+  const loaded = load();
+  const api = loaded.api;
+  api.start(route());
   api.completeStop('tower', { source: 'manual', postedWaitMinutes: 28 });
   api.updateRoute(route({
     stops: [{ rideId: 'coaster', name: 'Rock n Roller Coaster', experienceType: 'ride', postedWaitMinutes: 20 }],
@@ -232,6 +277,17 @@ function route(overrides) {
   assert.equal(loaded.api.getLatestSummary(), null);
   loaded.api.clearForTests();
   assert.equal(loaded.getSaved(), null);
+}
+
+{
+  const loaded = load();
+  loaded.api.start(route());
+  loaded.api.completeStop('tower', { source: 'manual', postedWaitMinutes: 18 });
+  loaded.api.skipStop('show', { reason: 'user' });
+  assert.equal(loaded.api.hasActive(), false, 'skipping the final unresolved stop must finish the route');
+  const summary = loaded.api.getLatestSummary();
+  assert.equal(summary.completedStops, 1);
+  assert.equal(summary.skippedStops, 1);
 }
 
 {

@@ -3108,6 +3108,8 @@ body{
 
 </style>
 <link rel="stylesheet" href="css/onboarding.css?v=8"/>
+<link rel="stylesheet" href="css/smart-entry.css?v=1"/>
+<link rel="stylesheet" href="css/ride-intelligence.css?v=1"/>
 </head>
 <body>
 
@@ -3337,6 +3339,7 @@ body{
       <div class="top-bar-title">Your route</div>
       <div class="top-bar-actions"><button class="route-share-top" id="route-share-top" type="button" onclick="openRouteShare()" hidden>Share</button><button class="friends-trigger" type="button" onclick="openRideHeroFriends()" aria-label="Friends and route sharing"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 11.2a3.1 3.1 0 1 0 0-6.2 3.1 3.1 0 0 0 0 6.2Z"></path><path d="M3.5 19c.3-3.1 2-4.8 5-4.8s4.7 1.7 5 4.8"></path><path d="M16.5 10a2.4 2.4 0 1 0 0-4.8"></path><path d="M15.2 14.4c3.2-.5 5.1 1 5.3 4.1"></path></svg><span class="friends-trigger-count" data-friends-count hidden>0</span></button></div>
     </div>
+    <div class="rh-route-notice" id="route-intelligence-notice" role="status" aria-live="polite" aria-atomic="true" hidden></div>
     <div id="rolling-route-queue" class="rolling-route-queue"></div>
     <div id="route-body"></div>
     <div class="route-growth-actions" id="route-growth-actions" hidden>
@@ -3355,16 +3358,18 @@ body{
 </div>
 <div class="growth-live-status" id="growth-live-status" role="status" aria-live="polite" aria-atomic="true"></div>
 
-<script src="data/park-catalog.js?v=1"></script>
+<script src="data/park-catalog.js?v=2"></script>
 <script src="data/ride-aliases.js?v=1"></script>
 <script src="js/data-quality.js?v=1"></script>
 <script src="js/park-catalog.js?v=1"></script>
-<script src="js/wait-provider.js?v=1"></script>
-<script src="js/location-service.js?v=1"></script>
+<script src="js/wait-provider.js?v=2"></script>
+<script src="js/smart-entry.js?v=1"></script>
+<script src="js/ride-intelligence.js?v=1"></script>
+<script src="js/location-service.js?v=2"></script>
 <script src="js/park-map.js?v=1"></script>
-<script src="js/storage-migration.js?v=1"></script>
+<script src="js/storage-migration.js?v=2"></script>
 <script src="js/route-engine.js?v=1"></script>
-<script src="js/route-session.js?v=1"></script>
+<script src="js/route-session.js?v=2"></script>
 <script src="data/walking-graphs.js?v=1"></script>
 <script src="js/walking-network.js?v=1"></script>
 <script>
@@ -3658,6 +3663,7 @@ let ridePos = {};
 let routeOrder = [];
 let rollingQueue = [];
 let clearedStops = new Set();
+let skippedStops = new Set();
 let activeRouteStops = [];
 let preserveImportedRouteOrder = false;
 let currentUserLocation = null;
@@ -3676,12 +3682,27 @@ var activeRidePark = null;
 var lastRideSource = null;
 var lastRouteComputation = null;
 var routeReoptimizationPending = false;
+var routeReoptimizationContext = null;
 var routeStyleMode = 'balanced';
+var lastWaitSnapshot = null;
+var lastRouteReoptimizedAt = null;
+var lastRouteSwitchAt = null;
+var routeChallengerSince = null;
+var lastRoutePositionEvaluation = null;
+var pendingRouteUpdate = null;
+var routeConditionRefreshTimer = null;
+var routeProxyOmissionCounts = Object.create(null);
+var routeStabilityTimer = null;
+var lastRoutePromptAt = null;
+var temporarilyUnavailableIds = new Set();
+var currentRecommendationMeta = null;
+var lastRouteLocationRenderAt = 0;
 
 // ── Screen management ────────────────────────────────────────────────────────
 
 function showScreen(id) {
   if (id !== 'route') destroyActiveParkMap();
+  if (id !== 'route') stopProximityClearing();
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-' + id).classList.add('active');
   window.scrollTo(0, 0);
@@ -3691,6 +3712,7 @@ function showScreen(id) {
   if (pf) pf.style.display = (id === 'priority') ? 'block' : 'none';
   updateNavState(id === 'priority' ? 'route' : (id === 'plan' ? 'setup' : id));
   if (id === 'plan') startCompactWaitRefresh(); else stopCompactWaitRefresh();
+  if (id === 'route' && currentMode === 'quick') startRouteConditionRefresh(); else stopRouteConditionRefresh();
   if (window.RideHeroMultiResort) window.RideHeroMultiResort.updateChangeParkAction();
 }
 
@@ -3698,7 +3720,7 @@ function showScreen(id) {
 function resetParkRuntimeState(options) {
   options = options || {};
   var abandonedSummary = null;
-  if (window.RideHeroRouteSession && window.RideHeroRouteSession.hasActive()) {
+  if (!options.preserveSession && window.RideHeroRouteSession && window.RideHeroRouteSession.hasActive()) {
     abandonedSummary = window.RideHeroRouteSession.abandon();
   }
   if (window.RideHeroWaitProvider) window.RideHeroWaitProvider.cancel();
@@ -3709,6 +3731,7 @@ function resetParkRuntimeState(options) {
   routeOrder = [];
   rollingQueue = [];
   clearedStops = new Set();
+  skippedStops = new Set();
   activeRouteStops = [];
   preserveImportedRouteOrder = false;
   currentUserLocation = null;
@@ -3720,6 +3743,18 @@ function resetParkRuntimeState(options) {
   destroyActiveParkMap();
   rideSearchQuery = '';
   lastRideSource = null;
+  lastWaitSnapshot = null;
+  routeProxyOmissionCounts = Object.create(null);
+  lastRoutePositionEvaluation = null;
+  pendingRouteUpdate = null;
+  routeReoptimizationPending = false;
+  routeReoptimizationContext = null;
+  if (routeStabilityTimer) clearTimeout(routeStabilityTimer);
+  routeStabilityTimer = null;
+  lastRoutePromptAt = null;
+  routeChallengerSince = null;
+  temporarilyUnavailableIds = new Set();
+  currentRecommendationMeta = null;
   activeRidePark = currentPark;
   var rb = document.getElementById('rides-body');
   if (rb) rb.innerHTML = '';
@@ -3908,6 +3943,8 @@ async function reloadRides(options) {
   options = options || {};
   var parkForRequest = currentPark;
   var requestToken = ++rideLoadToken;
+  var previousRides = rides.slice();
+  var previousWaitSnapshot = lastWaitSnapshot;
   activeRidePark = parkForRequest;
   lastRideSource = null;
   lastRouteComputation = null;
@@ -3936,7 +3973,13 @@ async function reloadRides(options) {
     }).map(function(ride) { return ride.id; }));
     assignPositions();
     lastRideSource = result.source;
+    lastWaitSnapshot = {
+      parkId:parkForRequest,
+      source:result.source || null,
+      fetchedAt:result.fetchedAt || null
+    };
     renderRides(lastRideSource);
+    if (options.evaluateRoute === true) evaluateRouteConditionChanges(previousRides, rides, previousWaitSnapshot, lastWaitSnapshot);
     if (result.message) {
       document.getElementById('rides-body').insertAdjacentHTML('afterbegin', '<div class="error-box" id="wait-provider-message" role="status"><p>' + escHTML(result.message) + '</p><button id="retry-btn">Retry</button> <button id="continue-static-btn">Continue with park information</button></div>');
     }
@@ -4069,9 +4112,216 @@ function setExperienceFilter(value) {
 
 
 function waitSortValue(ride) { return ride && ride.waitTime != null && Number.isFinite(Number(ride.waitTime)) ? Number(ride.waitTime) : 9999; }
-function scoredWait(ride) { return ride && ride.waitTime != null && Number.isFinite(Number(ride.waitTime)) ? Number(ride.waitTime) : 90; }
+function scoredWait(ride) {
+  if (!ride || ride.waitTime == null || !Number.isFinite(Number(ride.waitTime))) return 90;
+  var wait = Number(ride.waitTime);
+  if (currentMode !== 'quick' || !window.RideHeroIntelligence) return wait;
+  var freshness = currentWaitFreshness(ride);
+  if (freshness.freshness === 'fresh') return wait;
+  if (freshness.freshness === 'aging') return wait * 0.65 + 90 * 0.35;
+  if (freshness.freshness === 'stale') return wait * 0.25 + 90 * 0.75;
+  return 90;
+}
 function waitLabel(ride, longForm) { return ride && ride.waitTime != null && Number.isFinite(Number(ride.waitTime)) ? Number(ride.waitTime) + (longForm ? ' min wait' : 'm') : 'Live waits unavailable'; }
 function wc(w) { return w == null || !Number.isFinite(Number(w)) ? '' : w <= 20 ? 'wl' : w <= 45 ? 'wm' : 'wh'; }
+function routeAnalytics(name, properties) {
+  if (window.RideHeroAnalytics && typeof window.RideHeroAnalytics.track === 'function') window.RideHeroAnalytics.track(name, properties || {});
+}
+
+function startRouteConditionRefresh() {
+  stopRouteConditionRefresh();
+  if (currentMode !== 'quick') return;
+  routeConditionRefreshTimer = setInterval(function(){ refreshActiveRouteConditions(); }, 5 * 60 * 1000);
+}
+
+function stopRouteConditionRefresh() {
+  if (routeConditionRefreshTimer) clearInterval(routeConditionRefreshTimer);
+  routeConditionRefreshTimer = null;
+  if (routeStabilityTimer) clearTimeout(routeStabilityTimer);
+  routeStabilityTimer = null;
+}
+
+async function refreshActiveRouteConditions() {
+  if (currentMode !== 'quick' || !window.RideHeroRouteSession || !window.RideHeroRouteSession.hasActive()) return;
+  var routeScreen = document.getElementById('screen-route');
+  if (!routeScreen || !routeScreen.classList.contains('active')) return;
+  var parkAtStart = currentPark;
+  var previousRides = rides.slice();
+  var previousSnapshot = lastWaitSnapshot;
+  try {
+    var result = await window.RideHeroWaitProvider.getRideWaitTimes(parkAtStart, { force:true, proxyUrl:PROXY_URL });
+    if (parkAtStart !== currentPark || !document.getElementById('screen-route').classList.contains('active')) return;
+    if (result.source === 'static' || result.message) {
+      lastWaitSnapshot = { parkId:parkAtStart, source:result.source || 'static', fetchedAt:null, unavailable:true };
+      setRouteIntelligenceNotice('Live waits temporarily unavailable', 'Your current route is unchanged. Try Re-optimize when live wait data returns.', 'warning', false);
+      renderRollingQueue();
+      return;
+    }
+    var liveById = Object.create(null);
+    (result.rides || []).forEach(function(ride){ liveById[String(ride.id)] = ride; });
+    if (result.completeOperatingSet === true && result.snapshotSemantics === 'operating-set') {
+      var routedIds = activeRouteStops.map(stopKey).filter(Boolean);
+      routedIds.forEach(function(id) {
+        if (liveById[id]) {
+          delete routeProxyOmissionCounts[id];
+          return;
+        }
+        routeProxyOmissionCounts[id] = Math.min(2, Number(routeProxyOmissionCounts[id] || 0) + 1);
+        if (routeProxyOmissionCounts[id] < 2) return;
+        var previousRide = previousRides.find(function(ride){ return String(ride.id || '') === id; }) || resolveRouteStop(id);
+        if (!previousRide) return;
+        liveById[id] = Object.assign({}, previousRide, {
+          status:'TEMPORARILY_DOWN',
+          operatingStatus:'TEMPORARILY_DOWN',
+          waitTime:null,
+          waitMinutes:null,
+          lastUpdated:result.fetchedAt || null,
+          unavailableReason:'omitted-from-operating-set'
+        });
+      });
+    } else {
+      routeProxyOmissionCounts = Object.create(null);
+    }
+    rides = rides.map(function(ride){ return liveById[String(ride.id)] ? Object.assign({}, ride, liveById[String(ride.id)]) : ride; });
+    activeRouteStops = activeRouteStops.map(function(stop){ return liveById[stopKey(stop)] ? Object.assign({}, stop, liveById[stopKey(stop)]) : stop; });
+    rollingQueue = rollingQueue.map(function(stop){ return liveById[stopKey(stop)] ? Object.assign({}, stop, liveById[stopKey(stop)]) : stop; });
+    var reopened = [];
+    Array.from(temporarilyUnavailableIds).forEach(function(id) {
+      var ride = liveById[id];
+      var status = String(ride && (ride.status || ride.operatingStatus) || 'UNKNOWN').toUpperCase();
+      if (ride && (status === 'OPEN' || status === 'OPERATING')) {
+        temporarilyUnavailableIds.delete(id);
+        if (classifyExperience(ride) === 'ride') selected.add(id);
+        reopened.push(ride);
+      }
+    });
+    lastRideSource = result.source || lastRideSource;
+    lastWaitSnapshot = { parkId:parkAtStart, source:result.source || null, fetchedAt:result.fetchedAt || null, snapshotSemantics:result.snapshotSemantics || 'status-snapshot' };
+    lastRouteComputation = null;
+    evaluateRouteConditionChanges(previousRides, rides, previousSnapshot, lastWaitSnapshot);
+    if (reopened.length && !activeRouteStops.length) {
+      pendingRouteUpdate = { type:'reopen', title:reopened[0].name + ' is available again', message:'RideHero is rebuilding your available ride queue.' };
+      reoptimize({ trigger:'reopen', automatic:true, preserveNotice:true });
+      return;
+    }
+    if (reopened.length) setRouteIntelligenceNotice(reopened[0].name + ' is available again', 'It can return the next time you choose Re-optimize.', 'info', false);
+    renderRollingQueue();
+  } catch (error) {
+    setRouteIntelligenceNotice('Live waits temporarily unavailable', 'Your current route is unchanged. Try Re-optimize when wait data returns.', 'warning', false);
+  }
+}
+
+function evaluateRouteConditionChanges(previousRides, currentRides, previousSnapshot, currentSnapshot) {
+  if (currentMode !== 'quick' || !window.RideHeroIntelligence || !activeRouteStops.length) return;
+  var remainingIds = activeRouteStops.map(stopKey).filter(function(id){ return id && !clearedStops.has(id) && !skippedStops.has(id); });
+  var changes = window.RideHeroIntelligence.detectMeaningfulChanges({
+    previousRides:previousRides,
+    currentRides:currentRides,
+    previousObservedAt:previousSnapshot && previousSnapshot.fetchedAt,
+    currentObservedAt:currentSnapshot && currentSnapshot.fetchedAt,
+    remainingRouteIds:remainingIds,
+    candidateIds:quickRideCandidates().map(function(ride){ return ride.id; }),
+    lastReoptimizedAt:lastRouteReoptimizedAt
+  });
+  if (!changes.meaningful) return;
+  var closures = changes.triggers.filter(function(change){ return change.type === 'closure'; });
+  if (closures.length) {
+    var temporaryClosures = closures.filter(function(change){ return change.currentStatus === 'TEMPORARILY_DOWN' || change.currentStatus === 'DELAYED'; });
+    var nonReopeningClosures = closures.filter(function(change){ return change.currentStatus === 'CLOSED' || change.currentStatus === 'SEASONAL'; });
+    closures.forEach(function(change) {
+      if (temporaryClosures.indexOf(change) >= 0) temporarilyUnavailableIds.add(change.rideId);
+      else temporarilyUnavailableIds.delete(change.rideId);
+      selected.delete(change.rideId);
+    });
+    var closedRide = resolveRouteStop(closures[0].rideId);
+    nonReopeningClosures.forEach(function(change) {
+      if (window.RideHeroRouteSession) window.RideHeroRouteSession.skipStop(change.rideId, { reason:'unavailable' });
+      skippedStops.add(change.rideId);
+    });
+    var title = (closedRide && closedRide.name || 'A planned ride') + (temporaryClosures.length ? ' is temporarily unavailable' : ' is closed');
+    var message = nonReopeningClosures.length ? 'RideHero removed closed or seasonal rides and updated the remaining plan.' : (closures.length > 1 ? closures.length + ' planned rides are unavailable. ' : '') + 'RideHero updated the remaining rides without counting them as complete or skipped.';
+    pendingRouteUpdate = { type:'closure', title:title, message:message };
+    reoptimize({ trigger:'closure', automatic:true, preserveNotice:true });
+    return;
+  }
+  var primary = changes.primaryTrigger;
+  if (!primary || !changes.shouldReoptimize) return;
+  considerStableRouteChange(primary);
+}
+
+function comparableQuickRouteScore(order) {
+  var current = quickRouteStartPoint();
+  var score = 0;
+  (order || []).forEach(function(ride) {
+    score += scoredWait(ride) + walkingScore(current, ride, 1.5) + (current && current.id ? landTransitionPenalty(current, ride) : 0);
+    current = ride;
+  });
+  return score;
+}
+
+function considerStableRouteChange(trigger) {
+  if (currentMode !== 'quick' || !window.RideHeroIntelligence) return;
+  var limits = window.RideHeroIntelligence.DEFAULT_THRESHOLDS || {};
+  var now = Date.now();
+  if (lastRoutePromptAt && now - lastRoutePromptAt < (limits.switchCooldownMs || 120000)) return;
+  var pool = quickRideCandidates().filter(function(ride){ var id = String(ride.id || ''); return id && !clearedStops.has(id) && !skippedStops.has(id) && !temporarilyUnavailableIds.has(id); });
+  var challengerRoute = computeLocalRoute(pool);
+  var currentById = Object.create(null);
+  rides.forEach(function(ride){ currentById[String(ride.id || '')] = ride; });
+  var incumbentRoute = activeRouteStops.map(function(stop){ return currentById[stopKey(stop)] || stop; }).filter(function(stop){ var id = stopKey(stop); return id && !clearedStops.has(id) && !skippedStops.has(id) && !temporarilyUnavailableIds.has(id); }).slice(0, 3);
+  if (!challengerRoute.length || !incumbentRoute.length || String(challengerRoute[0].id) === String(incumbentRoute[0].id)) {
+    routeChallengerSince = null;
+    return;
+  }
+  var challengerId = String(challengerRoute[0].id || '');
+  if (!routeChallengerSince || routeChallengerSince.rideId !== challengerId) routeChallengerSince = { rideId:challengerId, since:now };
+  var decision = window.RideHeroIntelligence.decideRouteSwitch({
+    planningMode:'quick',
+    incumbent:{ id:incumbentRoute[0].id, status:incumbentRoute[0].status || incumbentRoute[0].operatingStatus, score:comparableQuickRouteScore(incumbentRoute) },
+    challenger:{ id:challengerRoute[0].id, classification:classifyExperience(challengerRoute[0]), status:challengerRoute[0].status || challengerRoute[0].operatingStatus, score:comparableQuickRouteScore(challengerRoute) },
+    lastSwitchAt:lastRouteSwitchAt,
+    challengerSince:routeChallengerSince.since,
+    now:now
+  });
+  if (!decision.shouldSwitch) {
+    if (decision.reason === 'awaiting_stability' && !routeStabilityTimer) {
+      routeStabilityTimer = setTimeout(function(){ routeStabilityTimer = null; considerStableRouteChange(trigger); }, Math.max(250, Number(decision.requiredStableMs || limits.switchStabilityMs || 45000) - Number(decision.stableForMs || 0)));
+    }
+    return;
+  }
+  var ride = trigger && trigger.rideId ? (currentById[String(trigger.rideId)] || resolveRouteStop(trigger.rideId)) : null;
+  var title = trigger && trigger.type === 'movement' ? "You're closer to a different ride now" : trigger && trigger.type === 'wait_spike' ? 'A wait changed meaningfully' : 'A better wait is available';
+  var message = trigger && trigger.type === 'movement' ? ((challengerRoute[0].name || 'A nearby ride') + ' is now a meaningfully better next move. Update your route?') : (ride && ride.name ? ride.name + ' changed enough to make ' + (challengerRoute[0].name || 'another ride') + ' the stronger next choice.' : 'Current waits changed enough to improve the route meaningfully.');
+  pendingRouteUpdate = { type:trigger && trigger.type || 'conditions', title:title, message:message };
+  lastRoutePromptAt = now;
+  setRouteIntelligenceNotice(title, message, 'warning', true);
+}
+function waitObservationForRide(ride, snapshot) {
+  snapshot = snapshot || lastWaitSnapshot || {};
+  return {
+    waitMinutes:snapshot.unavailable === true ? null : (ride && ride.waitTime != null && Number.isFinite(Number(ride.waitTime)) ? Number(ride.waitTime) : null),
+    status:ride && (ride.status || ride.operatingStatus) || 'UNKNOWN',
+    fetchedAt:ride && ride.lastUpdated || snapshot.fetchedAt || null,
+    source:snapshot.source || lastRideSource || null
+  };
+}
+function currentWaitFreshness(ride) {
+  if (!window.RideHeroIntelligence) return { state:'unknown', freshness:'unknown', ageMinutes:null, waitMinutes:ride && ride.waitTime != null ? Number(ride.waitTime) : null };
+  return window.RideHeroIntelligence.waitFreshness(waitObservationForRide(ride));
+}
+function waitFreshnessCopy(freshness) {
+  if (!freshness || freshness.availability === 'unavailable' || freshness.state === 'unavailable') return 'Live waits temporarily unavailable';
+  if (freshness.state === 'not_applicable') return 'Ride is unavailable';
+  if (freshness.freshness === 'stale') return 'Wait data may be outdated';
+  if (freshness.freshness === 'aging') return 'Waits updated about ' + Math.max(1, Math.round(freshness.ageMinutes || 0)) + ' min ago';
+  if (freshness.freshness === 'fresh' && freshness.ageMinutes != null) return 'Waits updated ' + (freshness.ageMinutes < 1 ? 'just now' : Math.max(1, Math.round(freshness.ageMinutes)) + ' min ago');
+  return 'Wait freshness unavailable';
+}
+function routeLocationSourceCopy() {
+  if (routeStartMode === 'live' && routeLivePosition) return 'Using your location';
+  if (routeManualStart && routeManualStart !== 'entrance_gate' && routeManualStart !== 'entrance_path') return 'Starting from ' + quickFallbackStartLabel();
+  return 'Starting from ' + quickFallbackStartLabel();
+}
 function rideEligibilityMeta(ride) {
   var parts = [];
   if (ride && ride.restrictionsVerified && ride.minimumHeightInches != null && Number.isFinite(Number(ride.minimumHeightInches))) parts.push(ride.minimumHeightInches + ' in minimum');
@@ -4317,22 +4567,21 @@ function updateLiveMapPosition(latitude, longitude, accuracy) {
 }
 
 function stopMapLocationWatch() {
-  if (mapLocationWatchId != null && navigator.geolocation) {
-    try { navigator.geolocation.clearWatch(mapLocationWatchId); } catch(e) {}
-  }
+  if (mapLocationWatchId != null && window.RideHeroLocationService && typeof window.RideHeroLocationService.stopWatch === 'function') window.RideHeroLocationService.stopWatch('map');
   mapLocationWatchId = null;
 }
 
 function startMapLocationWatch() {
   stopMapLocationWatch();
-  if (!navigator.geolocation || proximityWatchId != null) return;
+  if (!window.RideHeroLocationService || typeof window.RideHeroLocationService.startWatch !== 'function' || proximityWatchId != null) return;
   try {
-    mapLocationWatchId = navigator.geolocation.watchPosition(function(pos) {
-      updateLiveMapPosition(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
-    }, function() {
-      liveMapPosition = null;
-      if (activeParkMapController && typeof activeParkMapController.setUserLocation === 'function') activeParkMapController.setUserLocation(null);
-    }, { enableHighAccuracy:true, maximumAge:15000, timeout:12000 });
+    mapLocationWatchId = window.RideHeroLocationService.startWatch('map', {
+      onPosition:function(position) { updateLiveMapPosition(position.latitude, position.longitude, position.accuracy); },
+      onError:function() {
+        liveMapPosition = null;
+        if (activeParkMapController && typeof activeParkMapController.setUserLocation === 'function') activeParkMapController.setUserLocation(null);
+      }
+    });
   } catch(e) {}
 }
 
@@ -4340,12 +4589,7 @@ function requestParkMapLocation() {
   var generation = mapRenderGeneration;
   var request = window.RideHeroLocationService ?
     window.RideHeroLocationService.getCurrentPosition({force:true}) :
-    new Promise(function(resolve, reject) {
-      if (!navigator.geolocation) { reject(new Error('Location is unavailable.')); return; }
-      navigator.geolocation.getCurrentPosition(function(pos) {
-        resolve({latitude:pos.coords.latitude, longitude:pos.coords.longitude, accuracy:pos.coords.accuracy});
-      }, reject, {enableHighAccuracy:true, timeout:8000, maximumAge:15000});
-    });
+    Promise.reject(new Error('Location is unavailable.'));
   return request.then(function(position) {
     if (generation !== mapRenderGeneration || routeMapView !== 'live' || !document.getElementById('screen-route').classList.contains('active')) throw new Error('The live map is no longer active.');
     var mapped = updateLiveMapPosition(position.latitude, position.longitude, position.accuracy);
@@ -4368,35 +4612,41 @@ function destroyActiveParkMap(options) {
 
 function startProximityClearing() {
   stopProximityClearing();
-  if (!navigator.geolocation || !currentUserLocation || routeStartMode !== 'live') return;
+  if (!window.RideHeroLocationService || typeof window.RideHeroLocationService.startWatch !== 'function' || !currentUserLocation || routeStartMode !== 'live') return;
+  if (!lastRoutePositionEvaluation && routeLivePosition) lastRoutePositionEvaluation = Object.assign({}, routeLivePosition);
   try {
-    proximityWatchId = navigator.geolocation.watchPosition(function(pos){
+    proximityWatchId = window.RideHeroLocationService.startWatch('route', { onPosition:function(position){
+      var previousPosition = lastRoutePositionEvaluation || routeLivePosition;
       currentUserLocation = {
-        lat: pos.coords.latitude,
-        lng: pos.coords.longitude
+        lat: position.latitude,
+        lng: position.longitude,
+        accuracy:position.accuracy
       };
       routeLivePosition = {
-        lat:pos.coords.latitude,
-        lng:pos.coords.longitude,
-        accuracy:pos.coords.accuracy
+        lat:position.latitude,
+        lng:position.longitude,
+        accuracy:position.accuracy
       };
-      updateLiveMapPosition(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
+      updateLiveMapPosition(position.latitude, position.longitude, position.accuracy);
       maybeClearCurrentStopByLocation();
-      renderRollingQueue();
-    }, function(){
+      evaluateMeaningfulLocationChange(previousPosition, routeLivePosition);
+      var now = Date.now();
+      if (now - lastRouteLocationRenderAt >= 5000) {
+        var queueHost = document.getElementById('rolling-route-queue');
+        var focused = document.activeElement;
+        if (!queueHost || !focused || typeof queueHost.contains !== 'function' || !queueHost.contains(focused)) {
+          lastRouteLocationRenderAt = now;
+          renderRollingQueue();
+        }
+      }
+    }, onError:function(){
       // GPS unavailable/denied: keep manual clear button available.
-    }, {
-      enableHighAccuracy:true,
-      maximumAge:15000,
-      timeout:12000
-    });
+    }});
   } catch(e) {}
 }
 
 function stopProximityClearing() {
-  if (proximityWatchId != null && navigator.geolocation) {
-    try { navigator.geolocation.clearWatch(proximityWatchId); } catch(e) {}
-  }
+  if (proximityWatchId != null && window.RideHeroLocationService && typeof window.RideHeroLocationService.stopWatch === 'function') window.RideHeroLocationService.stopWatch('route');
   proximityWatchId = null;
 }
 
@@ -4420,12 +4670,14 @@ function clearQueuedStop(stop, source) {
   if (window.RideHeroRouteSession) {
     window.RideHeroRouteSession.completeStop(key, { source:source === 'location' ? 'location' : 'manual', postedWaitMinutes:wait });
   }
+  routeAnalytics('ride_completed', { parkId:currentPark, planningMode:publicPlanningMode(), status:source === 'location' ? 'proximity' : 'manual' });
   clearedStops.add(key);
   rollingQueue = rollingQueue.filter(function(item){ return stopKey(item) !== key; });
   chooseNextStopFromRemaining();
   renderRollingQueue();
   if (window.RideHeroRouteSession && !window.RideHeroRouteSession.hasActive()) {
     stopProximityClearing();
+    stopRouteConditionRefresh();
     setRouteGrowthActionsVisible(true);
     var latest = window.RideHeroRouteSession.getLatestSummary();
     if (latest && latest.reason === 'completed') {
@@ -4446,7 +4698,7 @@ function chooseNextStopFromRemaining() {
   var existing = new Set((rollingQueue || []).map(stopKey));
   var remaining = activeRouteStops.filter(function(stop){
     var key = stopKey(stop);
-    return key && !clearedStops.has(key) && !existing.has(key);
+    return key && !clearedStops.has(key) && !skippedStops.has(key) && !existing.has(key);
   });
   if (!remaining.length) return;
   if (!preserveImportedRouteOrder) {
@@ -4471,9 +4723,63 @@ function initRollingQueue(route) {
   activeRouteStops = (Array.isArray(route) ? route : []).map(resolveRouteStop).filter(Boolean);
   var activeSession = window.RideHeroRouteSession && window.RideHeroRouteSession.getActive();
   clearedStops = new Set(activeSession && activeSession.completed ? activeSession.completed.map(function(event){ return event.rideId; }) : []);
-  rollingQueue = activeRouteStops.filter(function(stop){ return !clearedStops.has(stopKey(stop)); }).slice(0, 1);
+  skippedStops = new Set(activeSession && activeSession.skipped ? activeSession.skipped.map(function(event){ return event.rideId; }) : []);
+  rollingQueue = activeRouteStops.filter(function(stop){ return !clearedStops.has(stopKey(stop)) && !skippedStops.has(stopKey(stop)); }).slice(0, 1);
   startProximityClearing();
   renderRollingQueue();
+}
+
+function evaluateMeaningfulLocationChange(previousPosition, currentPosition) {
+  if (currentMode !== 'quick' || !window.RideHeroIntelligence || !previousPosition || !currentPosition) {
+    if (currentPosition) lastRoutePositionEvaluation = currentPosition;
+    return;
+  }
+  var result = window.RideHeroIntelligence.detectMeaningfulChanges({
+    previousPosition:previousPosition,
+    currentPosition:currentPosition,
+    lastReoptimizedAt:lastRouteReoptimizedAt
+  });
+  if (!result.meaningful || !result.shouldReoptimize) return;
+  lastRoutePositionEvaluation = currentPosition;
+  considerStableRouteChange(result.primaryTrigger);
+}
+
+function skipCurrentRide() {
+  if (!rollingQueue || !rollingQueue.length || currentMode !== 'quick') return;
+  var stop = resolveRouteStop(rollingQueue[0]);
+  var key = stopKey(stop);
+  if (!key) return;
+  if (window.RideHeroRouteSession && typeof window.RideHeroRouteSession.skipStop === 'function') {
+    window.RideHeroRouteSession.skipStop(key, { reason:'user' });
+  }
+  skippedStops.add(key);
+  selected.delete(key);
+  rollingQueue = rollingQueue.filter(function(item){ return stopKey(item) !== key; });
+  routeAnalytics('ride_skipped', { parkId:currentPark, planningMode:'quick', reasonCode:'user' });
+  pendingRouteUpdate = { type:'skip', title:(stop.name || 'That ride') + ' skipped', message:'RideHero will not suggest it again in this route.' };
+  reoptimize({ trigger:'skip', preserveNotice:true });
+}
+
+function startWalkingToCurrentRide() {
+  var target = document.querySelector('#route-body .map-section') || document.getElementById('route-body');
+  setRouteIntelligenceNotice('Walking guidance ready', routeLocationSourceCopy() + '. The map and route list are below.', 'info', false);
+  if (target) target.scrollIntoView({ behavior:(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) ? 'auto' : 'smooth', block:'start' });
+}
+
+function setRouteIntelligenceNotice(title, message, kind, prompt) {
+  var notice = document.getElementById('route-intelligence-notice');
+  if (!notice) return;
+  notice.hidden = false;
+  notice.className = 'rh-route-notice' + (kind === 'warning' ? ' is-warning' : kind === 'unavailable' ? ' is-unavailable' : '');
+  notice.innerHTML = '<strong>' + escHTML(title) + '</strong><span>' + escHTML(message) + '</span>' + (prompt ? '<div class="rh-route-notice-actions"><button type="button" data-route-update-accept>Re-optimize</button><button type="button" data-route-update-keep>Keep Current Route</button></div>' : '');
+  var accept = notice.querySelector('[data-route-update-accept]');
+  if (accept) accept.onclick = function(){ reoptimize({ trigger:pendingRouteUpdate && pendingRouteUpdate.type || 'conditions', preserveNotice:true }); };
+  var keep = notice.querySelector('[data-route-update-keep]');
+  if (keep) keep.onclick = function(){ pendingRouteUpdate = null; routeChallengerSince = null; lastRoutePromptAt = Date.now(); notice.hidden = true; };
+  if (prompt) {
+    notice.setAttribute('tabindex', '-1');
+    notice.focus({ preventScroll:true });
+  }
 }
 
 function renderRollingQueue() {
@@ -4482,14 +4788,23 @@ function renderRollingQueue() {
   var quickOnly = currentMode === 'quick';
 
   if (!rollingQueue || !rollingQueue.length) {
-    var allDone = activeRouteStops.length > 0 && activeRouteStops.every(function(stop){ return clearedStops.has(stopKey(stop)); });
-    wrap.innerHTML = '<div class="rolling-queue-card complete"><div class="rolling-kicker">' + (quickOnly ? 'Ride queue' : 'Route queue') + '</div><div class="rolling-title">' + (allDone ? 'Route complete' : 'No next stop') + '</div><div class="rolling-sub">' + (allDone ? 'Your RideHero Day Summary is ready.' : 'RideHero will show the next available route stop here.') + '</div></div>';
+    var monitoringUnavailable = temporarilyUnavailableIds.size > 0 && window.RideHeroRouteSession && window.RideHeroRouteSession.hasActive();
+    var allDone = activeRouteStops.length > 0 && activeRouteStops.every(function(stop){
+      var id = stopKey(stop);
+      return clearedStops.has(id) || skippedStops.has(id);
+    }) && !monitoringUnavailable;
+    var emptyTitle = monitoringUnavailable ? 'No available next ride' : (allDone ? 'Route complete' : 'No next stop');
+    var emptyMessage = monitoringUnavailable ? 'RideHero is monitoring temporarily unavailable rides and will update if one reopens.' : (allDone ? 'Your RideHero Day Summary is ready.' : 'RideHero will show the next available route stop here.');
+    wrap.innerHTML = '<div class="rolling-queue-card complete"><div class="rolling-kicker">' + (quickOnly ? 'Ride queue' : 'Route queue') + '</div><div class="rolling-title">' + emptyTitle + '</div><div class="rolling-sub">' + emptyMessage + '</div></div>';
     return;
   }
 
   var current = rollingQueue[0];
-  var metres = distanceFromUserToStop(current);
-  var distanceText = metres == null ? 'GPS clears at ~100 ft' : Math.round(metres * 3.28084) + ' ft away';
+  var insight = recommendationInsightForRide(current);
+  currentRecommendationMeta = insight;
+  var freshness = insight.freshness;
+  var freshnessClass = freshness.freshness === 'aging' ? ' is-aging' : freshness.freshness === 'stale' ? ' is-stale' : freshness.availability === 'unavailable' ? ' is-unavailable' : '';
+  var reasonText = insight.explanations && insight.explanations[0] ? insight.explanations[0].text : 'RideHero has limited live evidence, so this uses the safest available route inputs.';
 
   var sequenceNumber = 1;
   if (routeOrder && routeOrder.length) {
@@ -4501,16 +4816,31 @@ function renderRollingQueue() {
     }
   }
 
-  wrap.innerHTML =
-    '<div class="rolling-queue-card single-next-stop">' +
-      '<div class="rolling-kicker">Next ' + (quickOnly ? 'ride' : 'stop') + ' in sequence</div>' +
-      '<div class="rolling-sequence-badge">' + (quickOnly ? 'Ride ' : 'Stop ') + sequenceNumber + '</div>' +
-      '<div class="rolling-title">' + escHTML(current.name || (quickOnly ? 'Next ride' : 'Next stop')) + '</div>' +
-      '<div class="rolling-sub">' + escHTML(distanceText) + '</div>' +
-      '<div class="rolling-actions">' +
-        '<button class="rolling-clear-btn" type="button" onclick="manualClearCurrentStop()">Mark ' + (quickOnly ? 'ride' : 'stop') + ' complete</button>' +
-      '</div>' +
-    '</div>';
+  wrap.innerHTML = quickOnly ?
+    '<article class="rh-next-card ride-intelligence-card" aria-labelledby="rh-next-title">' +
+      '<div class="rh-next-head"><span class="rh-next-kicker">Next Up</span><span class="rh-next-freshness' + freshnessClass + '">' + escHTML(waitFreshnessCopy(freshness)) + '</span></div>' +
+      '<h2 class="rh-next-title" id="rh-next-title">' + escHTML(current.name || 'Next ride') + '</h2>' +
+      '<div class="rh-next-stats"><div class="rh-next-stat' + (freshness.waitMinutes == null ? ' is-unavailable' : '') + '"><small>Current wait</small><strong>' + (freshness.waitMinutes == null ? 'Unavailable' : escHTML(freshness.waitMinutes + ' min')) + '</strong></div><div class="rh-next-stat' + (insight.walkApproximate ? ' is-approximate' : '') + (insight.walkMinutes == null ? ' is-unavailable' : '') + '"><small>Walking</small><strong>' + escHTML(insight.walkText) + '</strong></div></div>' +
+      '<div class="rh-next-reason"><strong>' + escHTML(insight.title) + '</strong><span>' + escHTML(reasonText) + '</span></div>' +
+      '<div class="smart-entry-location-source">' + escHTML(routeLocationSourceCopy()) + '</div>' +
+      whyRecommendationMarkup(current, insight) +
+      '<div class="rh-next-actions"><button class="rh-next-primary" type="button" data-rh-start-walking>Start Walking</button><button class="rh-next-secondary" type="button" data-rh-complete>Mark complete</button><button class="rh-next-secondary" type="button" data-rh-skip>Skip</button><button class="rh-next-secondary" type="button" data-rh-reoptimize>Re-optimize</button><button class="rh-next-tertiary" type="button" data-rh-view-route>View Route</button></div>' +
+    '</article>' :
+    '<div class="rolling-queue-card single-next-stop"><div class="rolling-kicker">Next stop in sequence</div><div class="rolling-sequence-badge">Stop ' + sequenceNumber + '</div><div class="rolling-title">' + escHTML(current.name || 'Next stop') + '</div><div class="rolling-actions"><button class="rolling-clear-btn" type="button" data-rh-complete>Mark stop complete</button></div></div>';
+
+  var complete = wrap.querySelector('[data-rh-complete]');
+  if (complete) complete.onclick = manualClearCurrentStop;
+  var skip = wrap.querySelector('[data-rh-skip]');
+  if (skip) skip.onclick = skipCurrentRide;
+  var reopt = wrap.querySelector('[data-rh-reoptimize]');
+  if (reopt) reopt.onclick = function(){ reoptimize({ trigger:'manual' }); };
+  var startWalking = wrap.querySelector('[data-rh-start-walking]');
+  if (startWalking) startWalking.onclick = startWalkingToCurrentRide;
+  var viewRoute = wrap.querySelector('[data-rh-view-route]');
+  if (viewRoute) viewRoute.onclick = function(){ var target = document.querySelector('#route-body .map-section') || document.getElementById('route-body'); if (target) target.scrollIntoView({ behavior:(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) ? 'auto' : 'smooth', block:'start' }); };
+  var why = wrap.querySelector('.rh-why-details');
+  if (why) why.ontoggle = function(){ if (why.open) routeAnalytics('recommendation_reason_viewed', { parkId:currentPark, planningMode:publicPlanningMode(), reasonCode:insight.primaryCode }); };
+  if (quickOnly) routeAnalytics('ride_recommended', { parkId:currentPark, planningMode:'quick', reasonCode:insight.primaryCode, routeCount:activeRouteStops.length });
 }
 
 function publicPlanningMode() {
@@ -4576,7 +4906,7 @@ function syncRouteSession(routeStops, start, options) {
   };
   var active = window.RideHeroRouteSession.getActive();
   var sameContext = active && active.parkId === input.parkId && active.planningMode === input.planningMode;
-  if (sameContext) window.RideHeroRouteSession.updateRoute(input, { reoptimization:options.reoptimization === true });
+  if (sameContext) window.RideHeroRouteSession.updateRoute(input, { reoptimization:options.reoptimization === true, retainRideIds:Array.from(temporarilyUnavailableIds) });
   else window.RideHeroRouteSession.start(input);
   preserveImportedRouteOrder = options.preserveImportedRouteOrder === true;
   initRollingQueue(routeStops);
@@ -4651,9 +4981,9 @@ function routeReasonForStop(prev, stop, idx) {
   var landLabel = cfg && cfg.lands && cfg.lands[land] ? cfg.lands[land].label : 'nearby area';
   var wait = scoredWait(stop);
   if (idx === 0 && currentMode === 'quick') {
-    return routeStartMode === 'live' && routeLivePosition
-      ? 'Best first ride from your current location based on wait + walking distance.'
-      : 'Best first ride from the fallback start based on wait + walking distance.';
+    var insight = window.RideHeroIntelligence ? recommendationInsightForRide(stop) : null;
+    if (insight && insight.explanations && insight.explanations[0]) return insight.explanations[0].text;
+    return 'Selected from the available rides using the safest current route inputs.';
   }
   if (idx === 0) return 'Best first move from the entrance based on wait + walking distance.';
   if (prev && inferRideLand(prev) === land) return 'Grouped in ' + landLabel + ' to reduce backtracking.';
@@ -4709,17 +5039,105 @@ function walkMins(a, b) {
 }
 function routeDistanceQuality(a, b) {
   var catalogPark = window.RIDEHERO_CATALOG && window.RIDEHERO_CATALOG.parks[currentPark];
-  if (catalogPark && catalogPark.map && catalogPark.map.routingQuality !== 'verified' && window.RideHeroWalkingNetwork) return window.RideHeroWalkingNetwork.estimate(currentPark, a, b);
-  return { minutes: walkMins(a, b), routingQuality: 'map-calibrated', dataConfidence: 'verified', trustWeight: 1 };
+  var networkEstimate = window.RideHeroWalkingNetwork && window.RideHeroWalkingNetwork.estimate(currentPark, a, b);
+  if (networkEstimate && (networkEstimate.routingQuality === 'verified' || networkEstimate.routingQuality === 'provider-gps')) return networkEstimate;
+  if (catalogPark && catalogPark.map && catalogPark.map.routingQuality === 'verified') {
+    var mapMinutes = mapWalkMins(a, b);
+    if (mapMinutes != null) {
+      var pointA = routePointForStop(a), pointB = routePointForStop(b);
+      var exact = !!(pointA && pointB && pointA.exact === true && pointB.exact === true);
+      return { minutes:mapMinutes, metres:null, routingQuality:'map-calibrated', dataConfidence:exact ? 'verified' : 'approximate', trustWeight:exact ? 1 : 0.62 };
+    }
+  }
+  return networkEstimate || { minutes:8, metres:null, routingQuality:'neutral', dataConfidence:'unknown', trustWeight:0.15 };
 }
 function walkingScore(a, b, multiplier) {
   var estimate = routeDistanceQuality(a, b);
-  return estimate.minutes * (multiplier == null ? 1 : multiplier) * estimate.trustWeight;
+  var rawTrust = Number(estimate && estimate.trustWeight);
+  var trust = Number.isFinite(rawTrust) ? Math.max(0, Math.min(1, rawTrust)) : 0;
+  var neutralMinutes = 8;
+  var factor = multiplier == null ? 1 : multiplier;
+  var rawMinutes = Number(estimate && estimate.minutes);
+  if (currentMode !== 'quick') return (Number.isFinite(rawMinutes) ? rawMinutes : neutralMinutes) * factor * trust;
+  // Lower-confidence geometry should influence the route less, not look
+  // artificially cheaper. Blend uncertain estimates toward a neutral cost so
+  // fresh waits carry more of the decision without inventing precision.
+  var confidenceAwareMinutes = (Number.isFinite(rawMinutes) ? rawMinutes : neutralMinutes) * trust + neutralMinutes * (1 - trust);
+  return confidenceAwareMinutes * factor;
 }
 function routingQualityMarkup(a, b) {
   var estimate = routeDistanceQuality(a, b);
-  var labels = { verified:'Verified walking network', 'provider-gps':'Provider GPS proximity', 'land-zone':'Land/zone proximity', neutral:'Wait-time-heavy fallback', 'map-calibrated':'Verified map routing' };
+  var labels = { verified:'Verified walking network', 'provider-gps':'Provider GPS proximity', 'land-zone':'Land/zone proximity', neutral:'Wait-time-heavy fallback', 'map-calibrated':estimate.dataConfidence === 'verified' ? 'Verified map routing' : 'Approximate map routing' };
   return '<span class="route-quality-label">Distance quality: ' + escHTML(labels[estimate.routingQuality] || estimate.routingQuality) + '</span>';
+}
+function recommendationInputForRide(ride, comparison, previousStop) {
+  var start = previousStop || quickRouteStartPoint();
+  var estimate = routeDistanceQuality(start, ride);
+  var comparisonEstimate = comparison ? routeDistanceQuality(start, comparison) : null;
+  return {
+    planningMode:publicPlanningMode(),
+    routeStyle:routeStyleMode,
+    startSource:routeStartMode === 'live' && routeLivePosition ? 'live' : (routeManualStart && routeManualStart !== 'entrance_gate' ? 'manual' : 'entrance'),
+    candidate:{
+      id:ride.id,
+      classification:classifyExperience(ride),
+      status:ride.status || ride.operatingStatus,
+      wait:waitObservationForRide(ride),
+      distance:estimate,
+      isPriority:priority[ride.id] === 'must',
+      zoneId:inferRideLand(ride)
+    },
+    comparison:comparison ? {
+      id:comparison.id,
+      classification:classifyExperience(comparison),
+      status:comparison.status || comparison.operatingStatus,
+      wait:waitObservationForRide(comparison),
+      distance:comparisonEstimate,
+      isPriority:priority[comparison.id] === 'must',
+      zoneId:inferRideLand(comparison)
+    } : {},
+    previousStop:previousStop ? { zoneId:inferRideLand(previousStop) } : null
+  };
+}
+function recommendationInsightForRide(ride) {
+  var comparison = activeRouteStops.filter(function(stop) {
+    return stop && stop.id !== ride.id && !clearedStops.has(stopKey(stop)) && !skippedStops.has(stopKey(stop));
+  })[0] || null;
+  var input = recommendationInputForRide(ride, comparison, null);
+  var reasons = window.RideHeroIntelligence ? window.RideHeroIntelligence.buildRecommendationReasons(input) : { primaryCode:'insufficient_evidence', confidence:'limited', explanations:[], rawReasons:[] };
+  var estimate = input.candidate.distance;
+  var quality = estimate && estimate.routingQuality || 'neutral';
+  var minutes = quality !== 'neutral' && estimate && Number.isFinite(Number(estimate.minutes)) ? Math.max(1, Math.round(Number(estimate.minutes))) : null;
+  var approximate = quality !== 'verified' && !(quality === 'map-calibrated' && estimate && estimate.dataConfidence === 'verified');
+  var titles = {
+    selected_priority:'Priority ride',
+    shorter_current_wait:'Better current wait',
+    closer_from_start:'Great nearby option',
+    same_zone:'Efficient next move',
+    current_wait_available:'Current wait available',
+    insufficient_evidence:'Best available option'
+  };
+  return {
+    rideId:String(ride.id || ''),
+    primaryCode:reasons.primaryCode,
+    title:titles[reasons.primaryCode] || 'Smart next move',
+    explanations:reasons.explanations || [],
+    rawReasons:reasons.rawReasons || [],
+    confidence:reasons.confidence,
+    walkMinutes:minutes,
+    walkQuality:quality,
+    walkApproximate:approximate,
+    walkText:minutes == null || quality === 'neutral' ? 'Walking estimate unavailable' : (approximate ? 'About ' + minutes + ' min away' : minutes + ' min walk'),
+    freshness:currentWaitFreshness(ride)
+  };
+}
+function whyRecommendationMarkup(ride, insight) {
+  var items = [];
+  if (insight.freshness.waitMinutes != null) items.push(insight.freshness.waitMinutes + ' min current posted wait');
+  if (insight.walkMinutes != null && insight.walkQuality !== 'neutral') items.push(insight.walkText);
+  (insight.explanations || []).forEach(function(explanation){ if (items.indexOf(explanation.text) < 0) items.push(explanation.text); });
+  if (!items.length) items.push('Limited live evidence is available, so RideHero is using the safest available route inputs.');
+  return '<details class="rh-why-details"><summary class="rh-why-summary">Why this ride?</summary><div class="rh-why-content"><h3>Why ' + escHTML(ride.name) + '?</h3><ul class="rh-why-list">' + items.slice(0,4).map(function(item){ return '<li>' + escHTML(item) + '</li>'; }).join('') + '</ul></div></details>';
 }
 function rideScore(current, candidate, isMust) {
   return (isMust ? 0 : 20) + scoredWait(candidate) + walkingScore(current, candidate, 1.5);
@@ -5394,6 +5812,82 @@ function navToWaits() {
   if (rides.length) showScreen('rides');
   else goToRides();
 }
+
+async function resumePersistedRideHeroRoute() {
+  var active = window.RideHeroRouteSession && window.RideHeroRouteSession.getActive ? window.RideHeroRouteSession.getActive() : null;
+  if (!active || active.parkId !== currentPark) throw new Error('This saved route is no longer available for the selected park.');
+
+  currentMode = active.planningMode === 'full' ? 'fullday' : 'quick';
+  guidanceMode = active.planningMode === 'full' ? 'strategic' : 'quick';
+  routeStyleMode = active.routeStyle || 'balanced';
+  activeRidePark = currentPark;
+  applyGuidanceMode(guidanceMode);
+  showScreen('route');
+  document.getElementById('route-body').innerHTML = '<div class="loading" style="padding-top:72px"><div class="loading-spinner"></div><p>Restoring your saved route&hellip;</p></div>';
+
+  var staticDataset = await window.RideHeroParkData.load(currentPark);
+  await reloadRides();
+  if (!rides.length && staticDataset && Array.isArray(staticDataset.rides)) {
+    rides = staticDataset.rides.map(function(ride){ return Object.assign({}, ride, { status:'UNKNOWN', waitTime:null, waitMinutes:null }); });
+    assignPositions();
+  }
+  if (currentMode === 'quick') await prepareQuickRouteStart();
+  else useQuickLocationFallback('Live starting location is not required for the saved Full Day route.');
+
+  var rideById = Object.create(null);
+  rides.forEach(function(ride){ rideById[String(ride.id || '')] = ride; });
+  var completedIds = new Set((active.completed || []).map(function(event){ return event.rideId; }));
+  var skippedIds = new Set((active.skipped || []).map(function(event){ return event.rideId; }));
+  var closed = { CLOSED:true, TEMPORARILY_DOWN:true, SEASONAL:true };
+  var rows = active.stops.map(function(saved) {
+    var ride = rideById[String(saved.rideId || '')] || null;
+    var invalidQuickType = currentMode === 'quick' && ride && classifyExperience(ride) !== 'ride';
+    var status = String(ride && (ride.status || ride.operatingStatus) || 'UNKNOWN').toUpperCase();
+    var unavailable = !ride || invalidQuickType || closed[status] === true;
+    return { saved:saved, ride:ride, unavailable:unavailable, completed:completedIds.has(saved.rideId), skipped:skippedIds.has(saved.rideId) };
+  });
+  rows.forEach(function(row){ if (row.unavailable && !row.completed && !row.skipped) temporarilyUnavailableIds.add(String(row.saved.rideId)); });
+  var routeRides = rows.filter(function(row){ return row.ride && !row.unavailable; }).map(function(row){ return row.ride; });
+  if (!routeRides.length) {
+    showRouteError('Your saved route has no currently available rides. Choose Start New Route to plan again.', 'rides');
+    return false;
+  }
+
+  routeOrder = rows.map(function(row){ return row.saved.rideId; });
+  selected = new Set(rows.filter(function(row){ return row.ride && !row.unavailable && !row.completed && !row.skipped; }).map(function(row){ return row.saved.rideId; }));
+  preserveImportedRouteOrder = true;
+  var meta = PARK_META[currentPark] || PARK_META.mk;
+  var finishedCount = completedIds.size;
+  var knownWaitCount = rows.filter(function(row){ return row.ride && row.ride.waitTime != null && Number.isFinite(Number(row.ride.waitTime)); }).length;
+  var html = '<div class="route-hero" style="background:' + escAttr(HERO_COLORS[currentPark] || '#334E68') + '"><h2>' + escHTML(meta.name) + '</h2><p>Saved ' + (currentMode === 'quick' ? 'Quick Route' : 'Full Day route') + ' restored. ' + escHTML(routeLocationSourceCopy()) + '.</p></div>' +
+    '<div class="route-stats"><div class="route-stat"><div class="route-stat-v">' + finishedCount + '/' + active.stops.length + '</div><div class="route-stat-l">complete</div></div><div class="route-stat"><div class="route-stat-v">' + knownWaitCount + '</div><div class="route-stat-l">current waits</div></div><div class="route-stat"><div class="route-stat-v">' + (active.skipped || []).length + '</div><div class="route-stat-l">skipped</div></div></div>' +
+    '<div class="map-section"><h3>Route map</h3><div class="map-wrap" id="map-container"></div></div><div class="steps-section"><h3>Saved route order</h3>';
+  rows.forEach(function(row, index) {
+    var label = row.completed ? 'Complete' : row.skipped ? 'Skipped' : row.unavailable ? 'Unavailable' : waitFreshnessCopy(currentWaitFreshness(row.ride));
+    html += '<div class="v3-route-stop' + (row.unavailable ? ' is-unavailable' : '') + '"><div class="v3-stop-num">' + (index + 1) + '</div><div class="v3-stop-main"><div class="v3-stop-title">' + escHTML(row.ride && row.ride.name || row.saved.name) + '</div><div class="v3-stop-sub">' + escHTML(label) + '</div></div></div>';
+  });
+  html += '</div><div style="margin:16px"><button class="sm-btn outline" id="resumed-reopt-btn" style="width:100%">Re-optimize with current conditions</button></div>';
+  document.getElementById('route-body').innerHTML = html;
+  document.getElementById('route-back-btn').onclick = function(){ showScreen(currentMode === 'quick' ? 'rides' : 'priority'); };
+  var reopt = document.getElementById('resumed-reopt-btn');
+  if (reopt) reopt.onclick = function(){
+    if (currentMode === 'fullday') {
+      priority = {};
+      routeRides.forEach(function(ride){ if (!completedIds.has(ride.id) && !skippedIds.has(ride.id)) priority[ride.id] = 'want'; });
+      routeReoptimizationPending = true;
+      routeReoptimizationContext = { trigger:'resume', automatic:false, previousNextId:rollingQueue[0] ? stopKey(rollingQueue[0]) : null };
+      buildFullDayRoute();
+    } else reoptimize({ trigger:'resume' });
+  };
+  renderRouteMapSafely(routeOrder);
+  activeRouteStops = routeRides;
+  initRollingQueue(routeRides);
+  setRouteGrowthActionsVisible(true);
+  return true;
+}
+
+window.RideHeroRouteResume = { resume:resumePersistedRideHeroRoute };
+
 function navToRoute() {
   if (document.getElementById('route-body') && document.getElementById('route-body').innerHTML.trim()) {
     showScreen('route');
@@ -5774,17 +6268,8 @@ var routeLivePosition = null;   // {lat,lng,accuracy}
 var routeLiveMessage = '';
 var routeManualStart = 'entrance_gate';
 
-var PARK_GEO_BOUNDS = {
-  mk:{south:28.4155,north:28.4232,west:-81.5858,east:-81.5733},
-  ep:{south:28.3680,north:28.3795,west:-81.5548,east:-81.5430},
-  hs:{south:28.3510,north:28.3605,west:-81.5660,east:-81.5560},
-  ak:{south:28.3520,north:28.3618,west:-81.5965,east:-81.5845}
-};
-
 function isLocationInPark(park, lat, lng) {
-  var bounds = PARK_GEO_BOUNDS[park];
-  if (bounds) return isFinite(lat) && isFinite(lng) && lat >= bounds.south && lat <= bounds.north && lng >= bounds.west && lng <= bounds.east;
-  if (window.RideHeroLocationService) return window.RideHeroLocationService.isInsideParkBounds({latitude:Number(lat), longitude:Number(lng), accuracy:0}, park) === true;
+  if (window.RideHeroLocationService && typeof window.RideHeroLocationService.isInsideParkBounds === 'function') return window.RideHeroLocationService.isInsideParkBounds({latitude:Number(lat), longitude:Number(lng), accuracy:0}, park) === true;
   return false;
 }
 
@@ -5840,7 +6325,7 @@ function prepareQuickRouteStart() {
   currentUserLocation = null;
   liveMapPosition = null;
   routeLiveMessage = '';
-  if (!navigator.geolocation) {
+  if (!window.RideHeroLocationService) {
     useQuickLocationFallback('Live location is unavailable.');
     return Promise.resolve(false);
   }
@@ -5850,7 +6335,8 @@ function prepareQuickRouteStart() {
   if (window.RideHeroLocationService) {
     window.RideHeroLocationService.setSelectedPark(currentPark);
     return window.RideHeroLocationService.getCurrentPosition().then(function(position) {
-      if (window.RideHeroLocationService.isInsideParkBounds(position, currentPark) !== true || !isFinite(position.accuracy) || position.accuracy > 500) {
+      var selectedDetection = window.RideHeroLocationService.detectCurrentPark(position);
+      if (!selectedDetection || selectedDetection.parkId !== currentPark || selectedDetection.confidence !== 'high' || !isFinite(position.accuracy) || position.accuracy > 200) {
         useQuickLocationFallback("We can't confirm that you're inside this park yet.");
         return false;
       }
@@ -5865,27 +6351,8 @@ function prepareQuickRouteStart() {
       return false;
     });
   }
-  return new Promise(function(resolve) {
-    navigator.geolocation.getCurrentPosition(function(pos) {
-      var lat = Number(pos && pos.coords && pos.coords.latitude);
-      var lng = Number(pos && pos.coords && pos.coords.longitude);
-      var accuracy = Number(pos && pos.coords && pos.coords.accuracy);
-      if (!isLocationInPark(currentPark, lat, lng) || !isFinite(accuracy) || accuracy > 500) {
-        useQuickLocationFallback('A valid live location inside the selected park was not available.');
-        resolve(false);
-        return;
-      }
-      routeStartMode = 'live';
-      routeLivePosition = {lat:lat, lng:lng, accuracy:accuracy};
-      currentUserLocation = {lat:lat, lng:lng};
-      updateLiveMapPosition(lat, lng, accuracy);
-      routeLiveMessage = '';
-      resolve(true);
-    }, function() {
-      useQuickLocationFallback('Live location permission or a valid position was unavailable.');
-      resolve(false);
-    }, {enableHighAccuracy:true, timeout:8000, maximumAge:15000});
-  });
+  useQuickLocationFallback('Live location service was unavailable.');
+  return Promise.resolve(false);
 }
 
 function isAnimalKingdomGeo(lat, lng) {
@@ -6000,7 +6467,7 @@ function ensureRouteStartControls() {
     var liveBtn = document.getElementById('route-live-btn');
     if (liveBtn) {
       liveBtn.onclick = function() {
-        if (!navigator.geolocation) {
+        if (!window.RideHeroLocationService) {
           if (currentMode === 'quick') useQuickLocationFallback('Location is not supported on this device.');
           else {
             routeStartMode = 'preview';
@@ -6016,12 +6483,13 @@ function ensureRouteStartControls() {
         routeLiveMessage = 'Checking whether you are inside Animal Kingdom...';
         updateRouteStartControlsUI();
 
-        navigator.geolocation.getCurrentPosition(function(pos) {
-          var lat = pos.coords.latitude;
-          var lng = pos.coords.longitude;
-          var acc = pos.coords.accuracy;
+        window.RideHeroLocationService.getCurrentPosition({ force:true }).then(function(position) {
+          var lat = position.latitude;
+          var lng = position.longitude;
+          var acc = position.accuracy;
 
-          if (!isAnimalKingdomGeo(lat, lng)) {
+          var detectedPark = window.RideHeroLocationService.detectCurrentPark(position);
+          if (!detectedPark || detectedPark.parkId !== currentPark || detectedPark.confidence !== 'high') {
             if (currentMode === 'quick') useQuickLocationFallback('You do not appear to be inside Animal Kingdom.');
             else {
               routeStartMode = 'preview';
@@ -6038,7 +6506,7 @@ function ensureRouteStartControls() {
 
           updateRouteStartControlsUI();
           if (currentMode === 'quick') optimizeRoute(); else renderRouteMapSafely(routeOrder || []);
-        }, function(err) {
+        }).catch(function(err) {
           if (currentMode === 'quick') useQuickLocationFallback('Could not get your location.');
           else {
             routeStartMode = 'preview';
@@ -6047,7 +6515,7 @@ function ensureRouteStartControls() {
           }
           updateRouteStartControlsUI();
           if (currentMode === 'quick') optimizeRoute(); else renderRouteMapSafely(routeOrder || []);
-        }, {enableHighAccuracy:true, timeout:8000, maximumAge:30000});
+        });
       };
     }
 
@@ -6067,11 +6535,46 @@ function ensureRouteStartControls() {
 
 async function optimizeRoute() {
   var isReoptimization = routeReoptimizationPending === true;
+  var reoptContext = routeReoptimizationContext;
   routeReoptimizationPending = false;
+  routeReoptimizationContext = null;
   try {
     var sel = currentMode === 'quick' ? selectedQuickRides() : selectedFilteredRides();
+    if (currentMode === 'quick') {
+      sel = sel.filter(function(ride) {
+        var id = String(ride.id || '');
+        return id && !clearedStops.has(id) && !skippedStops.has(id) && !temporarilyUnavailableIds.has(id);
+      });
+    }
     var minimum = currentMode === 'quick' ? 1 : 2;
-    if (sel.length < minimum) { alert(currentMode === 'quick' ? 'Select at least 1 ride.' : 'Select at least 2 ' + filterLabel() + '.'); return; }
+    if (sel.length < minimum) {
+      if (currentMode === 'quick' && (isReoptimization || activeRouteStops.length)) {
+        routeOrder = [];
+        rollingQueue = [];
+        activeRouteStops = [];
+        stopProximityClearing();
+        var monitoringUnavailable = temporarilyUnavailableIds.size > 0 && window.RideHeroRouteSession && window.RideHeroRouteSession.hasActive();
+        if (!monitoringUnavailable) {
+          if (window.RideHeroRouteSession && window.RideHeroRouteSession.hasActive()) window.RideHeroRouteSession.end('ended');
+          stopRouteConditionRefresh();
+        } else {
+          startRouteConditionRefresh();
+        }
+        showScreen('route');
+        document.getElementById('route-body').innerHTML = '<div class="error-box" role="status"><p>' + (monitoringUnavailable ? 'No planned rides are operating right now. RideHero will keep checking temporarily unavailable rides and will never fill the route with attractions.' : 'No more operating rides are available for this Quick Route. RideHero will never fill the route with attractions.') + '</p>' + (monitoringUnavailable ? '<button type="button" id="empty-quick-refresh">Retry live waits</button>' : '') + '<button type="button" id="empty-quick-change-park">Change Park</button></div>';
+        var refreshButton = document.getElementById('empty-quick-refresh');
+        if (refreshButton) refreshButton.onclick = function(){ refreshActiveRouteConditions(); };
+        var changeParkButton = document.getElementById('empty-quick-change-park');
+        if (changeParkButton) changeParkButton.onclick = function(){ if (window.RideHeroMultiResort) window.RideHeroMultiResort.changePark(); };
+        renderRollingQueue();
+        if (pendingRouteUpdate) setRouteIntelligenceNotice(pendingRouteUpdate.title, pendingRouteUpdate.message, 'info', false);
+        pendingRouteUpdate = null;
+        setRouteGrowthActionsVisible(true);
+        return;
+      }
+      alert(currentMode === 'quick' ? 'Select at least 1 ride.' : 'Select at least 2 ' + filterLabel() + '.');
+      return;
+    }
 
     var meta = PARK_META[currentPark];
     var top3 = computeLocalRoute(sel);
@@ -6087,7 +6590,10 @@ async function optimizeRoute() {
     var walkLabels = [];
     for (var i = 0; i < top3.length - 1; i++) {
       var w = walkMins(top3[i], top3[i+1]);
-      walkLabels.push(w < 1 ? '<1 min walk' : Math.round(w) + ' min walk');
+      var walkEstimate = routeDistanceQuality(top3[i], top3[i+1]);
+      var quality = walkEstimate.routingQuality;
+      var exactWalk = quality === 'verified' || (quality === 'map-calibrated' && walkEstimate.dataConfidence === 'verified');
+      walkLabels.push(quality === 'neutral' ? 'Walking estimate unavailable' : (exactWalk ? (w < 1 ? '<1 min walk' : Math.round(w) + ' min walk') : 'About ' + Math.max(1, Math.round(w)) + ' min away'));
     }
 
     var tip = safeTipForPark();
@@ -6095,22 +6601,28 @@ async function optimizeRoute() {
     showScreen('route');
     document.getElementById('route-back-btn').onclick = function() { showScreen('rides'); };
 
-    var totalWait = top3.reduce(function(s,r) { return s + scoredWait(r); }, 0);
-    var totalWalk = top3.reduce(function(s,r,i) { return s + walkMins(i === 0 ? routeStart : top3[i-1], r); }, 0);
-    var totalTime = totalWait + Math.round(totalWalk) + top3.length * 5;
+    var knownWaits = top3.map(function(r){ return r.waitTime != null && Number.isFinite(Number(r.waitTime)) ? Number(r.waitTime) : null; }).filter(function(wait){ return wait != null; });
+    var totalWait = knownWaits.reduce(function(sum, wait){ return sum + wait; }, 0);
+    var routeLegs = top3.map(function(ride, index){ return routeDistanceQuality(index === 0 ? routeStart : top3[index - 1], ride); });
+    var allWalkingKnown = routeLegs.every(function(estimate){ return estimate && estimate.routingQuality !== 'neutral' && Number.isFinite(Number(estimate.minutes)); });
+    var totalWalk = allWalkingKnown ? routeLegs.reduce(function(sum, estimate){ return sum + Number(estimate.minutes); }, 0) : null;
+    var totalTime = knownWaits.length === top3.length && totalWalk != null ? totalWait + Math.round(totalWalk) + top3.length * 5 : null;
     var heroBg = HERO_COLORS[currentPark] || '#334E68';
 
     var rideHeading = top3.length === 1 ? 'Next ride' : 'Next ' + top3.length + ' rides';
     var html = '<div class="route-hero" style="background:' + heroBg + '"><h2>' + meta.emoji + ' ' + rideHeading + '</h2><p>' + escHTML(tip) + routeLocationMessageMarkup() + routingQualityMarkup(routeStart, top3[0]) + '</p></div>' +
       '<div class="route-stats"><div class="route-stat"><div class="route-stat-v">' + top3.length + '</div><div class="route-stat-l">rides</div></div>' +
-      '<div class="route-stat"><div class="route-stat-v">' + Math.round(totalWait) + 'm</div><div class="route-stat-l">wait</div></div>' +
-      '<div class="route-stat"><div class="route-stat-v">' + Math.round(totalTime) + 'm</div><div class="route-stat-l">total time</div></div></div>' +
+      '<div class="route-stat"><div class="route-stat-v">' + (knownWaits.length === top3.length ? Math.round(totalWait) + 'm' : '—') + '</div><div class="route-stat-l">' + (knownWaits.length === top3.length ? 'posted wait' : 'wait unavailable') + '</div></div>' +
+      '<div class="route-stat"><div class="route-stat-v">' + (totalTime == null ? '—' : Math.round(totalTime) + 'm') + '</div><div class="route-stat-l">' + (totalTime == null ? 'time unavailable' : 'estimated total') + '</div></div></div>' +
       '<div class="map-section"><h3>Route map</h3><div class="map-wrap" id="map-container"></div></div>' +
       '<div class="steps-section"><h3>Your next rides</h3>';
 
     top3.forEach(function(ride, i) {
       var prev = i === 0 ? routeStart : top3[i-1];
       var walk = walkMins(prev, ride);
+      var legQuality = routeDistanceQuality(prev, ride);
+      var exactLeg = legQuality.routingQuality === 'verified' || (legQuality.routingQuality === 'map-calibrated' && legQuality.dataConfidence === 'verified');
+      var walkDescription = legQuality.routingQuality === 'neutral' ? 'walking estimate unavailable' : (exactLeg ? Math.round(walk) + ' min walk' : 'about ' + Math.round(walk) + ' min away');
       var land = inferRideLand(ride);
       var cfg = PARK_ROUTE_CONFIG[currentPark];
       var landLabel = cfg && cfg.lands && cfg.lands[land] ? cfg.lands[land].label : 'Park area';
@@ -6118,10 +6630,15 @@ async function optimizeRoute() {
       html += '<div class="v3-route-stop">' +
         '<div class="v3-stop-num">' + (i+1) + '</div>' +
         '<div class="v3-stop-main"><div class="v3-stop-title">' + escHTML(ride.name) + '</div>' +
-        '<div class="v3-stop-sub">' + escHTML(landLabel) + ' · ' + Math.round(walk) + ' min walk ' + (i === 0 ? (routeStartMode === 'live' && routeLivePosition ? 'from your location' : 'from the fallback start') : 'from the previous ride') + '</div>' +
+        '<div class="v3-stop-sub">' + escHTML(landLabel) + ' · ' + escHTML(walkDescription) + ' ' + (i === 0 ? (routeStartMode === 'live' && routeLivePosition ? 'from your location' : 'from the fallback start') : 'from the previous ride') + '</div>' +
         '<div class="v3-stop-reason">' + escHTML(routeReasonForStop(i === 0 ? null : top3[i-1], ride, i)) + '</div></div>' +
         '<span class="wait-badge ' + wc(ride.waitTime) + '">' + escHTML(waitLabel(ride, false)) + '</span></div>' + walkNote;
     });
+
+    var unavailableRides = rides.filter(function(ride){ return temporarilyUnavailableIds.has(String(ride.id || '')); });
+    if (unavailableRides.length) {
+      html += '<div class="route-unavailable-section"><h3>Temporarily unavailable</h3>' + unavailableRides.map(function(ride){ return '<div class="v3-route-stop is-unavailable"><div class="v3-stop-main"><div class="v3-stop-title">' + escHTML(ride.name) + '</div><div class="v3-stop-sub">Unavailable now · RideHero will keep checking</div></div></div>'; }).join('') + '</div>';
+    }
 
     var remaining = sel.filter(function(r) { return routeOrder.indexOf(r.id) < 0; });
     if (remaining.length) {
@@ -6145,17 +6662,47 @@ async function optimizeRoute() {
 
     ensureRouteStartControls();
     renderRouteMapSafely(routeOrder);
+    var newNextId = top3[0] && String(top3[0].id || '');
+    if (isReoptimization) {
+      lastRouteReoptimizedAt = Date.now();
+      if (reoptContext && reoptContext.previousNextId && reoptContext.previousNextId !== newNextId) lastRouteSwitchAt = lastRouteReoptimizedAt;
+      if (reoptContext && reoptContext.automatic) {
+        routeAnalytics('route_auto_updated', { parkId:currentPark, planningMode:'quick', method:'automatic', triggerType:reoptContext.trigger || 'conditions', routeCount:top3.length });
+      } else {
+        routeAnalytics('route_reoptimized', { parkId:currentPark, planningMode:publicPlanningMode(), method:'manual', triggerType:reoptContext && reoptContext.trigger || 'manual', routeCount:top3.length });
+      }
+    } else if (currentMode === 'quick') {
+      routeAnalytics('quick_route_generated', { parkId:currentPark, planningMode:'quick', routeCount:top3.length });
+    }
     syncRouteSession(top3, routeStart, { reoptimization:isReoptimization });
+    if (isReoptimization) {
+      var update = pendingRouteUpdate;
+      if (!update) {
+        var changed = reoptContext && reoptContext.previousNextId && reoptContext.previousNextId !== newNextId;
+        update = {
+          title:'Route updated',
+          message:changed ? ((top3[0] && top3[0].name || 'A different ride') + ' is now your smartest next ride.') : 'Your current next ride is still the strongest choice.'
+        };
+      }
+      setRouteIntelligenceNotice(update.title, update.message, reoptContext && reoptContext.automatic ? 'unavailable' : 'info', false);
+      pendingRouteUpdate = null;
+    }
   } catch (err) {
     console.error('Route optimization failed:', err);
     showRouteError('Route optimization failed. Try selecting fewer rides or refreshing wait times.', 'rides');
   }
 }
 
-function reoptimize() {
+function reoptimize(options) {
+  options = options || {};
   routeReoptimizationPending = true;
-  if (routeOrder.length > 0) selected.delete(routeOrder[0]);
-  optimizeRoute();
+  routeReoptimizationContext = {
+    trigger:String(options.trigger || 'manual'),
+    automatic:options.automatic === true,
+    previousNextId:rollingQueue && rollingQueue[0] ? stopKey(rollingQueue[0]) : (routeOrder[0] ? stopKey(routeOrder[0]) : null)
+  };
+  lastRouteComputation = null;
+  return optimizeRoute();
 }
 
 // ── Priority picker ───────────────────────────────────────────────────────────
@@ -6201,7 +6748,9 @@ function renderPriorityList() {
 
 async function buildFullDayRoute() {
   var isReoptimization = routeReoptimizationPending === true;
+  var reoptContext = routeReoptimizationContext;
   routeReoptimizationPending = false;
+  routeReoptimizationContext = null;
   try {
     routeLiveMessage = '';
     showScreen('route');
@@ -6285,7 +6834,8 @@ async function buildFullDayRoute() {
       return disp + ':' + (m < 10 ? '0' : '') + m + ampm;
     }
 
-    var totalWait = fullRoute.reduce(function(s,r) { return s + scoredWait(r.ride); }, 0);
+    var knownFullWaits = fullRoute.map(function(item){ return item.ride.waitTime != null && Number.isFinite(Number(item.ride.waitTime)) ? Number(item.ride.waitTime) : null; }).filter(function(wait){ return wait != null; });
+    var totalWait = knownFullWaits.reduce(function(sum, wait){ return sum + wait; }, 0);
     var mustDone = mustRides.filter(function(r) {
       return fullRoute.find(function(s) { return s.ride.id === r.id; });
     }).length;
@@ -6294,7 +6844,7 @@ async function buildFullDayRoute() {
       '<div class="route-stats">' +
       '<div class="route-stat"><div class="route-stat-v">' + fullRoute.length + '</div><div class="route-stat-l">stops</div></div>' +
       '<div class="route-stat"><div class="route-stat-v">' + mustDone + '</div><div class="route-stat-l">must-dos</div></div>' +
-      '<div class="route-stat"><div class="route-stat-v">' + Math.round(totalWait) + 'm</div><div class="route-stat-l">total wait</div></div>' +
+      '<div class="route-stat"><div class="route-stat-v">' + (knownFullWaits.length === fullRoute.length ? Math.round(totalWait) + 'm' : '—') + '</div><div class="route-stat-l">' + (knownFullWaits.length === fullRoute.length ? 'posted wait' : 'wait unavailable') + '</div></div>' +
       '</div><div class="map-section"><h3>Full day route</h3><div class="map-wrap" id="map-container"></div></div>';
 
     var totalMins = hours * 60;
@@ -6344,6 +6894,7 @@ async function buildFullDayRoute() {
 
     ensureRouteStartControls();
     renderRouteMapSafely(routeOrder);
+    if (isReoptimization) routeAnalytics('route_reoptimized', { parkId:currentPark, planningMode:'full', method:'manual', triggerType:reoptContext && reoptContext.trigger || 'manual', routeCount:fullRoute.length });
     syncRouteSession(fullRoute.map(function(item){ return item.ride; }), { name:'entrance', waitTime:0 }, { reoptimization:isReoptimization });
   } catch (err) {
     routeReoptimizationPending = false;
@@ -6447,6 +6998,7 @@ function renderImportedSharedRoute(preview, payload) {
   var reopt = document.getElementById('imported-reopt-btn');
   if (reopt) reopt.onclick = function(){
     routeReoptimizationPending = true;
+    routeReoptimizationContext = { trigger:'import', automatic:false, previousNextId:rollingQueue[0] ? stopKey(rollingQueue[0]) : (routeOrder[0] || null) };
     if (currentMode === 'fullday') {
       priority = {};
       routeRides.forEach(function(ride){ priority[ride.id] = 'want'; });
@@ -6496,6 +7048,7 @@ window.RideHeroGrowthBridge = {
   getLatestSummary:function(){ return window.RideHeroRouteSession ? window.RideHeroRouteSession.getLatestSummary() : null; },
   endActiveSession:function(reason){
     stopProximityClearing();
+    stopRouteConditionRefresh();
     var summary = window.RideHeroRouteSession ? window.RideHeroRouteSession.end(reason || 'ended') : null;
     setRouteGrowthActionsVisible(!!summary);
     return summary;
@@ -6749,6 +7302,26 @@ function startGuidance() {
   }
 }
 
+if (document.addEventListener) document.addEventListener('visibilitychange', function() {
+  if (document.hidden) {
+    stopRouteConditionRefresh();
+    stopProximityClearing();
+    stopMapLocationWatch();
+    return;
+  }
+  var routeScreen = document.getElementById('screen-route');
+  if (routeScreen && routeScreen.classList.contains('active') && currentMode === 'quick') {
+    startRouteConditionRefresh();
+    if (routeStartMode === 'live' && currentUserLocation) startProximityClearing();
+  }
+  if (routeScreen && routeScreen.classList.contains('active') && routeMapView === 'live' && activeParkMapController && proximityWatchId == null) startMapLocationWatch();
+});
+if (window.addEventListener) window.addEventListener('pagehide', function() {
+  stopRouteConditionRefresh();
+  stopProximityClearing();
+  stopMapLocationWatch();
+});
+
 
 initSplash();
 updateHomePreview();
@@ -6770,6 +7343,7 @@ updateNavState('setup');
 <script src="js/account-friends.js?v=1"></script>
 <script src="js/friends-store.js?v=1"></script>
 <script src="js/friends-ui.js?v=2"></script>
+<script src="js/growth-analytics.js?v=2"></script>
 <script src="js/navigation.js?v=10"></script>
 <script src="js/pwa-install.js?v=1"></script>
 <script src="js/growth-loader.js?v=2"></script>

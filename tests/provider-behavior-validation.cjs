@@ -52,6 +52,15 @@ function response(body, ok = true) { return { ok, async json() { return body; } 
   result = await provider.getRideWaitTimes('mk', { force: true });
   assert.equal(result.rides.find((ride) => ride.providerId === 'wdw-coaster').classification, 'ride', 'existing Walt Disney World classification remains compatible');
 
+  context.fetch = async (url) => {
+    if (url.includes('/waittimes?')) return response([{ id: 'alpha', name: 'Alpha Ride', waitTime: 12 }]);
+    throw new Error('primary provider unavailable');
+  };
+  result = await provider.getRideWaitTimes('mk', { force: true, proxyUrl: 'https://ridehero-proxy.example' });
+  assert.equal(result.source, 'ridehero-proxy');
+  assert.equal(result.completeOperatingSet, true, 'the legacy proxy must identify its response as the complete operating set');
+  assert.equal(result.snapshotSemantics, 'operating-set');
+
   context.fetch = async (url) => url.endsWith('/children') ? response({ children: [] }) : response({ liveData: 'malformed' });
   result = await provider.getRideWaitTimes('test', { force: true });
   assert.equal(result.source, 'static');

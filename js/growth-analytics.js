@@ -16,9 +16,22 @@
     shared_route_joined: true,
     day_summary_viewed: true,
     day_summary_shared: true,
-    route_completed: true
+    route_completed: true,
+    planning_mode_selected: true,
+    park_auto_detected: true,
+    park_detection_confirmed: true,
+    park_detection_changed: true,
+    quick_route_generated: true,
+    ride_recommended: true,
+    ride_completed: true,
+    ride_skipped: true,
+    route_reoptimized: true,
+    route_auto_updated: true,
+    recommendation_reason_viewed: true
   };
   var recent = [];
+  var recommendationEpoch = 0;
+  var lastRecommendationKey = null;
 
   function cleanString(value, limit) {
     if (typeof value !== 'string') return null;
@@ -43,7 +56,7 @@
   function sanitizeProperties(properties) {
     var source = properties && typeof properties === 'object' ? properties : {};
     var safe = {};
-    var identifierKeys = ['shareId', 'parkId'];
+    var identifierKeys = ['shareId', 'parkId', 'reasonCode', 'triggerType'];
     identifierKeys.forEach(function(key) {
       var value = cleanIdentifier(source[key]);
       if (value !== null) safe[key] = value;
@@ -54,7 +67,7 @@
     }
 
     ['status', 'method'].forEach(function(key) {
-      var value = cleanString(source[key], 32);
+      var value = cleanIdentifier(source[key]);
       if (value !== null) safe[key] = value;
     });
 
@@ -69,6 +82,27 @@
     return safe;
   }
 
+  function resetsRecommendation(name) {
+    return name === 'planning_mode_selected' ||
+      name === 'park_detection_confirmed' ||
+      name === 'quick_route_generated' ||
+      name === 'ride_completed' ||
+      name === 'ride_skipped' ||
+      name === 'route_reoptimized' ||
+      name === 'route_auto_updated' ||
+      name === 'route_completed';
+  }
+
+  function recommendationKey(properties) {
+    return [
+      recommendationEpoch,
+      properties.parkId || '',
+      properties.planningMode || '',
+      properties.reasonCode || '',
+      properties.routeCount == null ? '' : properties.routeCount
+    ].join('|');
+  }
+
   function dispatch(event) {
     if (!root || typeof root.dispatchEvent !== 'function' || typeof root.CustomEvent !== 'function') return;
     try {
@@ -80,9 +114,18 @@
 
   function track(name, properties) {
     if (!EVENTS[name]) return null;
+    var safeProperties = sanitizeProperties(properties);
+    if (name === 'ride_recommended') {
+      var key = recommendationKey(safeProperties);
+      if (key === lastRecommendationKey) return null;
+      lastRecommendationKey = key;
+    } else if (resetsRecommendation(name)) {
+      recommendationEpoch += 1;
+      lastRecommendationKey = null;
+    }
     var event = {
       name: name,
-      properties: sanitizeProperties(properties),
+      properties: safeProperties,
       timestamp: new Date().toISOString()
     };
     recent.push(event);
@@ -103,6 +146,8 @@
 
   function clear() {
     recent.length = 0;
+    recommendationEpoch = 0;
+    lastRecommendationKey = null;
   }
 
   return {

@@ -135,7 +135,16 @@
             };
             return normalizeProviderRide(entity, staticNames[global.RideHeroParkData.normalize(ride.name)] || null, ride);
           });
-          var proxyValue = { parkId: parkId, supported: true, source: 'ridehero-proxy', rides: normalizedProxy, message: null, fetchedAt: new Date().toISOString() };
+          var proxyValue = {
+            parkId: parkId,
+            supported: true,
+            source: 'ridehero-proxy',
+            rides: normalizedProxy,
+            message: null,
+            fetchedAt: new Date().toISOString(),
+            snapshotSemantics: 'operating-set',
+            completeOperatingSet: true
+          };
           cache[parkId] = { at: Date.now(), value: proxyValue };
           return proxyValue;
         }

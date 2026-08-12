@@ -129,6 +129,17 @@
     };
   }
 
+  function cleanSkipEvent(event, stopIds) {
+    var rideId = cleanId(event && event.rideId);
+    if (!rideId || !stopIds[rideId]) return null;
+    var reason = cleanText(event && event.reason, 24);
+    return {
+      rideId: rideId,
+      reason: reason === 'unavailable' || reason === 'not-now' ? reason : 'user',
+      skippedAt: cleanTimestamp(event && event.skippedAt)
+    };
+  }
+
   function randomId() {
     try {
       if (root.crypto && typeof root.crypto.randomUUID === 'function') return root.crypto.randomUUID();
@@ -169,6 +180,14 @@
       seen[event.rideId] = true;
       return true;
     });
+    var skippedSeen = Object.create(null);
+    var skipped = (Array.isArray(raw.skipped) ? raw.skipped : []).slice(0, MAX_EVENTS).map(function(event) {
+      return cleanSkipEvent(event, stopIds);
+    }).filter(function(event) {
+      if (!event || seen[event.rideId] || skippedSeen[event.rideId]) return false;
+      skippedSeen[event.rideId] = true;
+      return true;
+    });
     return {
       sessionId: cleanId(raw.sessionId) || randomId(),
       parkId: route.parkId,
@@ -179,6 +198,7 @@
       stops: route.stops,
       legs: route.legs,
       completed: completed,
+      skipped: skipped,
       reoptimizations: Math.min(MAX_REOPTIMIZATIONS, Math.floor(finiteNumber(raw.reoptimizations, MAX_REOPTIMIZATIONS) || 0)),
       status: 'active'
     };
@@ -195,6 +215,9 @@
     var completedRideIds = (Array.isArray(raw.completedRideIds) ? raw.completedRideIds : []).map(cleanId).filter(function(id, index, list) {
       return id && known[id] && list.indexOf(id) === index;
     });
+    var skippedRideIds = (Array.isArray(raw.skippedRideIds) ? raw.skippedRideIds : []).map(cleanId).filter(function(id, index, list) {
+      return id && known[id] && completedRideIds.indexOf(id) < 0 && list.indexOf(id) === index;
+    });
     return {
       sessionId: cleanId(raw.sessionId),
       parkId: parkId,
@@ -206,7 +229,9 @@
       routeStopCount: Math.min(MAX_STOPS, Math.floor(finiteNumber(raw.routeStopCount, MAX_STOPS) || 0)),
       stops: stops,
       completedRideIds: completedRideIds,
+      skippedRideIds: skippedRideIds,
       completedStops: Math.min(MAX_STOPS, Math.floor(finiteNumber(raw.completedStops, MAX_STOPS) || 0)),
+      skippedStops: Math.min(MAX_STOPS, Math.floor(finiteNumber(raw.skippedStops, MAX_STOPS) || 0)),
       completedRides: Math.min(MAX_STOPS, Math.floor(finiteNumber(raw.completedRides, MAX_STOPS) || 0)),
       recordedWaitCount: Math.min(MAX_STOPS, Math.floor(finiteNumber(raw.recordedWaitCount, MAX_STOPS) || 0)),
       longestPostedWaitMinutes: finiteNumber(raw.longestPostedWaitMinutes, 600),
@@ -278,6 +303,7 @@
       stops: route.stops,
       legs: route.legs,
       completed: [],
+      skipped: [],
       reoptimizations: 0,
       status: 'active'
     };
@@ -293,16 +319,22 @@
     route.stops.forEach(function(stop) { routeIds[stop.rideId] = true; });
     var completedIds = Object.create(null);
     state.active.completed.forEach(function(event) { completedIds[event.rideId] = true; });
-    var completedHistory = state.active.stops.filter(function(stop) {
-      return completedIds[stop.rideId] && !routeIds[stop.rideId];
+    var skippedIds = Object.create(null);
+    state.active.skipped.forEach(function(event) { skippedIds[event.rideId] = true; });
+    var retainedIds = Object.create(null);
+    (options && Array.isArray(options.retainRideIds) ? options.retainRideIds : []).map(cleanId).forEach(function(id) {
+      if (id) retainedIds[id] = true;
+    });
+    var resolvedHistory = state.active.stops.filter(function(stop) {
+      return (completedIds[stop.rideId] || skippedIds[stop.rideId] || retainedIds[stop.rideId]) && !routeIds[stop.rideId];
     });
     var historicalLegs = state.active.legs.filter(function(leg) {
-      return completedIds[leg.toRideId] && !routeIds[leg.toRideId];
+      return (completedIds[leg.toRideId] || skippedIds[leg.toRideId] || retainedIds[leg.toRideId]) && !routeIds[leg.toRideId];
     });
     state.active.parkId = route.parkId;
     state.active.planningMode = route.planningMode;
     state.active.routeStyle = route.routeStyle;
-    state.active.stops = completedHistory.concat(route.stops).slice(0, MAX_STOPS);
+    state.active.stops = resolvedHistory.concat(route.stops).slice(0, MAX_STOPS);
     state.active.legs = historicalLegs.concat(route.legs).slice(0, MAX_STOPS);
     if (options && options.reoptimization === true) {
       state.active.reoptimizations = Math.min(MAX_REOPTIMIZATIONS, state.active.reoptimizations + 1);
@@ -340,7 +372,9 @@
       routeStopCount: active.stops.length,
       stops: clone(active.stops),
       completedRideIds: active.completed.map(function(event) { return event.rideId; }),
+      skippedRideIds: active.skipped.map(function(event) { return event.rideId; }),
       completedStops: active.completed.length,
+      skippedStops: active.skipped.length,
       completedRides: completedRides,
       recordedWaitCount: waits.length,
       longestPostedWaitMinutes: waits.length ? Math.max.apply(Math, waits) : null,
@@ -385,8 +419,32 @@
       completedAt: cleanTimestamp(options.completedAt)
     };
     state.active.completed.push(event);
-    if (state.active.completed.length >= state.active.stops.length) {
+    if (state.active.completed.length + state.active.skipped.length >= state.active.stops.length) {
       finish('completed', event.completedAt, false);
+    } else {
+      touchActive();
+      persist();
+    }
+    return clone(event);
+  }
+
+  function skipStop(rideId, options) {
+    if (!requireResumableActive()) return null;
+    var id = cleanId(rideId);
+    var stop = state.active.stops.find(function(item) { return item.rideId === id; });
+    if (!stop || state.active.completed.some(function(event) { return event.rideId === id; })) return null;
+    var existing = state.active.skipped.find(function(event) { return event.rideId === id; });
+    if (existing) return clone(existing);
+    options = options || {};
+    var reason = cleanText(options.reason, 24);
+    var event = {
+      rideId: id,
+      reason: reason === 'unavailable' || reason === 'not-now' ? reason : 'user',
+      skippedAt: cleanTimestamp(options.skippedAt)
+    };
+    state.active.skipped.push(event);
+    if (state.active.completed.length + state.active.skipped.length >= state.active.stops.length) {
+      finish('completed', event.skippedAt, false);
     } else {
       touchActive();
       persist();
@@ -420,6 +478,7 @@
     start: start,
     updateRoute: updateRoute,
     completeStop: completeStop,
+    skipStop: skipStop,
     end: end,
     abandon: abandon,
     getActive: function() { return clone(requireResumableActive()); },
