@@ -317,8 +317,9 @@ assert.match(html, /RideHeroIntelligence[\s\S]*(?:buildRecommendationReasons|rec
 assert.match(html, /Waits updated|Wait data may be outdated|Live waits temporarily unavailable/i, 'route UI must communicate wait freshness and failure states');
 const recommendationInsightSource = topLevelFunction(html, 'recommendationInsightForRide');
 assert.match(recommendationInsightSource, /quality\s*===\s*['"]neutral['"][\s\S]{0,180}\?\s*null|quality\s*!==\s*['"]neutral['"][\s\S]{0,180}:\s*null/, 'unknown/neutral distance must not render a synthetic walking duration');
-assert.match(optimizeRouteSource, /map-calibrated['"]?\s*&&\s*(?:walkEstimate|legQuality)\.dataConfidence\s*===\s*['"]verified['"]/, 'map-calibrated walking copy must be exact only when its underlying data is verified');
-assert.match(optimizeRouteSource, /allWaitsKnown|knownWaits|waitTotalLabel|totalWaitLabel/, 'route totals must distinguish known posted waits from missing waits');
+assert.match(recommendationInsightSource, /map-calibrated['"]?\s*&&\s*estimate[\s\S]{0,80}dataConfidence\s*===\s*['"]verified['"]/, 'map-calibrated walking copy must be exact only when its underlying data is verified');
+const quickRoutePageSource = topLevelFunction(html, 'renderQuickRoutePage');
+assert.doesNotMatch(quickRoutePageSource, /totalWait|estimated total|route-stats/, 'the compact Quick Route page must not reintroduce aggregate totals when inputs can be missing');
 const routeReasonSource = topLevelFunction(html, 'routeReasonForStop');
 assert.doesNotMatch(routeReasonSource, /Best first ride[^'"\n]*wait \+ walking distance/i, 'legacy route copy must not claim evidence that may be missing');
 const now = Date.parse('2026-08-12T16:00:00.000Z');
