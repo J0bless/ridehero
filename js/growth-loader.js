@@ -2,7 +2,7 @@
   'use strict';
 
   var loadPromise = null;
-  var VERSION = '1';
+  var VERSION = '2';
 
   function status(message) {
     var node = global.document && global.document.getElementById('growth-live-status');

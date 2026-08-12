@@ -1,11 +1,13 @@
-const CACHE_NAME = 'ridehero-shell-v15';
+const CACHE_NAME = 'ridehero-shell-v16';
 const APP_SHELL = [
   './',
   './index.html',
   './manifest.webmanifest',
   './css/multi-resort.css?v=1',
-  './css/onboarding.css?v=7',
-  './css/growth-engine.css?v=1',
+  './css/onboarding.css?v=8',
+  './css/growth-engine.css?v=2',
+  './css/friends.css?v=1',
+  './css/park-map.css?v=1',
   './data/park-catalog.js?v=1',
   './data/ride-aliases.js?v=1',
   './data/walking-graphs.js?v=1',
@@ -13,17 +15,21 @@ const APP_SHELL = [
   './js/park-catalog.js?v=1',
   './js/wait-provider.js?v=1',
   './js/location-service.js?v=1',
+  './js/park-map.js?v=1',
   './js/storage-migration.js?v=1',
   './js/route-engine.js?v=1',
   './js/route-session.js?v=1',
   './js/walking-network.js?v=1',
   './js/data-health.js?v=1',
-  './js/navigation.js?v=7',
+  './js/friends-store.js?v=1',
+  './js/friends-ui.js?v=1',
+  './js/navigation.js?v=8',
   './js/pwa-install.js?v=1',
-  './js/growth-loader.js?v=1',
+  './js/growth-loader.js?v=2',
   './icons/ridehero-180.png',
   './icons/ridehero-192.png',
-  './icons/ridehero-512.png'
+  './icons/ridehero-512.png',
+  './icons/ridehero-wordmark.png'
 ];
 
 self.addEventListener('install', function(event) {
