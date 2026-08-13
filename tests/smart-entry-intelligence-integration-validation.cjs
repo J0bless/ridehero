@@ -73,9 +73,10 @@ assert.match(renderNavigation, /parts\[0\]\s*===\s*['"]smart-entry['"][\s\S]*ren
 
 const renderSmartEntry = topLevelFunction(navigationSource, 'renderSmartEntry', '  ');
 const startSmartEntryDetection = topLevelFunction(navigationSource, 'startSmartEntryDetection', '  ');
+const smartEntryQueuePreview = topLevelFunction(navigationSource, 'smartEntryQueuePreview', '  ');
 const smartEntryParkCard = topLevelFunction(navigationSource, 'smartEntryParkCard', '  ');
 const smartEntryFailure = topLevelFunction(navigationSource, 'smartEntryFailure', '  ');
-const smartEntryMarkup = [renderSmartEntry, smartEntryParkCard, smartEntryFailure].join('\n');
+const smartEntryMarkup = [renderSmartEntry, smartEntryQueuePreview, smartEntryParkCard, smartEntryFailure].join('\n');
 assert.match(startSmartEntryDetection, /RideHeroLocationService[\s\S]*getCurrentPosition/, 'Smart Entry must use the shared location service');
 assert.match(startSmartEntryDetection, /detectCurrentPark/, 'Smart Entry must use confidence-aware park detection');
 assert.doesNotMatch(startSmartEntryDetection, /navigator\.geolocation/, 'Smart Entry must not duplicate browser GPS calls');
@@ -91,7 +92,7 @@ assert.match(bindSmartEntry, /activatePark/, 'confirming a Smart Entry suggestio
 assert.match(bindSmartEntry, /smart-entry|data-smart|detected-park|confirm-park/i, 'Smart Entry confirmation and fallback controls must be bound');
 assert.match(navigationSource, /RideHeroRouteSession[\s\S]*getActive\(\)[\s\S]*Resume|Resume[\s\S]*RideHeroRouteSession[\s\S]*getActive\(\)/i, 'Smart Entry must surface a real resumable route without fabricating progress');
 assert.match(html + allJavaScript, /RideHeroRouteResume\s*=/, 'the Resume Route action must have a concrete bridge implementation');
-assert.match(smartEntryParkCard, /Waits updated|Wait data may be outdated|Live waits temporarily unavailable|Wait freshness/i, 'a resume card must describe wait freshness truthfully');
+assert.match(smartEntryQueuePreview, /Live waits[^<]*(?:refresh|update)[^<]*when you resume/i, 'a resume card must describe saved wait freshness truthfully');
 assert.match(smartEntryParkCard, /data-smart-source/i, 'Smart Entry confirmation must carry whether its suggestion came from live or recent context');
 assert.match(bindSmartEntry, /smartSource/i, 'Smart Entry must not label a recent-park fallback as live location');
 
