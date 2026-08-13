@@ -7,10 +7,9 @@
     supabaseUrl: 'https://wiryzupgdfxftrvjvdzh.supabase.co',
     publishableKey: 'sb_publishable_NlH_dlXgON7osLtscCxYbA_AVTtFyQc',
     emailEnabled: true,
-    // Keep social providers disabled in RideHero until their matching provider
-    // credentials are enabled in Supabase. Their buttons remain visible but
-    // unavailable, so users are not sent into a broken OAuth flow.
-    enabledProviders: Object.freeze([]),
+    // These providers are configured in Supabase. Provider secrets remain in
+    // the Supabase dashboard and must never be added to browser code.
+    enabledProviders: Object.freeze(['google', 'facebook']),
     profileReadRpc: 'get_my_profile',
     profileCompleteRpc: 'complete_profile',
 
