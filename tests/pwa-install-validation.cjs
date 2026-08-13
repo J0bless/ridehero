@@ -38,7 +38,7 @@ const wordmark = fs.readFileSync(path.join(root, 'icons', 'ridehero-wordmark.png
 assert.equal(wordmark.readUInt32BE(16), 935, 'incorrect RideHero wordmark width');
 assert.equal(wordmark.readUInt32BE(20), 167, 'incorrect RideHero wordmark height');
 assert.equal(wordmark[25], 6, 'RideHero wordmark must retain transparent RGBA pixels');
-assert.match(worker, /const CACHE_NAME = 'ridehero-shell-v34'/);
+assert.match(worker, /const CACHE_NAME = 'ridehero-shell-v35'/);
 assert.match(html, /css\/onboarding\.css\?v=9/, 'the onboarding stylesheet must use the current cache-busting version');
 assert.match(html, /js\/navigation\.js\?v=14/, 'the navigation script must use the current cache-busting version');
 assert.match(worker, /\.\/css\/onboarding\.css\?v=9/, 'the service worker must precache the current onboarding stylesheet');
@@ -51,7 +51,7 @@ assert.match(html, /css\/smart-entry\.css\?v=5/, 'the Smart Entry queue preview 
 assert.match(worker, /\.\/css\/smart-entry\.css\?v=5/);
 assert.match(worker, /\.\/css\/ride-intelligence\.css\?v=8/);
 assert.match(worker, /\.\/js\/friends-store\.js\?v=1/);
-assert.match(worker, /\.\/js\/supabase-config\.js\?v=2/);
+assert.match(worker, /\.\/js\/supabase-config\.js\?v=3/);
 assert.match(worker, /\.\/js\/auth-client\.js\?v=1/);
 assert.match(worker, /\.\/js\/auth-ui\.js\?v=2/);
 assert.match(worker, /\.\/js\/account-friends\.js\?v=1/);
