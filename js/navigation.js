@@ -186,7 +186,7 @@
       return !(active.completed || []).some(function(event){ return event.rideId === stop.rideId; }) && !(active.skipped || []).some(function(event){ return event.rideId === stop.rideId; });
     }) : [];
     var resume = active && active.parkId === park.id && active.planningMode === appState.planningMode;
-    return '<section class="smart-entry-card' + (resume ? ' has-resume' : '') + '" aria-labelledby="smart-entry-park-title">' +
+    return '<section class="smart-entry-card' + (isRecent ? ' is-recent' : '') + (resume ? ' has-resume' : '') + '" aria-labelledby="smart-entry-park-title">' +
       '<div class="smart-entry-location-mark" aria-hidden="true">&#9678;</div>' +
       '<div class="smart-entry-copy"><span>' + esc(heading) + '</span><h2 id="smart-entry-park-title">' + esc(park.shortName) + '</h2><p>' + esc(destination.name) + '</p><small>' + esc(detail) + '</small></div>' +
       (resume ? '<div class="smart-entry-resume"><strong class="smart-entry-resume-title">Resume your ' + esc(modeName()) + '</strong><span class="smart-entry-resume-progress">' + progress + ' of ' + active.stops.length + ' ' + (appState.planningMode === 'quick' ? 'rides' : 'stops') + ' complete</span>' + (remaining[0] ? '<small class="smart-entry-resume-next">Next: ' + esc(remaining[0].name) + '</small>' : '') + '<small class="smart-entry-resume-freshness">Wait freshness updates when you resume.</small></div>' : '') +

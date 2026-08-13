@@ -29,7 +29,7 @@ assert.doesNotMatch(layer, /(?:^|\n)\s*(?:width|min-width|max-width|height|min-h
 
 assert.match(html, /css\/ride-intelligence\.css\?v=8/,
   'the document must request the new route color stylesheet version');
-assert.match(worker, /const CACHE_NAME = 'ridehero-shell-v31'/,
+assert.match(worker, /const CACHE_NAME = 'ridehero-shell-v32'/,
   'the app shell cache must advance for the live visual update');
 assert.match(worker, /\.\/css\/ride-intelligence\.css\?v=8/,
   'the new route color stylesheet must be available offline');

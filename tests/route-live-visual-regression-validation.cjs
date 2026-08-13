@@ -142,8 +142,8 @@ assert.match(optionLayer, /button:first-child svg\{\s*background:transparent;\s*
 // A fresh app-shell key is required so installed/live clients receive the fix.
 assert.match(html, /css\/ride-intelligence\.css\?v=8/,
   'the page must request route intelligence CSS v8');
-assert.match(worker, /const CACHE_NAME = ['"]ridehero-shell-v31['"]/,
-  'the service worker must use shell cache v31');
+assert.match(worker, /const CACHE_NAME = ['"]ridehero-shell-v32['"]/,
+  'the service worker must use shell cache v32');
 assert.match(worker, /\.\/css\/ride-intelligence\.css\?v=8/,
   'the service worker must precache route intelligence CSS v8');
 
