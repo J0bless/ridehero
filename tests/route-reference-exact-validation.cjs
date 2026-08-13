@@ -46,7 +46,7 @@ const routeScreen = html.slice(routeScreenStart, routeScreenEnd);
 const context = functionSource('renderRouteContext');
 const page = functionSource('renderRoutePage');
 const lists = functionSource('renderRoutePageLists');
-const previewRow = functionSource('routePagePreviewRowMarkup');
+const upcomingRow = functionSource('routePageUpcomingRowMarkup');
 const walkCopy = functionSource('routePageWalkCopy');
 const queue = functionSource('renderRollingQueue');
 const bindPage = functionSource('bindRoutePageActions');
@@ -56,8 +56,8 @@ const reoptimize = functionSource('reoptimize');
 const fullDay = functionSource('buildFullDayRoute');
 const contextMarkup = context.slice(context.indexOf('context.innerHTML'));
 
-// Approved vertical hierarchy. The map thumbnail is part of the single
-// Upcoming card shown in the supplied reference, not another dashboard.
+// Approved vertical hierarchy. The real map replaces the resting Upcoming
+// panel; route rows stay one interaction deeper.
 ordered(routeScreen, [
   'route-top-bar',
   'route-context',
@@ -70,9 +70,9 @@ ordered(contextMarkup, [
   'statusMarkup'
 ], 'route identity and status hierarchy');
 ordered(page, [
-  'rh-upcoming-card',
+  'rh-route-map-card',
   'map-container',
-  'rh-up-next',
+  'rh-route-map-summary',
   'rh-route-full-itinerary',
   'rh-completed-card',
   'rh-route-utility-actions'
@@ -125,8 +125,8 @@ assert.match(queue, /insight\.walkMinutes\s*==\s*null[\s\S]*Unavailable/,
   'a missing walking estimate must remain unavailable');
 assert.match(queue, /insight\.walkApproximate[\s\S]*About/,
   'approximate walking must be visibly qualified');
-assert.match(queue, /unavailable\s*\?[\s\S]*data-rh-reoptimize-route[\s\S]*insight\.walkMinutes\s*==\s*null[\s\S]*data-rh-open-map-primary[\s\S]*data-rh-start-walking/,
-  'the primary CTA must switch between Re-optimize, Open Map, and Start Walking truthfully');
+assert.match(queue, /unavailable\s*\?[\s\S]*data-rh-reoptimize-route[\s\S]*walkingToCurrent\s*\?[\s\S]*data-rh-confirm-arrival[\s\S]*insight\.walkMinutes\s*==\s*null[\s\S]*data-rh-open-map-primary[\s\S]*data-rh-start-walking/,
+  'the primary CTA must switch between Re-optimize, arrival, Open Map, and Start Walking truthfully');
 assert.match(queue, /class="rh-next-star"[^>]*data-rh-route-options[^>]*aria-label=/,
   'the quiet star/options affordance must remain a labeled button');
 assert.doesNotMatch(queue, /data-rh-favorite/i,
@@ -145,14 +145,16 @@ const ctaHeight = numericProperty('body\\.route-screen-active #screen-route \\.r
 assert.ok(ctaHeight !== null && ctaHeight >= 52 && ctaHeight <= 60,
   'the primary CTA must retain the approved 52–60px touch target');
 
-// Upcoming has only two rows in the main view, with one shrink-safe name
+// Upcoming exists only behind View full route, with one shrink-safe name
 // column and a compact truthful wait/walk stack.
-assert.match(lists, /remaining\.slice\(0,\s*2\)/,
-  'the main Upcoming card must contain at most two stops');
-assert.match(previewRow, /rh-up-next-name[\s\S]*rh-up-next-details[\s\S]*rh-up-next-wait[\s\S]*rh-up-next-walk[\s\S]*rh-up-next-arrow/,
-  'upcoming rows must match the approved information density');
-assert.match(previewRow, /waitLabel\(ride,\s*true\)[\s\S]*routePageWalkCopy\(fromRide,\s*ride\)/,
-  'upcoming metrics must be generated from existing route data');
+assert.doesNotMatch(page, /id="rh-up-next-list"/,
+  'the resting map panel must not contain Upcoming rows');
+assert.match(lists, /fullHost\.innerHTML\s*=\s*remaining\.length\s*\?[\s\S]*remaining\.map/,
+  'the full-route disclosure must contain all remaining stops');
+assert.match(upcomingRow, /rh-up-next-name[\s\S]*rh-up-next-details[\s\S]*rh-up-next-wait[\s\S]*rh-up-next-walk/,
+  'disclosed upcoming rows must match the approved information density');
+assert.match(upcomingRow, /waitLabel\(ride,\s*true\)[\s\S]*routePageWalkCopy\(fromRide,\s*ride\)/,
+  'disclosed upcoming metrics must be generated from existing route data');
 assert.match(walkCopy, /Walk unavailable[\s\S]*verified[\s\S]*About/,
   'upcoming walk copy must handle unavailable, verified, and approximate data');
 assert.match(css, /\.rh-up-next-row\s*\{[^{}]*grid-template-columns\s*:\s*30px minmax\(0,1fr\) minmax\(76px,auto\) 18px/s,
@@ -161,8 +163,8 @@ assert.match(css, /\.rh-up-next-name strong\s*\{[^{}]*overflow-wrap\s*:\s*break-
   'long ride names must wrap naturally, never by character');
 assert.match(css, /\.rh-up-next-details\s*\{[^{}]*flex-direction\s*:\s*column[^{}]*align-items\s*:\s*flex-end/s,
   'wait and walk must remain a clean right-aligned stack');
-assert.match(css, /\.rh-up-next-button:focus-visible\s*\{[^{}]*outline\s*:/s,
-  'the fully tappable upcoming row needs a visible keyboard focus state');
+assert.match(css, /\.rh-route-map-summary button:focus-visible\s*\{[^{}]*outline\s*:/s,
+  'View full route needs a visible keyboard focus state');
 
 // Completed rides are collapsed by default and visually secondary.
 assert.match(page, /<section class="rh-completed-card"[\s\S]*<button class="rh-completed-toggle"[^>]*aria-expanded="false"[^>]*aria-controls="rh-completed-list"[\s\S]*id="rh-completed-list"[^>]*hidden/,
@@ -240,12 +242,12 @@ assert.match(css, /body\.route-screen-active #screen-route \.rh-route-context,[\
   'tablet and desktop route content must stay calm and readable');
 assert.match(css, /@media \(prefers-reduced-motion:reduce\)[\s\S]*\.rh-route-context \*[\s\S]*transition:none!important/,
   'route interactions must respect reduced-motion preferences');
-assert.match(css, /body\.route-screen-active #screen-route \.rh-route-map-card:not\(\.is-map-active\)>\.map-wrap,[\s\S]*\.rh-map-walk-chip[\s\S]*display:none!important/,
-  'the resting route view must collapse the map preview without deleting the real map host');
+assert.match(css, /body\.route-screen-active #screen-route \.rh-route-map-card:not\(\.is-map-active\)>\.map-wrap\{display:block!important\}/,
+  'the resting route view must always show the compact real map');
 assert.match(css, /@media \(max-width:430px\) and \(max-height:700px\)[\s\S]*\.route-top-bar\{min-height:44px[\s\S]*\.rh-next-card\{border-radius:17px[\s\S]*\.rh-route-utility-actions button\{min-height:44px/,
   '320x568-class phones need a compact single-screen hierarchy with accessible controls');
-assert.match(css, /@media \(max-width:340px\) and \(max-height:620px\)[\s\S]*#rh-up-next-list>\.rh-up-next-row:nth-child\(n\+2\)\{display:none\}/,
-  'short 320px-class screens must keep one upcoming ride and leave all others behind View full route');
+assert.match(css, /@media \(max-width:430px\) and \(max-height:700px\)[\s\S]*\.rh-route-full-itinerary \.rh-up-next-row\{grid-template-columns:24px minmax\(0,1fr\) minmax\(68px,auto\)\}/,
+  'short phones must preserve readable columns when the full route is disclosed');
 assert.doesNotMatch(css, /route-screen-active[^{}]*overflow\s*:\s*hidden/,
   'single-screen compaction must not trap enlarged text or expanded route content');
 

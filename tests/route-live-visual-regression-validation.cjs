@@ -43,7 +43,7 @@ assert.match(startWalking, /activeParkMapController\.setCompact\(true\)/,
   'Start Walking must keep the real map controller in compact mode');
 assert.match(startWalking, /classList\.remove\(['"]is-map-active['"]\)[\s\S]*aria-expanded['"],\s*['"]false['"][\s\S]*mapLabel\.textContent\s*=\s*['"]Map['"]/,
   'Start Walking must normalize an already-open inspector before showing the compact preview');
-assert.match(startWalking, /announceRouteGuidance\(['"]Walking guidance ready\./,
+assert.match(startWalking, /announceRouteGuidance\(['"]Walking to ['"]?\s*\+/,
   'Start Walking must announce its state through the dedicated live region');
 assert.doesNotMatch(startWalking, /setRouteIntelligenceNotice|\.click\(\)|classList\.add\(['"]is-map-active['"]\)/,
   'Start Walking must not open the detailed inspector or add a large inline notice');
@@ -54,12 +54,14 @@ assert.match(guidance, /status\.textContent\s*=\s*['"][^'"]*['"][\s\S]*setTimeou
 assert.match(css, /\.rh-route-guidance-status\s*\{[^{}]*position:absolute[^{}]*width:1px[^{}]*height:1px[^{}]*clip-path:inset\(50%\)/s,
   'the live announcement must not consume route-page space');
 
-// The resting short-phone layout stays compact. Tall screens and Start Walking
-// may reveal the same real preview; the detailed inspector remains distinct.
-assert.match(css, /body\.route-screen-active #screen-route \.rh-route-map-card:not\(\.is-map-active\)>\.map-wrap,[\s\S]*\.rh-map-walk-chip\{[\s\S]*display:none!important/,
-  'the default short-screen route view must keep the map preview collapsed');
-assert.match(css, /@media \(min-height:900px\)\{[\s\S]*\.rh-route-map-card:not\(\.is-map-active\)>\.map-wrap\{display:block!important\}[\s\S]*\.rh-map-walk-chip:not\(\[hidden\]\)\{display:inline-flex!important\}/,
-  'tall screens must show the compact map and truthful walk chip by default');
+// The real compact map is now the resting secondary panel at every supported
+// height; the detailed inspector remains a separate explicit state.
+assert.match(css, /body\.route-screen-active #screen-route \.rh-route-map-card:not\(\.is-map-active\)>\.map-wrap\{display:block!important\}/,
+  'the default route view must always show the real compact map preview');
+assert.match(css, /body\.route-screen-active #screen-route \.rh-route-map-card:not\(\.is-map-active\)>\.rh-map-walk-chip:not\(\[hidden\]\)\{display:inline-flex!important\}/,
+  'the compact preview must retain its truthful walking chip');
+assert.match(css, /body\.route-screen-active #screen-route \.rh-route-map-card:not\(\.is-map-active\) \.rh-park-map-viewport\{height:clamp\(108px,30vw,142px\)\}/,
+  'the resting map must remain bounded and compact');
 assert.match(css, /\.rh-route-map-card\.is-walking-preview:not\(\.is-map-active\)>\.map-wrap\{display:block!important\}[\s\S]*\.is-walking-preview:not\(\.is-map-active\)>\.rh-map-walk-chip:not\(\[hidden\]\)\{display:inline-flex!important\}/,
   'Start Walking must reveal the compact preview at shorter heights');
 assert.match(css, /\.rh-route-map-card\.is-map-active>\.rh-map-walk-chip\{display:none!important\}/,
@@ -90,8 +92,10 @@ assert.match(queue, /freshness\.waitMinutes\s*==\s*null\s*\?\s*['"]<strong>Unava
   'a missing wait must render Unavailable, never zero');
 assert.match(queue, /insight\.walkMinutes\s*==\s*null[\s\S]*data-rh-open-map-primary[\s\S]*data-rh-start-walking/,
   'a real walk estimate must preserve Start Walking even when wait data is absent');
-assert.match(lists, /remaining\.length[\s\S]*remaining\.slice\(0,\s*2\)[\s\S]*This is the final stop in your current route/,
-  'a one-stop route must show a compact final-stop Upcoming state');
+assert.doesNotMatch(page, /id="rh-up-next-list"/,
+  'Upcoming rows must not appear beside the resting map');
+assert.match(page, /id="rh-route-full-itinerary"[^>]*hidden[\s\S]*id="rh-route-full-list"/,
+  'the complete route must remain available behind View full route');
 
 // Tree of Life is a park landmark/walkthrough, not a Quick Route ride. The
 // classification must protect both new optimization and restored old sessions.
@@ -136,11 +140,11 @@ assert.match(optionLayer, /button:first-child svg\{\s*background:transparent;\s*
   'utility icons must not restore colored circular fills');
 
 // A fresh app-shell key is required so installed/live clients receive the fix.
-assert.match(html, /css\/ride-intelligence\.css\?v=7/,
-  'the page must request route intelligence CSS v7');
-assert.match(worker, /const CACHE_NAME = ['"]ridehero-shell-v28['"]/,
-  'the service worker must use shell cache v28');
-assert.match(worker, /\.\/css\/ride-intelligence\.css\?v=7/,
-  'the service worker must precache route intelligence CSS v7');
+assert.match(html, /css\/ride-intelligence\.css\?v=8/,
+  'the page must request route intelligence CSS v8');
+assert.match(worker, /const CACHE_NAME = ['"]ridehero-shell-v29['"]/,
+  'the service worker must use shell cache v29');
+assert.match(worker, /\.\/css\/ride-intelligence\.css\?v=8/,
+  'the service worker must precache route intelligence CSS v8');
 
 console.log('Live route visual-regression contracts passed.');

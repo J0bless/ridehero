@@ -3109,7 +3109,7 @@ body{
 </style>
 <link rel="stylesheet" href="css/onboarding.css?v=9"/>
 <link rel="stylesheet" href="css/smart-entry.css?v=1"/>
-<link rel="stylesheet" href="css/ride-intelligence.css?v=7"/>
+<link rel="stylesheet" href="css/ride-intelligence.css?v=8"/>
 </head>
 <body>
 
@@ -3664,6 +3664,8 @@ let priority = {};
 let ridePos = {};
 let routeOrder = [];
 let rollingQueue = [];
+let walkingToRideId = null;
+let proximityArrivalPromptedRideId = null;
 let clearedStops = new Set();
 let skippedStops = new Set();
 let activeRouteStops = [];
@@ -3734,6 +3736,8 @@ function resetParkRuntimeState(options) {
   ridePos = {};
   routeOrder = [];
   rollingQueue = [];
+  walkingToRideId = null;
+  proximityArrivalPromptedRideId = null;
   clearedStops = new Set();
   skippedStops = new Set();
   activeRouteStops = [];
@@ -4660,10 +4664,13 @@ function stopProximityClearing() {
 function maybeClearCurrentStopByLocation() {
   if (!rollingQueue || !rollingQueue.length) return;
   var current = rollingQueue[0];
+  var currentId = stopKey(current);
+  if (!currentId || walkingToRideId !== currentId) return;
   var metres = distanceFromUserToStop(current);
   if (metres == null) return;
-  if (metres <= feetToMetres(ROUTE_CLEAR_RADIUS_FT)) {
-    clearQueuedStop(current, 'location');
+  if (metres <= feetToMetres(ROUTE_CLEAR_RADIUS_FT) && proximityArrivalPromptedRideId !== currentId) {
+    proximityArrivalPromptedRideId = currentId;
+    announceRouteGuidance("You're nearby. Tap I've Arrived when you reach " + (current.name || 'the ride') + '.');
   }
 }
 
@@ -4671,13 +4678,17 @@ function clearQueuedStop(stop, source) {
   if (!stop || !rollingQueue || !rollingQueue.length) return;
   stop = resolveRouteStop(stop);
   var key = stopKey(stop);
-  if (!key) return;
+  var currentKey = stopKey(rollingQueue[0]);
+  if (!key || key !== currentKey) return;
+  walkingToRideId = null;
+  proximityArrivalPromptedRideId = null;
   var wait = stop && stop.waitTime != null && Number.isFinite(Number(stop.waitTime)) ? Number(stop.waitTime) :
     stop && stop.waitMinutes != null && Number.isFinite(Number(stop.waitMinutes)) ? Number(stop.waitMinutes) : null;
+  var arrivedOnly = source === 'location' || source === 'arrival';
   if (window.RideHeroRouteSession) {
-    window.RideHeroRouteSession.completeStop(key, { source:source === 'location' ? 'location' : 'manual', postedWaitMinutes:wait });
+    window.RideHeroRouteSession.completeStop(key, { source:arrivedOnly ? 'location' : 'manual', postedWaitMinutes:wait });
   }
-  routeAnalytics('ride_completed', { parkId:currentPark, planningMode:publicPlanningMode(), status:source === 'location' ? 'proximity' : 'manual' });
+  if (!arrivedOnly) routeAnalytics('ride_completed', { parkId:currentPark, planningMode:publicPlanningMode(), status:'manual' });
   clearedStops.add(key);
   rollingQueue = rollingQueue.filter(function(item){ return stopKey(item) !== key; });
   chooseNextStopFromRemaining();
@@ -4692,8 +4703,7 @@ function clearQueuedStop(stop, source) {
 }
 
 function manualClearCurrentStop() {
-  if (!rollingQueue || !rollingQueue.length) return;
-  clearQueuedStop(rollingQueue[0], 'manual');
+  return confirmArrivalAtCurrentRide();
 }
 
 function chooseNextStopFromRemaining() {
@@ -4725,6 +4735,8 @@ function chooseNextStopFromRemaining() {
 }
 
 function initRollingQueue(route) {
+  walkingToRideId = null;
+  proximityArrivalPromptedRideId = null;
   activeRouteStops = (Array.isArray(route) ? route : []).map(resolveRouteStop).filter(Boolean);
   var activeSession = window.RideHeroRouteSession && window.RideHeroRouteSession.getActive();
   clearedStops = new Set(activeSession && activeSession.completed ? activeSession.completed.map(function(event){ return event.rideId; }) : []);
@@ -4754,6 +4766,8 @@ function skipCurrentRide() {
   var stop = resolveRouteStop(rollingQueue[0]);
   var key = stopKey(stop);
   if (!key) return;
+  walkingToRideId = null;
+  proximityArrivalPromptedRideId = null;
   if (window.RideHeroRouteSession && typeof window.RideHeroRouteSession.skipStop === 'function') {
     window.RideHeroRouteSession.skipStop(key, { reason:'user' });
   }
@@ -4767,6 +4781,12 @@ function skipCurrentRide() {
 }
 
 function startWalkingToCurrentRide() {
+  if (!rollingQueue || !rollingQueue.length) return;
+  var current = resolveRouteStop(rollingQueue[0]);
+  var currentId = stopKey(current);
+  if (!currentId) return;
+  walkingToRideId = currentId;
+  proximityArrivalPromptedRideId = null;
   var target = document.getElementById('rh-route-map-card');
   if (target) {
     target.classList.remove('is-map-active');
@@ -4779,8 +4799,50 @@ function startWalkingToCurrentRide() {
     var mapLabel = mapButton.querySelector('span');
     if (mapLabel) mapLabel.textContent = 'Map';
   }
-  announceRouteGuidance('Walking guidance ready. ' + routeLocationSourceCopy() + '. Compact route map shown.');
-  if (target) target.scrollIntoView({ behavior:(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) ? 'auto' : 'smooth', block:'start' });
+  renderRollingQueue();
+  announceRouteGuidance('Walking to ' + (current.name || 'your next ride') + '. Tap I\'ve Arrived when you get there.');
+  window.setTimeout(function(){ var button = document.querySelector('[data-rh-confirm-arrival]'); if (button) button.focus({ preventScroll:true }); }, 0);
+}
+
+function routeStopIsUnavailable(stop) {
+  if (!stop) return true;
+  var id = stopKey(stop);
+  var status = String(stop.status || stop.operatingStatus || '').toUpperCase();
+  return !!(id && temporarilyUnavailableIds.has(id)) || status === 'CLOSED' || status === 'TEMPORARILY_DOWN' || status === 'SEASONAL';
+}
+
+function confirmArrivalAtCurrentRide() {
+  if (!rollingQueue || !rollingQueue.length || !walkingToRideId) return false;
+  var current = resolveRouteStop(rollingQueue[0]);
+  var currentId = stopKey(current);
+  if (!currentId || currentId !== walkingToRideId) {
+    walkingToRideId = null;
+    proximityArrivalPromptedRideId = null;
+    renderRollingQueue();
+    announceRouteGuidance('Your route changed. Review the new next ride before continuing.');
+    return false;
+  }
+  if (routeStopIsUnavailable(current)) {
+    walkingToRideId = null;
+    proximityArrivalPromptedRideId = null;
+    renderRollingQueue();
+    announceRouteGuidance((current.name || 'This ride') + ' is unavailable. Re-optimize your route before continuing.');
+    return false;
+  }
+  var arrivedName = current.name || 'Your ride';
+  walkingToRideId = null;
+  proximityArrivalPromptedRideId = null;
+  clearQueuedStop(current, 'arrival');
+  var next = rollingQueue && rollingQueue[0] ? resolveRouteStop(rollingQueue[0]) : null;
+  announceRouteGuidance(next ? arrivedName + ' confirmed. Next up: ' + (next.name || 'your next ride') + '.' : arrivedName + ' confirmed. Your route is complete.');
+  window.setTimeout(function(){
+    var heading = document.getElementById(next ? 'rh-next-title' : 'rh-route-empty-title');
+    if (heading) {
+      heading.setAttribute('tabindex', '-1');
+      heading.focus({ preventScroll:true });
+    }
+  }, 0);
+  return true;
 }
 
 function announceRouteGuidance(message) {
@@ -4878,14 +4940,23 @@ function routePagePreviewRowMarkup(ride, state, fallbackIndex, fromRide) {
   return '<button class="rh-up-next-row rh-up-next-button" type="button" data-rh-preview-route aria-label="View ' + escAttr(ride.name || 'upcoming stop') + ' in the full route"><span class="rh-up-next-number">' + sequence + '</span><span class="rh-up-next-name"><strong>' + escHTML(ride.name || 'RideHero stop') + '</strong></span><span class="rh-up-next-details"><span class="rh-up-next-wait">' + escHTML(wait) + '</span><span class="rh-up-next-walk">' + escHTML(walk) + '</span></span><span class="rh-up-next-arrow" aria-hidden="true">›</span></button>';
 }
 
+function routePageUpcomingRowMarkup(ride, state, fallbackIndex, fromRide) {
+  var sequence = routeSequenceNumberForRide(ride, state, fallbackIndex);
+  var wait = waitLabel(ride, true);
+  var walk = routePageWalkCopy(fromRide, ride);
+  return '<div class="rh-up-next-row"><span class="rh-up-next-number">' + sequence + '</span><span class="rh-up-next-name"><strong>' + escHTML(ride.name || 'RideHero stop') + '</strong></span><span class="rh-up-next-details"><span class="rh-up-next-wait">' + escHTML(wait) + '</span><span class="rh-up-next-walk">' + escHTML(walk) + '</span></span></div>';
+}
+
 function setQuickFullRouteOpen(open) {
   var itinerary = document.getElementById('rh-route-full-itinerary');
   var fullRouteButton = document.querySelector('[data-rh-view-full-route]');
   if (!itinerary || !fullRouteButton) return;
   itinerary.hidden = !open;
   fullRouteButton.setAttribute('aria-expanded', open ? 'true' : 'false');
-  fullRouteButton.firstChild.nodeValue = open ? 'Hide full route ' : 'View full route ';
+  var label = fullRouteButton.querySelector('[data-rh-full-route-label]');
+  if (label) label.textContent = open ? 'Hide full route' : 'View full route';
   if (open) itinerary.focus({ preventScroll:true });
+  else fullRouteButton.focus({ preventScroll:true });
 }
 
 function renderRouteContext(routeStops, options) {
@@ -4924,24 +4995,14 @@ function renderRoutePageLists(routeStops) {
     var id = stopKey(ride);
     return id && id !== currentId && !state.completedIds.has(id) && !state.skippedIds.has(id) && (currentMode !== 'quick' || classifyExperience(ride) === 'ride');
   });
-  var previewHost = document.getElementById('rh-up-next-list');
-  if (previewHost) {
-    var previous = rollingQueue && rollingQueue[0] ? resolveRouteStop(rollingQueue[0]) : quickRouteStartPoint();
-    previewHost.innerHTML = remaining.length ? remaining.slice(0, 2).map(function(ride, index){ var markup = routePagePreviewRowMarkup(ride, state, index + 1, previous); previous = ride; return markup; }).join('') : '<p class="rh-up-next-empty">This is the final stop in your current route.</p>';
-    previewHost.querySelectorAll('[data-rh-preview-route]').forEach(function(button){
-      button.onclick = function(){ setQuickFullRouteOpen(true); };
-    });
-  }
   var fullHost = document.getElementById('rh-route-full-list');
   if (fullHost) {
-    var displayStops = state.savedStops.map(function(saved) {
-      return resolveRouteStop(saved.rideId) || { id:String(saved.rideId || ''), name:saved.name || 'Unavailable route stop', waitTime:null };
-    });
-    fullHost.innerHTML = displayStops.map(function(ride, index) {
-      var id = stopKey(ride);
-      var status = state.completedIds.has(id) ? 'Complete' : state.skippedIds.has(id) ? 'Skipped' : temporarilyUnavailableIds.has(id) ? 'Temporarily unavailable' : id === currentId ? 'Next up' : waitLabel(ride, true);
-      return routePageListRowMarkup(ride, state, index, status);
-    }).join('');
+    var previous = rollingQueue && rollingQueue[0] ? resolveRouteStop(rollingQueue[0]) : quickRouteStartPoint();
+    fullHost.innerHTML = remaining.length ? remaining.map(function(ride, index) {
+      var markup = routePageUpcomingRowMarkup(ride, state, index + 1, previous);
+      previous = ride;
+      return markup;
+    }).join('') : '<p class="rh-up-next-empty">This is the final stop in your current route.</p>';
   }
   var completedToggle = document.querySelector('[data-rh-completed-toggle]');
   var completedList = document.getElementById('rh-completed-list');
@@ -5048,12 +5109,12 @@ function renderRoutePage(routeStops, options) {
   var routeScreen = document.getElementById('screen-route');
   if (routeScreen) routeScreen.classList.remove('is-route-complete');
   routeBody.innerHTML =
-    '<section class="rh-route-map-card rh-upcoming-card map-section" id="rh-route-map-card" aria-labelledby="rh-up-next-title">' +
+    '<section class="rh-route-map-card map-section" id="rh-route-map-card" aria-labelledby="rh-route-map-preview-title">' +
       '<div class="rh-route-map-heading"><h2 id="rh-route-map-title" tabindex="-1">Route map</h2><button class="rh-route-map-close" type="button" data-rh-close-map aria-label="Close detailed route map">Close</button></div>' +
       '<span class="rh-map-walk-chip" id="rh-map-walk-chip" hidden></span>' +
       '<div class="map-wrap" id="map-container"></div>' +
-      '<section class="rh-up-next" aria-labelledby="rh-up-next-title"><div class="rh-up-next-heading"><h2 id="rh-up-next-title">Upcoming</h2><button type="button" data-rh-view-full-route aria-expanded="false" aria-controls="rh-route-full-itinerary">View full route <span aria-hidden="true">›</span></button></div><div class="rh-up-next-list" id="rh-up-next-list"></div></section>' +
-      '<section class="rh-route-full-itinerary" id="rh-route-full-itinerary" tabindex="-1" aria-label="Full route order" hidden><div id="rh-route-full-list"></div></section>' +
+      '<div class="rh-route-map-summary"><h2 id="rh-route-map-preview-title">Park map</h2><button type="button" data-rh-view-full-route aria-expanded="false" aria-controls="rh-route-full-itinerary"><span data-rh-full-route-label>View full route</span> <span aria-hidden="true">›</span></button></div>' +
+      '<section class="rh-route-full-itinerary" id="rh-route-full-itinerary" tabindex="-1" aria-labelledby="rh-route-full-title" hidden><h2 id="rh-route-full-title">Upcoming</h2><div id="rh-route-full-list"></div></section>' +
     '</section>' +
     '<section class="rh-completed-card" aria-labelledby="rh-completed-label"><button class="rh-completed-toggle" type="button" data-rh-completed-toggle aria-expanded="false" aria-controls="rh-completed-list"><span class="rh-completed-check" aria-hidden="true">✓</span><span id="rh-completed-label">0 ' + (currentMode === 'quick' ? 'rides' : 'stops') + ' completed</span><span class="rh-completed-chevron" aria-hidden="true">⌄</span></button><div class="rh-completed-list" id="rh-completed-list" tabindex="-1" hidden></div></section>' +
     '<nav class="rh-route-utility-actions" aria-label="Route actions"><button type="button" data-rh-open-map aria-expanded="false" aria-controls="rh-route-map-card"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 6 5-2 8 3 5-2v13l-5 2-8-3-5 2Z"></path><path d="M8 4v13M16 7v13"></path></svg><span>Map</span></button><button type="button" data-rh-reoptimize-route><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7h-5V2"></path><path d="M19 5a8 8 0 1 0 1 9"></path></svg><span>Re-optimize</span></button></nav>';
@@ -5079,6 +5140,7 @@ function openQuickRouteOptions() {
   var current = resolveRouteStop(rollingQueue[0]);
   if (!current) return;
   var openedRideId = stopKey(current);
+  var walkingToOpenedRide = walkingToRideId === openedRideId && !routeStopIsUnavailable(current);
   var insight = recommendationInsightForRide(current);
   var freshness = insight.freshness || currentWaitFreshness(current);
   var explanations = Array.isArray(insight.explanations) && insight.explanations.length ? insight.explanations.slice(0, 2) : [];
@@ -5100,7 +5162,7 @@ function openQuickRouteOptions() {
         '<li>' + escHTML(insight.walkText) + '</li>' +
         (explanations.length ? explanations.map(function(reason){ return '<li>' + escHTML(reason.text) + '</li>'; }).join('') : '<li>RideHero has limited live evidence, so this uses the safest available route inputs.</li>') +
       '</ul>' +
-      '<div class="rh-route-options-primary"><button type="button" data-rh-options-complete>Mark complete</button><button type="button" data-rh-options-skip>Skip</button></div>' +
+      '<div class="rh-route-options-primary">' + (walkingToOpenedRide ? '<button type="button" data-rh-options-arrived>I\'ve Arrived</button>' : '') + '<button type="button" data-rh-options-skip>Skip</button></div>' +
       '<div class="rh-route-options-list">' +
         '<button type="button" data-rh-options-map>Map controls</button>' +
         '<button type="button" data-rh-options-share>Share Route</button>' +
@@ -5113,8 +5175,8 @@ function openQuickRouteOptions() {
   var close = function(){ if (dialog.open && typeof dialog.close === 'function') dialog.close(); else dialog.removeAttribute('open'); };
   var closeButton = dialog.querySelector('[data-rh-options-close]');
   if (closeButton) closeButton.onclick = close;
-  var complete = dialog.querySelector('[data-rh-options-complete]');
-  if (complete) complete.onclick = function(){ close(); if (rollingQueue && rollingQueue[0] && stopKey(rollingQueue[0]) === openedRideId) manualClearCurrentStop(); else setRouteIntelligenceNotice('Route changed', 'Review the new next ride before marking it complete.', 'info', false); };
+  var arrived = dialog.querySelector('[data-rh-options-arrived]');
+  if (arrived) arrived.onclick = function(){ close(); if (rollingQueue && rollingQueue[0] && stopKey(rollingQueue[0]) === openedRideId) confirmArrivalAtCurrentRide(); else setRouteIntelligenceNotice('Route changed', 'Review the new next ride before confirming arrival.', 'info', false); };
   var skip = dialog.querySelector('[data-rh-options-skip]');
   if (skip) skip.onclick = function(){ close(); if (rollingQueue && rollingQueue[0] && stopKey(rollingQueue[0]) === openedRideId) skipCurrentRide(); else setRouteIntelligenceNotice('Route changed', 'Review the new next ride before skipping it.', 'info', false); };
   var map = dialog.querySelector('[data-rh-options-map]');
@@ -5141,6 +5203,8 @@ function renderRollingQueue() {
   var quickOnly = currentMode === 'quick';
 
   if (!rollingQueue || !rollingQueue.length) {
+    walkingToRideId = null;
+    proximityArrivalPromptedRideId = null;
     var monitoringUnavailable = temporarilyUnavailableIds.size > 0 && window.RideHeroRouteSession && window.RideHeroRouteSession.hasActive();
     var allDone = activeRouteStops.length > 0 && activeRouteStops.every(function(stop){
       var id = stopKey(stop);
@@ -5148,11 +5212,13 @@ function renderRollingQueue() {
     }) && !monitoringUnavailable;
     var latest = window.RideHeroRouteSession && window.RideHeroRouteSession.getLatestSummary ? window.RideHeroRouteSession.getLatestSummary() : null;
     var matchingLatest = latest && latest.parkId === currentPark && latest.planningMode === publicPlanningMode() ? latest : null;
-    var completedCount = matchingLatest ? Number(matchingLatest.completedStops || matchingLatest.completedRides || 0) : clearedStops.size;
+    var completedStopCount = matchingLatest ? Number(matchingLatest.completedStops || 0) : clearedStops.size;
+    var completedRideCount = matchingLatest ? Number(matchingLatest.completedRides || 0) : 0;
     var completedRoute = allDone || !!(matchingLatest && matchingLatest.reason === 'completed');
-    var successfulRoute = completedRoute && completedCount > 0;
+    var successfulRoute = completedRoute && completedStopCount > 0;
+    var completionCopy = quickOnly ? (completedRideCount > 0 ? completedRideCount + ' rides completed' + (completedRideCount < completedStopCount ? ' · ' + completedStopCount + ' route stops reached' : '') + '.' : completedStopCount + ' route stops reached.') : completedStopCount + ' stops completed.';
     var emptyTitle = monitoringUnavailable ? 'No available next ride' : (successfulRoute ? 'Route Complete' : completedRoute ? 'Route ended' : 'No active route');
-    var emptyMessage = monitoringUnavailable ? 'RideHero is monitoring temporarily unavailable rides and will update if one reopens.' : (completedRoute ? completedCount + ' ' + (quickOnly ? 'rides' : 'stops') + ' completed.' + (successfulRoute ? ' Great day!' : '') : 'Build a route to see your smartest next stop.');
+    var emptyMessage = monitoringUnavailable ? 'RideHero is monitoring temporarily unavailable rides and will update if one reopens.' : (completedRoute ? completionCopy + (successfulRoute ? ' Great day!' : '') : 'Build a route to see your smartest next stop.');
     var actions = monitoringUnavailable ? '<button class="rh-empty-primary" type="button" data-rh-empty-reoptimize>Re-optimize</button><button class="rh-empty-secondary" type="button" data-rh-empty-route-options>Route options</button>' : (completedRoute ? '<button class="rh-empty-primary" type="button" data-rh-day-summary>View Day Summary</button><button class="rh-empty-secondary" type="button" data-rh-share-day>Share My Day</button>' : '<button class="rh-empty-primary" type="button" data-rh-plan-day>Plan My Day</button>');
     wrap.innerHTML = '<section class="rh-route-empty-state' + (successfulRoute ? ' is-complete' : '') + '" aria-labelledby="rh-route-empty-title"><span class="rh-route-empty-check" aria-hidden="true">' + (successfulRoute ? '✓' : 'R') + '</span><h2 id="rh-route-empty-title">' + emptyTitle + '</h2><p>' + emptyMessage + '</p><div class="rh-route-empty-actions">' + actions + '</div></section>';
     var routeScreen = document.getElementById('screen-route');
@@ -5171,12 +5237,17 @@ function renderRollingQueue() {
   if (activeRouteScreen) activeRouteScreen.classList.remove('is-route-complete');
 
   var current = rollingQueue[0];
+  var currentId = stopKey(current);
+  if (walkingToRideId && walkingToRideId !== currentId) {
+    walkingToRideId = null;
+    proximityArrivalPromptedRideId = null;
+  }
+  var walkingToCurrent = walkingToRideId === currentId;
   var insight = recommendationInsightForRide(current);
   currentRecommendationMeta = insight;
   var freshness = insight.freshness;
   var reasonText = insight.title || (insight.explanations && insight.explanations[0] ? insight.explanations[0].text : 'Best available option');
-  var currentStatus = String(current.status || current.operatingStatus || '').toUpperCase();
-  var unavailable = temporarilyUnavailableIds.has(stopKey(current)) || currentStatus === 'CLOSED' || currentStatus === 'TEMPORARILY_DOWN' || currentStatus === 'SEASONAL';
+  var unavailable = routeStopIsUnavailable(current);
   var waitMetricMarkup = freshness.waitMinutes == null ? '<strong>Unavailable</strong>' : '<span class="rh-next-metric"><strong>' + escHTML(freshness.waitMinutes) + '</strong><span>min</span></span>';
   var walkMetricMarkup = insight.walkMinutes == null ? '<strong>Unavailable</strong>' : '<span class="rh-next-metric" aria-label="' + escAttr(insight.walkMetricValue) + '">' + (insight.walkApproximate ? '<i>About</i>' : '') + '<strong>' + escHTML(insight.walkMinutes) + '</strong><span>min</span></span>';
 
@@ -5197,11 +5268,13 @@ function renderRollingQueue() {
       '<h2 class="rh-next-title" id="rh-next-title">' + escHTML(current.name || 'Next ride') + '</h2>' +
       '<div class="rh-next-stats"><div class="rh-next-stat' + (freshness.waitMinutes == null ? ' is-unavailable' : '') + '"><span class="rh-next-stat-icon is-wait" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg></span><span>' + waitMetricMarkup + '<small>wait</small></span></div><div class="rh-next-stat' + (insight.walkApproximate ? ' is-approximate' : '') + (insight.walkMinutes == null ? ' is-unavailable' : '') + '"><span class="rh-next-stat-icon is-walk" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="13" cy="4" r="2"></circle><path d="m10 22 2-6-3-3 2-5 4 3 3 1"></path><path d="m14 14 3 3v5M9 13l-3 4"></path></svg></span><span>' + walkMetricMarkup + '<small>' + escHTML(insight.walkMetricLabel) + '</small></span></div></div>' +
       '<div class="rh-next-reason' + (unavailable ? ' is-unavailable' : insight.primaryCode === 'insufficient_evidence' ? ' is-limited' : '') + '"><i aria-hidden="true"></i><span>' + escHTML(unavailable ? 'Temporarily unavailable' : reasonText) + '</span></div>' +
-      '<div class="rh-next-actions">' + (unavailable ? '<button class="rh-next-primary" type="button" data-rh-reoptimize-route><span>Re-optimize</span><span aria-hidden="true">↻</span></button>' : insight.walkMinutes == null ? '<button class="rh-next-primary" type="button" data-rh-open-map-primary><span>Open Map</span><span aria-hidden="true">→</span></button>' : '<button class="rh-next-primary" type="button" data-rh-start-walking><span>Start Walking</span><span aria-hidden="true">→</span></button>') + '</div>' +
+      '<div class="rh-next-actions">' + (unavailable ? '<button class="rh-next-primary" type="button" data-rh-reoptimize-route><span>Re-optimize</span><span aria-hidden="true">↻</span></button>' : walkingToCurrent ? '<button class="rh-next-primary is-arrival" type="button" data-rh-confirm-arrival aria-label="I\'ve arrived at ' + escAttr(current.name || 'this ride') + '"><span>I\'ve Arrived</span><span aria-hidden="true">✓</span></button>' : insight.walkMinutes == null ? '<button class="rh-next-primary" type="button" data-rh-open-map-primary><span>Open Map</span><span aria-hidden="true">→</span></button>' : '<button class="rh-next-primary" type="button" data-rh-start-walking><span>Start Walking</span><span aria-hidden="true">→</span></button>') + '</div>' +
     '</article>';
 
   var startWalking = wrap.querySelector('[data-rh-start-walking]');
   if (startWalking) startWalking.onclick = startWalkingToCurrentRide;
+  var confirmArrival = wrap.querySelector('[data-rh-confirm-arrival]');
+  if (confirmArrival) confirmArrival.onclick = confirmArrivalAtCurrentRide;
   var openMapPrimary = wrap.querySelector('[data-rh-open-map-primary]');
   if (openMapPrimary) openMapPrimary.onclick = function(){ var button = document.querySelector('[data-rh-open-map]'); if (button) button.click(); };
   var unavailableReoptimize = wrap.querySelector('[data-rh-reoptimize-route]');
@@ -7301,6 +7374,8 @@ window.RideHeroGrowthBridge = {
   endActiveSession:function(reason){
     stopProximityClearing();
     stopRouteConditionRefresh();
+    walkingToRideId = null;
+    proximityArrivalPromptedRideId = null;
     var summary = window.RideHeroRouteSession ? window.RideHeroRouteSession.end(reason || 'ended') : null;
     setRouteGrowthActionsVisible(!!summary);
     return summary;

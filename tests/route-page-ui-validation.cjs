@@ -28,7 +28,7 @@ function ordered(source, fragments, message) {
 
 const viewState = functionSource('routePageViewState');
 const context = functionSource('renderRouteContext');
-const previewRow = functionSource('routePagePreviewRowMarkup');
+const upcomingRow = functionSource('routePageUpcomingRowMarkup');
 const walkCopy = functionSource('routePageWalkCopy');
 const lists = functionSource('renderRoutePageLists');
 const fullRoute = functionSource('setQuickFullRouteOpen');
@@ -88,14 +88,14 @@ assert.doesNotMatch(context, /routeLocationSourceCopy\(|rh-route-location|route 
 assert.match(context, /focus\(\{\s*preventScroll\s*:\s*true\s*\}\)/,
   'entering a newly rendered route must move focus to the page heading');
 
-// The shared page contains one integrated Upcoming card, a collapsed completed
-// section, then the balanced Map / Re-optimize utility bar.
-ordered(page, ['rh-upcoming-card', 'rh-up-next', 'rh-route-full-itinerary', 'rh-completed-card', 'rh-route-utility-actions'],
+// The shared page contains one always-visible compact map, a disclosure-only
+// itinerary, a collapsed completed section, then the utility bar.
+ordered(page, ['rh-route-map-card', 'map-container', 'rh-route-map-summary', 'rh-route-full-itinerary', 'rh-completed-card', 'rh-route-utility-actions'],
   'shared route-page sections');
-assert.match(page, /class="rh-route-map-card rh-upcoming-card map-section"[\s\S]*id="map-container"/,
-  'the compact Upcoming card must preserve the existing real map host');
-assert.match(page, /<h2 id="rh-up-next-title">Upcoming<\/h2>/,
-  'the secondary card must use the approved Upcoming heading');
+assert.match(page, /class="rh-route-map-card map-section"[\s\S]*id="map-container"/,
+  'the compact map card must preserve the existing real map host');
+assert.match(page, /<h2 id="rh-route-map-preview-title">Park map<\/h2>/,
+  'the resting secondary panel must identify the map');
 assert.match(page, /data-rh-view-full-route[^>]*aria-expanded="false"[^>]*aria-controls="rh-route-full-itinerary"/,
   'View full route must be a semantic disclosure control');
 assert.match(page, /id="rh-route-full-itinerary"[^>]*tabindex="-1"[^>]*hidden/,
@@ -103,19 +103,19 @@ assert.match(page, /id="rh-route-full-itinerary"[^>]*tabindex="-1"[^>]*hidden/,
 assert.match(fullRoute, /itinerary\.hidden\s*=\s*!open[\s\S]*aria-expanded[\s\S]*itinerary\.focus/,
   'the full-route disclosure must synchronize visibility, ARIA, and focus');
 
-// Upcoming rows show no more than two state-backed stops with both truthful
-// wait and walking information. Quick still enforces rides-only; Full Day does not.
-assert.match(lists, /remaining\.slice\(0,\s*2\)/,
-  'the primary page must show only two upcoming stops');
+// Upcoming rows exist only in the disclosed full itinerary and use state-backed
+// wait/walk information. Quick still enforces rides-only; Full Day does not.
+assert.doesNotMatch(page, /id="rh-up-next-list"/,
+  'the resting map panel must not render an Upcoming preview list');
+assert.match(lists, /fullHost\.innerHTML\s*=\s*remaining\.length\s*\?[\s\S]*remaining\.map/,
+  'the disclosure must render all remaining route stops');
 assert.match(lists, /!state\.completedIds\.has\(id\)[\s\S]*!state\.skippedIds\.has\(id\)/,
   'completed and intentionally skipped stops must not reappear in Upcoming');
 assert.match(lists, /currentMode\s*!==\s*['"]quick['"]\s*\|\|\s*classifyExperience\(ride\)\s*===\s*['"]ride['"]/,
   'Quick must remain rides-only without applying that restriction to Full Day');
-assert.match(previewRow, /waitLabel\(ride,\s*true\)[\s\S]*routePageWalkCopy\(fromRide,\s*ride\)/,
-  'each upcoming row must derive both wait and walk copy from real route inputs');
-assert.match(previewRow, /<button class="rh-up-next-row rh-up-next-button"[^>]*data-rh-preview-route[^>]*aria-label=/,
-  'the entire upcoming row must be a labeled semantic button');
-assert.match(previewRow, /rh-up-next-name[\s\S]*rh-up-next-details[\s\S]*rh-up-next-wait[\s\S]*rh-up-next-walk[\s\S]*rh-up-next-arrow/,
+assert.match(upcomingRow, /waitLabel\(ride,\s*true\)[\s\S]*routePageWalkCopy\(fromRide,\s*ride\)/,
+  'each disclosed upcoming row must derive both wait and walk copy from real route inputs');
+assert.match(upcomingRow, /rh-up-next-name[\s\S]*rh-up-next-details[\s\S]*rh-up-next-wait[\s\S]*rh-up-next-walk/,
   'upcoming rows must preserve name, wait, walk, and chevron hierarchy');
 assert.match(walkCopy, /quality\s*!==\s*['"]neutral['"][\s\S]*Walk unavailable/,
   'unknown routing quality must never invent a walking estimate');
@@ -123,8 +123,8 @@ assert.match(walkCopy, /quality\s*===\s*['"]verified['"][\s\S]*map-calibrated[\s
   'only verified routing may use exact walking copy');
 assert.match(walkCopy, /About ['"]?\s*\+\s*minutes\s*\+\s*['"] min walk/,
   'non-verified estimates must be visibly approximate');
-assert.match(lists, /\[data-rh-preview-route\][\s\S]*setQuickFullRouteOpen\(true\)/,
-  'an upcoming-row tap must reveal the actual full route');
+assert.match(fullRoute, /data-rh-full-route-label[\s\S]*Hide full route[\s\S]*View full route/,
+  'the disclosure label must truthfully reflect its open state');
 
 // Completed stops are secondary, truthful, and collapsed by default.
 assert.match(page, /<button class="rh-completed-toggle"[^>]*data-rh-completed-toggle[^>]*aria-expanded="false"[^>]*aria-controls="rh-completed-list"/,
@@ -158,10 +158,12 @@ assert.match(queue, /insight\.title[\s\S]*insight\.explanations/,
   'the concise recommendation must come from recommendation evidence');
 assert.match(queue, /Temporarily unavailable[\s\S]*data-rh-reoptimize-route/,
   'a closed next stop must replace Start Walking with Re-optimize');
-assert.match(queue, /insight\.walkMinutes\s*==\s*null[\s\S]*data-rh-open-map-primary[\s\S]*data-rh-start-walking/,
+assert.match(queue, /unavailable\s*\?[\s\S]*data-rh-reoptimize-route[\s\S]*walkingToCurrent\s*\?[\s\S]*data-rh-confirm-arrival[\s\S]*insight\.walkMinutes\s*==\s*null[\s\S]*data-rh-open-map-primary[\s\S]*data-rh-start-walking/,
   'missing navigation must offer the map instead of pretending guidance exists');
 assert.match(queue, /data-rh-start-walking[\s\S]*startWalkingToCurrentRide/,
   'available walking guidance must retain its real existing handler');
+assert.match(queue, /data-rh-confirm-arrival[\s\S]*confirmArrivalAtCurrentRide/,
+  'walking guidance must become an explicit arrival confirmation');
 assert.match(queue, /<article class="rh-next-card ride-intelligence-card" aria-labelledby="rh-next-title"/,
   'Next Up must remain a labeled semantic card');
 assert.doesNotMatch(queue, /Tower of Terror|Hollywood Studios|22 min|6 min walk|2 of 6/,
@@ -189,9 +191,9 @@ assert.match(queue, /No available next ride[\s\S]*data-rh-empty-reoptimize[\s\S]
   'temporarily unavailable routes must retain a recovery action');
 assert.match(queue, /Route Complete[\s\S]*data-rh-day-summary[\s\S]*View Day Summary[\s\S]*data-rh-share-day[\s\S]*Share My Day/,
   'completed routes must show the approved summary/share actions');
-assert.match(queue, /completedCount[\s\S]*completedStops[\s\S]*completedRides/,
+assert.match(queue, /completedStopCount\s*=\s*matchingLatest[\s\S]*matchingLatest\.completedStops[\s\S]*completedRideCount\s*=\s*matchingLatest[\s\S]*matchingLatest\.completedRides/,
   'completion copy must come from real route-session counts');
-assert.match(queue, /matchingLatest\s*=\s*latest\s*&&\s*latest\.parkId\s*===\s*currentPark\s*&&\s*latest\.planningMode\s*===\s*publicPlanningMode\(\)[\s\S]*completedCount\s*=\s*matchingLatest[\s\S]*completedRoute\s*=\s*allDone\s*\|\|\s*!!\(matchingLatest/,
+assert.match(queue, /matchingLatest\s*=\s*latest\s*&&\s*latest\.parkId\s*===\s*currentPark\s*&&\s*latest\.planningMode\s*===\s*publicPlanningMode\(\)[\s\S]*completedStopCount\s*=\s*matchingLatest[\s\S]*completedRoute\s*=\s*allDone\s*\|\|\s*!!\(matchingLatest/,
   'a completion card must never reuse a summary from another park or planning mode');
 assert.match(queue, /RideHeroGrowthLoader\.openDaySummary\(['"]completed['"]\)/,
   'completion actions must open the existing day-summary workflow');
@@ -205,8 +207,8 @@ assert.match(refreshPage, /renderRouteContext[\s\S]*renderRoutePageLists[\s\S]*a
   'live updates must refresh status, upcoming/completed lists, and the existing map in place');
 
 // Secondary intelligence and lifecycle tools remain one interaction deeper.
-assert.match(routeOptions, /manualClearCurrentStop/,
-  'Mark complete must remain available behind route options');
+assert.match(routeOptions, /walkingToOpenedRide[\s\S]*data-rh-options-arrived[\s\S]*confirmArrivalAtCurrentRide/,
+  'arrival confirmation must remain available behind route options while walking');
 assert.match(routeOptions, /skipCurrentRide/,
   'Skip must remain available behind route options');
 assert.match(routeOptions, /routeLocationSourceCopy/,
