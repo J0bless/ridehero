@@ -65,7 +65,41 @@ function createHarness() {
   return { window, document, status };
 }
 
+function nextTurn() {
+  return new Promise(resolve => setImmediate(resolve));
+}
+
+function latestScript(harness) {
+  const scripts = harness.document.head.children.filter(node => node.tagName === 'SCRIPT');
+  return scripts[scripts.length - 1];
+}
+
+async function finishSuccessfulLoad(harness) {
+  const modules = [
+    ['RideHeroShareModel', 'js/share-model.js'],
+    ['RideHeroAnalytics', 'js/growth-analytics.js'],
+    ['RideHeroShareActions', 'js/share-actions.js'],
+    ['RideHeroGrowth', 'js/growth-engine.js']
+  ];
+  for (const [globalName, sourceName] of modules) {
+    const script = latestScript(harness);
+    assert.equal(script.dataset.growthSrc, sourceName, `loader must request ${sourceName} in sequence`);
+    harness.window[globalName] = {};
+    script.dispatch('load');
+    await nextTurn();
+  }
+}
+
 (async function run() {
+  const successHarness = createHarness();
+  const successfulLoad = successHarness.window.RideHeroGrowthLoader.ensure();
+  assert.match(successHarness.status.textContent, /loading/i,
+    'the sharing loader must announce work while its optional modules download');
+  await finishSuccessfulLoad(successHarness);
+  await successfulLoad;
+  assert.equal(successHarness.status.textContent, '',
+    'the global sharing loading notification must auto-clear after a successful lazy load');
+
   const harness = createHarness();
   const firstAttempt = harness.window.RideHeroGrowthLoader.ensure();
   assert.match(harness.status.textContent, /loading/i,

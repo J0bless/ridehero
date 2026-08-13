@@ -212,6 +212,8 @@
 .auth-dialog :focus-visible,
 .auth-trigger:focus-visible,
 .auth-route-shell :focus-visible { outline: 3px solid rgba(90, 152, 217, .72); outline-offset: 3px; }
+.auth-route-shell .auth-title[tabindex="-1"]:focus { outline: 0; box-shadow: none; }
+.auth-route-shell .auth-title[tabindex="-1"]:focus-visible { outline: 0; box-shadow: none; }
 
 @media (max-width: 350px) {
   .auth-dialog { width: calc(100% - 12px); border-radius: 22px; }
