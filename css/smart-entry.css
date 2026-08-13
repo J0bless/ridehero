@@ -362,6 +362,57 @@ body.mode-quick .smart-entry-marker{
   .smart-entry-primary,.smart-entry-secondary,.smart-entry-link{padding-left:10px;padding-right:10px}
 }
 
+/* Compact the live Smart Entry catalog on phone-height viewports. The page
+   remains content-sized so long names, large text, and zoom can still scroll. */
+body.smart-entry-screen-active #screen-setup.active{padding-bottom:0}
+body.smart-entry-screen-active .pwa-install-button{display:none!important}
+@media (max-width:700px) and (max-height:1000px){
+  .catalog-view-smart-entry{height:auto;min-height:100dvh;padding-bottom:calc(64px + env(safe-area-inset-bottom))}
+  .catalog-view-smart-entry .catalog-header{padding-top:calc(6px + env(safe-area-inset-top));padding-bottom:0}
+  .catalog-view-smart-entry .catalog-nav-row{min-height:44px}
+  .catalog-view-smart-entry .catalog-heading{padding:9px 0 7px}
+  .catalog-view-smart-entry .catalog-heading h1{margin-top:3px;font-size:clamp(27px,7.7vw,34px);line-height:1}
+  .catalog-view-smart-entry .catalog-heading p{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+  .catalog-view-smart-entry .catalog-content{padding-top:0}
+  .smart-entry-shell{padding:3px 0 8px}
+  .smart-entry-card{display:grid;grid-template-columns:44px minmax(0,1fr);column-gap:10px;align-items:start;padding:13px 14px 14px;border-radius:22px}
+  .smart-entry-card::before{height:5px}
+  .smart-entry-location-mark{grid-column:1;width:44px;height:44px;margin:1px 0 0;border-radius:15px;font-size:20px}
+  .smart-entry-copy{grid-column:2;text-align:left;word-break:normal;overflow-wrap:break-word}
+  .smart-entry-copy>h2{font-size:clamp(21px,6vw,26px);word-break:normal;overflow-wrap:break-word}
+  .smart-entry-copy>p,.smart-entry-copy>small{font-size:13px;line-height:1.3;word-break:normal;overflow-wrap:break-word}
+  .smart-entry-copy>small{margin-top:4px}
+  .smart-entry-card>.smart-entry-resume{grid-column:1/-1;margin-top:9px;padding:10px 12px;border-radius:15px}
+  .smart-entry-card>.smart-entry-resume strong{font-size:15px;line-height:1.2;word-break:normal;overflow-wrap:break-word}
+  .smart-entry-card>.smart-entry-resume span{font-size:13px;line-height:1.25}
+  .smart-entry-card>.smart-entry-resume small{font-size:12px;line-height:1.25;word-break:normal;overflow-wrap:break-word}
+  .smart-entry-actions{grid-column:1/-1;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:10px}
+  .smart-entry-primary,.smart-entry-secondary,.smart-entry-link{min-height:44px;padding:8px 9px;font-size:13px}
+  .smart-entry-card.has-resume .smart-entry-link{grid-column:1/-1}
+  .smart-entry-resume-freshness{position:absolute!important;width:1px!important;height:1px!important;margin:-1px!important;padding:0!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+}
+
+@media (max-width:430px) and (max-height:700px){
+  .catalog-view-smart-entry{height:auto;min-height:100dvh;padding-bottom:calc(62px + env(safe-area-inset-bottom))}
+  .catalog-view-smart-entry .catalog-header{padding-top:calc(3px + env(safe-area-inset-top));padding-left:10px;padding-right:10px}
+  .catalog-view-smart-entry .catalog-heading{padding:5px 0 4px}
+  .catalog-view-smart-entry .catalog-heading h1{font-size:26px}
+  .catalog-view-smart-entry .catalog-content{padding-top:0;padding-left:10px;padding-right:10px}
+  .smart-entry-shell{padding:2px 0 5px}
+  .smart-entry-card{grid-template-columns:40px minmax(0,1fr);column-gap:8px;padding:10px 11px 11px;border-radius:20px}
+  .smart-entry-location-mark{width:40px;height:40px;margin:1px 0 0;border-radius:14px;font-size:18px}
+  .smart-entry-copy{word-break:normal;overflow-wrap:break-word}
+  .smart-entry-copy>span{font-size:9px}
+  .smart-entry-copy>h2{margin-top:2px;font-size:21px;word-break:normal;overflow-wrap:break-word}
+  .smart-entry-copy>p,.smart-entry-copy>small{margin-top:3px;font-size:12px;line-height:1.24;word-break:normal;overflow-wrap:break-word}
+  .smart-entry-card>.smart-entry-resume{margin-top:7px;padding:8px 10px}
+  .smart-entry-card>.smart-entry-resume strong{font-size:14px}
+  .smart-entry-card>.smart-entry-resume span{font-size:12px}
+  .smart-entry-card>.smart-entry-resume small{font-size:11px}
+  .smart-entry-actions{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:7px}
+  .smart-entry-primary,.smart-entry-secondary,.smart-entry-link{min-height:44px;padding:7px 8px;font-size:12px}
+}
+
 @media (prefers-reduced-motion:reduce){
   .smart-entry-page,
   .smart-entry-card,
