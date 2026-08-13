@@ -199,8 +199,8 @@ assert.match(queue, /RideHeroGrowthLoader\.openDaySummary\(['"]completed['"]\)/,
 // Map and live refreshes reuse existing route machinery.
 assert.match(page, /ensureRouteStartControls\(\)[\s\S]*renderRouteMapSafely\(routeOrder\)/,
   'the shared page must preserve real route-start and map behavior');
-assert.match(bindPage, /classList\.toggle\(['"]is-map-active['"]\)[\s\S]*activeParkMapController\.setCompact[\s\S]*aria-expanded/,
-  'Map must expand the existing map instead of creating a fake surface');
+assert.match(bindPage, /function setMapInspectorOpen[\s\S]*classList\.toggle\(['"]is-map-active['"],\s*expanded\)[\s\S]*aria-expanded[\s\S]*activeParkMapController\.setCompact\(!expanded\)/,
+  'Map must expand and collapse the existing map controller through the shared inspector helper');
 assert.match(refreshPage, /renderRouteContext[\s\S]*renderRoutePageLists[\s\S]*activeParkMapController\.setStops/,
   'live updates must refresh status, upcoming/completed lists, and the existing map in place');
 

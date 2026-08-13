@@ -186,8 +186,8 @@ assert.ok(utilityHeight >= 44,
   'each bottom action must be fully touch friendly');
 assert.match(css, /\.rh-route-utility-actions button\+button\s*\{[^{}]*border-left\s*:\s*1px solid #e8ebef/,
   'the two bottom actions must retain the subtle central divider');
-assert.match(bindPage, /data-rh-open-map[\s\S]*classList\.toggle\(['"]is-map-active['"]\)[\s\S]*activeParkMapController\.setCompact/,
-  'Map must expand the existing map controller');
+assert.match(bindPage, /data-rh-open-map[\s\S]*function setMapInspectorOpen[\s\S]*classList\.toggle\(['"]is-map-active['"],\s*expanded\)[\s\S]*activeParkMapController\.setCompact\(!expanded\)/,
+  'Map must expand and collapse the existing map controller through the shared inspector helper');
 assert.match(loading, /disabled\s*=\s*loading[\s\S]*aria-busy[\s\S]*Updating route/,
   'Re-optimize must expose a visible and accessible loading state');
 assert.match(reoptimizeActive, /Promise\.resolve\(reoptimize[\s\S]*\.finally[\s\S]*setRouteReoptimizeLoading\(false\)/,

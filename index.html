@@ -3109,7 +3109,7 @@ body{
 </style>
 <link rel="stylesheet" href="css/onboarding.css?v=9"/>
 <link rel="stylesheet" href="css/smart-entry.css?v=1"/>
-<link rel="stylesheet" href="css/ride-intelligence.css?v=6"/>
+<link rel="stylesheet" href="css/ride-intelligence.css?v=7"/>
 </head>
 <body>
 
@@ -3341,6 +3341,7 @@ body{
     </div>
     <section class="rh-route-context" id="route-context" aria-labelledby="rh-route-page-title" hidden></section>
     <div class="rh-route-notice" id="route-intelligence-notice" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+    <div class="rh-route-guidance-status" id="route-guidance-status" role="status" aria-live="polite" aria-atomic="true"></div>
     <div id="rolling-route-queue" class="rolling-route-queue"></div>
     <div id="route-body"></div>
     <div class="route-growth-actions" id="route-growth-actions" hidden>
@@ -4035,7 +4036,6 @@ function savePlanningPreferences() {
 
 
 function classifyExperience(ride) {
-  if (ride && ride.classification) return ride.classification === 'ride' ? 'ride' : 'attraction';
   var name = ((ride && ride.name) || '').toLowerCase();
 
   // These are lower-movement, show, trail, exhibit, or walkthrough style experiences.
@@ -4046,12 +4046,14 @@ function classifyExperience(ride) {
     'gorilla falls','maharajah','tom sawyer','treehouse','enchanted tales',
     'discovery island trail','oasis','impressions','awesome planet','beauty and the beast',
     'frozen sing-along','lightning mcqueen','indiana jones','festival','finding nemo',
-    'lion king','feathered friends','bird show'
+    'lion king','feathered friends','bird show','tree of life'
   ];
 
   for (var i = 0; i < attractionWords.length; i++) {
     if (name.indexOf(attractionWords[i]) >= 0) return 'attraction';
   }
+
+  if (ride && ride.classification) return ride.classification === 'ride' ? 'ride' : 'attraction';
 
   // Everything else in the park API is treated as a ride-style stop by default.
   return 'ride';
@@ -4315,7 +4317,7 @@ function currentWaitFreshness(ride) {
   return window.RideHeroIntelligence.waitFreshness(waitObservationForRide(ride));
 }
 function waitFreshnessCopy(freshness) {
-  if (!freshness || freshness.availability === 'unavailable' || freshness.state === 'unavailable') return 'Live waits temporarily unavailable';
+  if (!freshness || freshness.availability === 'unavailable' || freshness.state === 'unavailable') return 'Live waits unavailable';
   if (freshness.state === 'not_applicable') return 'Ride is unavailable';
   if (freshness.freshness === 'stale') return 'Wait data may be outdated';
   if (freshness.freshness === 'aging') return 'Waits updated about ' + Math.max(1, Math.round(freshness.ageMinutes || 0)) + ' min ago';
@@ -4765,18 +4767,40 @@ function skipCurrentRide() {
 }
 
 function startWalkingToCurrentRide() {
+  var target = document.getElementById('rh-route-map-card');
+  if (target) {
+    target.classList.remove('is-map-active');
+    target.classList.add('is-walking-preview');
+    if (activeParkMapController && typeof activeParkMapController.setCompact === 'function') activeParkMapController.setCompact(true);
+  }
   var mapButton = document.querySelector('[data-rh-open-map]');
-  if (mapButton && mapButton.getAttribute('aria-expanded') !== 'true') mapButton.click();
-  var target = document.querySelector('#route-body .map-section') || document.getElementById('route-body');
-  setRouteIntelligenceNotice('Walking guidance ready', routeLocationSourceCopy() + '. The map and route list are below.', 'info', false);
+  if (mapButton) {
+    mapButton.setAttribute('aria-expanded', 'false');
+    var mapLabel = mapButton.querySelector('span');
+    if (mapLabel) mapLabel.textContent = 'Map';
+  }
+  announceRouteGuidance('Walking guidance ready. ' + routeLocationSourceCopy() + '. Compact route map shown.');
   if (target) target.scrollIntoView({ behavior:(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) ? 'auto' : 'smooth', block:'start' });
+}
+
+function announceRouteGuidance(message) {
+  var status = document.getElementById('route-guidance-status');
+  if (!status) return;
+  if (status._rideHeroTimer) window.clearTimeout(status._rideHeroTimer);
+  status.textContent = '';
+  status._rideHeroTimer = window.setTimeout(function(){ status.textContent = String(message || ''); }, 0);
 }
 
 function setRouteIntelligenceNotice(title, message, kind, prompt) {
   var notice = document.getElementById('route-intelligence-notice');
   if (!notice) return;
+  if (notice._rideHeroTimer) {
+    window.clearTimeout(notice._rideHeroTimer);
+    notice._rideHeroTimer = null;
+  }
+  var transient = !prompt;
   notice.hidden = false;
-  notice.className = 'rh-route-notice' + (kind === 'warning' ? ' is-warning' : kind === 'unavailable' ? ' is-unavailable' : '');
+  notice.className = 'rh-route-notice' + (kind === 'warning' ? ' is-warning' : kind === 'unavailable' ? ' is-unavailable' : '') + (transient ? ' is-transient' : '');
   notice.innerHTML = '<strong>' + escHTML(title) + '</strong><span>' + escHTML(message) + '</span>' + (prompt ? '<div class="rh-route-notice-actions"><button type="button" data-route-update-accept>Re-optimize</button><button type="button" data-route-update-keep>Keep Current Route</button></div>' : '');
   var accept = notice.querySelector('[data-route-update-accept]');
   if (accept) accept.onclick = function(){ reoptimize({ trigger:pendingRouteUpdate && pendingRouteUpdate.type || 'conditions', preserveNotice:true }); };
@@ -4785,6 +4809,9 @@ function setRouteIntelligenceNotice(title, message, kind, prompt) {
   if (prompt) {
     notice.setAttribute('tabindex', '-1');
     notice.focus({ preventScroll:true });
+  } else {
+    notice.removeAttribute('tabindex');
+    notice._rideHeroTimer = window.setTimeout(function(){ notice.hidden = true; }, 4200);
   }
 }
 
@@ -4874,7 +4901,7 @@ function renderRouteContext(routeStops, options) {
   var freshnessCopy = waitFreshnessCopy(freshness);
   var freshnessClass = freshness.freshness === 'fresh' ? ' is-fresh' : freshness.freshness === 'aging' || freshness.freshness === 'stale' ? ' is-stale' : ' is-unavailable';
   var modeLabel = currentMode === 'quick' ? 'Quick Route' : 'Maximize My Day';
-  var statusMarkup = state.totalCount > 0 ? '<div class="rh-route-status" id="rh-route-status"><span class="rh-route-mode">' + escHTML(modeLabel) + '</span><span class="rh-route-dot" aria-hidden="true">•</span><span class="rh-route-progress" id="rh-route-progress">' + state.completedCount + ' of ' + state.totalCount + ' complete</span><span class="rh-route-divider" aria-hidden="true"></span><span class="rh-route-wait-status' + freshnessClass + '"><i aria-hidden="true"></i><span>' + escHTML(freshnessCopy) + '</span></span></div>' : '';
+  var statusMarkup = state.totalCount > 0 ? '<div class="rh-route-status" id="rh-route-status"><span class="rh-route-summary"><span class="rh-route-mode">' + escHTML(modeLabel) + '</span><span class="rh-route-dot" aria-hidden="true">•</span><span class="rh-route-progress" id="rh-route-progress">' + state.completedCount + ' of ' + state.totalCount + ' complete</span></span><span class="rh-route-divider" aria-hidden="true"></span><span class="rh-route-wait-status' + freshnessClass + '"><i aria-hidden="true"></i><span>' + escHTML(freshnessCopy) + '</span></span></div>' : '';
   context.hidden = false;
   context.innerHTML =
     '<div class="rh-route-dashboard">' +
@@ -4969,17 +4996,27 @@ function reoptimizeActiveRoute(trigger) {
 
 function bindRoutePageActions(routeStops) {
   var mapButton = document.querySelector('[data-rh-open-map]');
-  if (mapButton) mapButton.onclick = function(){
-    var target = document.getElementById('rh-route-map-card');
-    if (target) {
-      var expanded = target.classList.toggle('is-map-active');
+  function setMapInspectorOpen(target, expanded, returnFocus) {
+    if (!target) return;
+    target.classList.toggle('is-map-active', expanded);
+    if (mapButton) {
       mapButton.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-      if (activeParkMapController && typeof activeParkMapController.setCompact === 'function') activeParkMapController.setCompact(!expanded);
+      var mapLabel = mapButton.querySelector('span');
+      if (mapLabel) mapLabel.textContent = expanded ? 'Close Map' : 'Map';
+    }
+    if (activeParkMapController && typeof activeParkMapController.setCompact === 'function') activeParkMapController.setCompact(!expanded);
+    if (expanded) {
       target.scrollIntoView({ behavior:(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) ? 'auto' : 'smooth', block:'start' });
       var heading = document.getElementById('rh-route-map-title');
-      if (expanded && heading) heading.focus({ preventScroll:true });
-    }
+      if (heading) heading.focus({ preventScroll:true });
+    } else if (returnFocus && mapButton) mapButton.focus({ preventScroll:true });
+  }
+  if (mapButton) mapButton.onclick = function(){
+    var target = document.getElementById('rh-route-map-card');
+    setMapInspectorOpen(target, !(target && target.classList.contains('is-map-active')), false);
   };
+  var closeMapButton = document.querySelector('[data-rh-close-map]');
+  if (closeMapButton) closeMapButton.onclick = function(){ setMapInspectorOpen(document.getElementById('rh-route-map-card'), false, true); };
   var reoptimizeButton = document.querySelector('[data-rh-reoptimize-route]');
   if (reoptimizeButton) reoptimizeButton.onclick = function(){ reoptimizeActiveRoute('manual'); };
   var fullRouteButton = document.querySelector('[data-rh-view-full-route]');
@@ -5012,7 +5049,7 @@ function renderRoutePage(routeStops, options) {
   if (routeScreen) routeScreen.classList.remove('is-route-complete');
   routeBody.innerHTML =
     '<section class="rh-route-map-card rh-upcoming-card map-section" id="rh-route-map-card" aria-labelledby="rh-up-next-title">' +
-      '<div class="rh-route-map-heading"><h2 id="rh-route-map-title" tabindex="-1">Route map</h2><span>Park route view</span></div>' +
+      '<div class="rh-route-map-heading"><h2 id="rh-route-map-title" tabindex="-1">Route map</h2><button class="rh-route-map-close" type="button" data-rh-close-map aria-label="Close detailed route map">Close</button></div>' +
       '<span class="rh-map-walk-chip" id="rh-map-walk-chip" hidden></span>' +
       '<div class="map-wrap" id="map-container"></div>' +
       '<section class="rh-up-next" aria-labelledby="rh-up-next-title"><div class="rh-up-next-heading"><h2 id="rh-up-next-title">Upcoming</h2><button type="button" data-rh-view-full-route aria-expanded="false" aria-controls="rh-route-full-itinerary">View full route <span aria-hidden="true">›</span></button></div><div class="rh-up-next-list" id="rh-up-next-list"></div></section>' +

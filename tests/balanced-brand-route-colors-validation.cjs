@@ -27,11 +27,11 @@ assert.doesNotMatch(layer, /gradient|purple|pink/i,
 assert.doesNotMatch(layer, /(?:^|\n)\s*(?:width|min-width|max-width|height|min-height|max-height|margin|padding|gap|display|position|transform|overflow|font-size|line-height|grid-template-columns)\s*:/m,
   'the color layer must not change the validated one-screen geometry');
 
-assert.match(html, /css\/ride-intelligence\.css\?v=6/,
+assert.match(html, /css\/ride-intelligence\.css\?v=7/,
   'the document must request the new route color stylesheet version');
-assert.match(worker, /const CACHE_NAME = 'ridehero-shell-v27'/,
+assert.match(worker, /const CACHE_NAME = 'ridehero-shell-v28'/,
   'the app shell cache must advance for the live visual update');
-assert.match(worker, /\.\/css\/ride-intelligence\.css\?v=6/,
+assert.match(worker, /\.\/css\/ride-intelligence\.css\?v=7/,
   'the new route color stylesheet must be available offline');
 
 console.log('Balanced Brand Quick Route and Maximize My Day color contracts passed.');
