@@ -8,6 +8,7 @@ const onboardingCss = fs.readFileSync(path.join(root, 'css', 'onboarding.css'), 
 const growthCss = fs.readFileSync(path.join(root, 'css', 'growth-engine.css'), 'utf8');
 const friendsCss = fs.readFileSync(path.join(root, 'css', 'friends.css'), 'utf8');
 const mapCss = fs.readFileSync(path.join(root, 'css', 'park-map.css'), 'utf8');
+const intelligenceCss = fs.readFileSync(path.join(root, 'css', 'ride-intelligence.css'), 'utf8');
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 
 assert.match(css, /grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/, 'wide cards must use shrink-safe grid tracks');
@@ -46,5 +47,19 @@ assert.match(onboardingCss, /grid-template-columns:minmax\(0,1fr\) auto minmax\(
 assert.match(friendsCss, /\.friends-trigger\s*\{[\s\S]*min-width:\s*44px[\s\S]*height:\s*44px/, 'the Friends shortcut must remain touch friendly');
 assert.match(mapCss, /height:clamp\(280px,66vw,390px\)/, 'live maps must use a bounded responsive viewport');
 assert.match(mapCss, /@media\(max-width:350px\)/, 'live maps need an explicit 320px layout rule');
+assert.match(intelligenceCss, /@media \(max-width:430px\) and \(max-height:700px\)/,
+  'short mobile route screens need a height-aware single-screen layout');
+assert.match(intelligenceCss, /\.rh-route-map-card:not\(\.is-map-active\)>\.map-wrap[\s\S]*display:none!important/,
+  'the real map must stay collapsed until the user selects Map');
+assert.match(intelligenceCss, /@media \(max-width:340px\) and \(max-height:620px\)[\s\S]*#rh-up-next-list>\.rh-up-next-row:nth-child\(n\+2\)\{display:none\}/,
+  '320x568-class screens must show one upcoming stop while preserving View full route');
+assert.match(intelligenceCss, /@media \(max-width:430px\) and \(max-height:700px\)[\s\S]*\.rh-next-primary\{min-height:48px/,
+  'the compact primary action must retain a prominent 48px touch target');
+assert.match(intelligenceCss, /@media \(max-width:430px\) and \(max-height:700px\)[\s\S]*\.rh-completed-toggle\{min-height:44px/,
+  'the completed-route disclosure must remain visible and touch friendly on short phones');
+assert.match(intelligenceCss, /@media \(max-width:430px\) and \(max-height:700px\)[\s\S]*\.route-wordmark-button\{width:108px;min-height:44px/,
+  'the compact RideHero home control must retain a 44px touch target');
+assert.doesNotMatch(intelligenceCss, /@media \(max-width:430px\) and \(max-height:700px\)[\s\S]*font-size:(?:8|9)px/,
+  'short-phone route copy must avoid 8px and 9px outdoor-unfriendly text');
 
 console.log('Responsive contract validation passed for 320/360/390/430px, tablet, and desktop CSS breakpoints.');

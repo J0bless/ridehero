@@ -240,5 +240,13 @@ assert.match(css, /body\.route-screen-active #screen-route \.rh-route-context,[\
   'tablet and desktop route content must stay calm and readable');
 assert.match(css, /@media \(prefers-reduced-motion:reduce\)[\s\S]*\.rh-route-context \*[\s\S]*transition:none!important/,
   'route interactions must respect reduced-motion preferences');
+assert.match(css, /body\.route-screen-active #screen-route \.rh-route-map-card:not\(\.is-map-active\)>\.map-wrap,[\s\S]*\.rh-map-walk-chip[\s\S]*display:none!important/,
+  'the resting route view must collapse the map preview without deleting the real map host');
+assert.match(css, /@media \(max-width:430px\) and \(max-height:700px\)[\s\S]*\.route-top-bar\{min-height:44px[\s\S]*\.rh-next-card\{border-radius:17px[\s\S]*\.rh-route-utility-actions button\{min-height:44px/,
+  '320x568-class phones need a compact single-screen hierarchy with accessible controls');
+assert.match(css, /@media \(max-width:340px\) and \(max-height:620px\)[\s\S]*#rh-up-next-list>\.rh-up-next-row:nth-child\(n\+2\)\{display:none\}/,
+  'short 320px-class screens must keep one upcoming ride and leave all others behind View full route');
+assert.doesNotMatch(css, /route-screen-active[^{}]*overflow\s*:\s*hidden/,
+  'single-screen compaction must not trap enlarged text or expanded route content');
 
 console.log('Approved-reference shared Your Route visual contracts passed.');
