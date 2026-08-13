@@ -61,7 +61,10 @@
   }
 
   function ensure() {
-    if (global.RideHeroGrowth) return Promise.resolve(global.RideHeroGrowth);
+    if (global.RideHeroGrowth) {
+      status('');
+      return Promise.resolve(global.RideHeroGrowth);
+    }
     if (loadPromise) return loadPromise;
     status('Loading RideHero sharing…');
     addStyles();
@@ -69,7 +72,10 @@
       .then(function(){ return loadScript('js/growth-analytics.js', function(){ return !!global.RideHeroAnalytics; }); })
       .then(function(){ return loadScript('js/share-actions.js', function(){ return !!global.RideHeroShareActions; }); })
       .then(function(){ return loadScript('js/growth-engine.js', function(){ return !!global.RideHeroGrowth; }); })
-      .then(function(){ return global.RideHeroGrowth; })
+      .then(function(){
+        status('');
+        return global.RideHeroGrowth;
+      })
       .catch(function(error) {
         loadPromise = null;
         status('Sharing is temporarily unavailable. Please try again.');
