@@ -43,8 +43,8 @@ assert.match(parkCard, /smart-entry-card[\s\S]*has-resume/,
   'the live Smart Entry card must expose its returning-route state to CSS');
 assert.match(parkCard, /isRecent\s*\?\s*['"] is-recent['"]\s*:\s*['"]['"]/,
   'recent-only and resumable routes must share an explicit large-card layout hook');
-assert.match(parkCard, /smart-entry-resume[\s\S]*Resume Route[\s\S]*Start New Route[\s\S]*Change Park/,
-  'the compact state must preserve resume, new-route, and manual park override actions');
+assert.match(parkCard, /smartEntryQueuePreview[\s\S]*Resume Route[\s\S]*Start New Route[\s\S]*Change Park/,
+  'the compact state must preserve the next-queue panel, resume, new-route, and manual park override actions');
 
 // Width containment and normal word boundaries prevent one-letter columns at
 // 320px while still allowing genuine long names to wrap.
