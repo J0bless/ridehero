@@ -49,10 +49,10 @@ assert.match(mapCss, /height:clamp\(280px,66vw,390px\)/, 'live maps must use a b
 assert.match(mapCss, /@media\(max-width:350px\)/, 'live maps need an explicit 320px layout rule');
 assert.match(intelligenceCss, /@media \(max-width:430px\) and \(max-height:700px\)/,
   'short mobile route screens need a height-aware single-screen layout');
-assert.match(intelligenceCss, /\.rh-route-map-card:not\(\.is-map-active\)>\.map-wrap[\s\S]*display:none!important/,
-  'the real map must stay collapsed until the user selects Map');
-assert.match(intelligenceCss, /@media \(max-width:340px\) and \(max-height:620px\)[\s\S]*#rh-up-next-list>\.rh-up-next-row:nth-child\(n\+2\)\{display:none\}/,
-  '320x568-class screens must show one upcoming stop while preserving View full route');
+assert.match(intelligenceCss, /\.rh-route-map-card:not\(\.is-map-active\)>\.map-wrap\{display:block!important\}/,
+  'the real compact map must remain visible in the resting route view');
+assert.match(intelligenceCss, /@media \(max-width:430px\) and \(max-height:700px\)[\s\S]*\.rh-park-map-viewport\{height:92px\}[\s\S]*\.rh-route-full-itinerary \.rh-up-next-row\{grid-template-columns:24px minmax\(0,1fr\) minmax\(68px,auto\)\}/,
+  '320x568-class screens must keep a compact map and readable disclosure-only itinerary');
 assert.match(intelligenceCss, /@media \(max-width:430px\) and \(max-height:700px\)[\s\S]*\.rh-next-primary\{min-height:48px/,
   'the compact primary action must retain a prominent 48px touch target');
 assert.match(intelligenceCss, /@media \(max-width:430px\) and \(max-height:700px\)[\s\S]*\.rh-completed-toggle\{min-height:44px/,
