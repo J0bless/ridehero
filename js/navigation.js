@@ -189,7 +189,7 @@
     return '<section class="smart-entry-card' + (resume ? ' has-resume' : '') + '" aria-labelledby="smart-entry-park-title">' +
       '<div class="smart-entry-location-mark" aria-hidden="true">&#9678;</div>' +
       '<div class="smart-entry-copy"><span>' + esc(heading) + '</span><h2 id="smart-entry-park-title">' + esc(park.shortName) + '</h2><p>' + esc(destination.name) + '</p><small>' + esc(detail) + '</small></div>' +
-      (resume ? '<div class="smart-entry-resume"><strong>Resume your ' + esc(park.shortName) + ' ' + esc(modeName()) + '</strong><span>' + progress + ' of ' + active.stops.length + ' ' + (appState.planningMode === 'quick' ? 'rides' : 'stops') + ' complete</span>' + (remaining[0] ? '<small>Next: ' + esc(remaining[0].name) + '</small>' : '') + '<small>Wait freshness updates when you resume.</small></div>' : '') +
+      (resume ? '<div class="smart-entry-resume"><strong class="smart-entry-resume-title">Resume your ' + esc(modeName()) + '</strong><span class="smart-entry-resume-progress">' + progress + ' of ' + active.stops.length + ' ' + (appState.planningMode === 'quick' ? 'rides' : 'stops') + ' complete</span>' + (remaining[0] ? '<small class="smart-entry-resume-next">Next: ' + esc(remaining[0].name) + '</small>' : '') + '<small class="smart-entry-resume-freshness">Wait freshness updates when you resume.</small></div>' : '') +
       '<div class="smart-entry-actions">' +
         (resume ? '<button class="smart-entry-primary" type="button" data-smart-source="' + (isRecent ? 'recent' : 'live') + '" data-smart-resume="' + esc(park.id) + '">Resume Route</button><button class="smart-entry-secondary" type="button" data-smart-source="' + (isRecent ? 'recent' : 'live') + '" data-smart-new="' + esc(park.id) + '">Start New Route</button>' : '<button class="smart-entry-primary" type="button" data-smart-source="' + (isRecent ? 'recent' : 'live') + '" data-smart-park="' + esc(park.id) + '">' + (isRecent ? 'Continue at ' : (high ? 'Continue' : 'Use ')) + (high ? '' : esc(park.shortName)) + '</button>') +
         '<button class="smart-entry-link" type="button" data-smart-change>Change Park</button>' +
@@ -207,7 +207,7 @@
     host.innerHTML = markup;
     host.setAttribute('aria-busy', status === 'loading' ? 'true' : 'false');
     bindSmartEntry();
-    var focusTarget = host.querySelector('h2');
+    var focusTarget = host.querySelector('h2') || (status === 'loading' ? host.querySelector('[role="status"]') : null);
     if (focusTarget) { focusTarget.setAttribute('tabindex', '-1'); focusTarget.focus({ preventScroll:true }); }
   }
 
@@ -278,6 +278,8 @@
     root.classList.add('active');
     document.querySelectorAll('.screen').forEach(function(screen){ if (screen !== root) screen.classList.remove('active'); });
     var parts = currentRoute();
+    if (parts[0] === 'smart-entry') document.body.classList.add('smart-entry-screen-active');
+    else document.body.classList.remove('smart-entry-screen-active');
     if (parts[0] === 'account') document.body.classList.add('auth-screen-active');
     else document.body.classList.remove('auth-screen-active');
     if (!parts.length || parts[0] === 'mode') {
@@ -303,7 +305,7 @@
     if (parts[0] === 'smart-entry') startSmartEntryDetection(false);
     initModeWorkflow();
     var heading = root.querySelector('.catalog-heading');
-    if (heading) heading.focus({ preventScroll: true });
+    if (heading && parts[0] !== 'smart-entry') heading.focus({ preventScroll: true });
     window.scrollTo(0, 0);
     updateContextActions();
     if (parkToActivate) activatePark(parkToActivate);
