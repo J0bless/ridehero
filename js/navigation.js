@@ -175,6 +175,28 @@
     if (global.RideHeroDataHealth) global.RideHeroDataHealth.render(root.querySelector('#data-health-root'));
   }
 
+  function smartEntryPlanPreview(park) {
+    var quick = appState.planningMode === 'quick';
+    var experienceFact = quick ? 'Operating rides only' : 'Eligible experiences';
+    var waitFact = park.liveWaitTimesAvailable === true ? 'Live waits when available' : 'Waits when available';
+    var walkingFact = park.mapRoutingAvailable || (park.map && park.map.routingQuality === 'verified') ? 'Walking-aware order' : 'Nearby-area guidance';
+    return '<div class="smart-entry-plan-preview" aria-labelledby="smart-entry-plan-preview-title">' +
+      '<div class="smart-entry-plan-art" aria-hidden="true">' +
+        '<svg viewBox="0 0 360 150" focusable="false">' +
+          '<path class="smart-entry-plan-horizon" d="M0 118 C58 94 92 124 144 108 S246 82 360 112 V150 H0 Z"></path>' +
+          '<path class="smart-entry-plan-route" d="M32 108 C76 38 124 129 181 76 S275 27 329 54"></path>' +
+          '<g class="smart-entry-plan-stop" transform="translate(32 108)"><circle r="18"></circle><text x="0" y="5">1</text></g>' +
+          '<g class="smart-entry-plan-stop" transform="translate(181 76)"><circle r="18"></circle><text x="0" y="5">2</text></g>' +
+          '<g class="smart-entry-plan-destination" transform="translate(329 54)"><path d="M0-24c-13 0-23 10-23 23 0 17 23 36 23 36S23 16 23-1C23-14 13-24 0-24Z"></path><path d="M0-12l4 8 9 1-7 6 2 9-8-4-8 4 2-9-7-6 9-1Z"></path></g>' +
+        '</svg>' +
+        '<span>Waits</span><span>Walking</span><span>Best next ride</span>' +
+      '</div>' +
+      '<div class="smart-entry-plan-copy"><strong id="smart-entry-plan-preview-title">RideHero will plan with</strong>' +
+        '<ul><li>' + esc(experienceFact) + '</li><li>' + esc(waitFact) + '</li><li>' + esc(walkingFact) + '</li></ul>' +
+      '</div>' +
+    '</div>';
+  }
+
   function smartEntryParkCard(park, detection, active) {
     var destination = catalog.destinations[park.destinationId];
     var isRecent = detection && detection.source === 'recent';
@@ -190,6 +212,7 @@
       '<div class="smart-entry-location-mark" aria-hidden="true">&#9678;</div>' +
       '<div class="smart-entry-copy"><span>' + esc(heading) + '</span><h2 id="smart-entry-park-title">' + esc(park.shortName) + '</h2><p>' + esc(destination.name) + '</p><small>' + esc(detail) + '</small></div>' +
       (resume ? '<div class="smart-entry-resume"><strong class="smart-entry-resume-title">Resume your ' + esc(modeName()) + '</strong><span class="smart-entry-resume-progress">' + progress + ' of ' + active.stops.length + ' ' + (appState.planningMode === 'quick' ? 'rides' : 'stops') + ' complete</span>' + (remaining[0] ? '<small class="smart-entry-resume-next">Next: ' + esc(remaining[0].name) + '</small>' : '') + '<small class="smart-entry-resume-freshness">Wait freshness updates when you resume.</small></div>' : '') +
+      (isRecent && !resume ? smartEntryPlanPreview(park) : '') +
       '<div class="smart-entry-actions">' +
         (resume ? '<button class="smart-entry-primary" type="button" data-smart-source="' + (isRecent ? 'recent' : 'live') + '" data-smart-resume="' + esc(park.id) + '">Resume Route</button><button class="smart-entry-secondary" type="button" data-smart-source="' + (isRecent ? 'recent' : 'live') + '" data-smart-new="' + esc(park.id) + '">Start New Route</button>' : '<button class="smart-entry-primary" type="button" data-smart-source="' + (isRecent ? 'recent' : 'live') + '" data-smart-park="' + esc(park.id) + '">' + (isRecent ? 'Continue at ' : (high ? 'Continue' : 'Use ')) + (high ? '' : esc(park.shortName)) + '</button>') +
         '<button class="smart-entry-link" type="button" data-smart-change>Change Park</button>' +
