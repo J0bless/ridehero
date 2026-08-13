@@ -7665,8 +7665,8 @@ updateNavState('setup');
 
 <script src="js/data-health.js?v=1"></script>
 <script src="js/supabase-config.js?v=3"></script>
-<script src="js/auth-client.js?v=1"></script>
-<script src="js/auth-ui.js?v=2"></script>
+<script src="js/auth-client.js?v=2"></script>
+<script src="js/auth-ui.js?v=3"></script>
 <script src="js/account-friends.js?v=1"></script>
 <script src="js/friends-store.js?v=1"></script>
 <script src="js/friends-ui.js?v=2"></script>
@@ -7675,7 +7675,13 @@ updateNavState('setup');
 <script src="js/pwa-install.js?v=1"></script>
 <script src="js/growth-loader.js?v=3"></script>
 <script>
-if (location.pathname === '/auth/callback' && window.RideHeroAuth) {
+var rideHeroAuthParams = new URLSearchParams(location.search || '');
+var rideHeroHasAuthQuery = ['code', 'error', 'error_code', 'error_description'].some(function(key) {
+  return rideHeroAuthParams.has(key);
+});
+var rideHeroIsAuthCallback = /^\/auth\/callback\/?$/.test(location.pathname || '') ||
+  ((location.pathname || '/') === '/' && rideHeroHasAuthQuery);
+if (rideHeroIsAuthCallback && window.RideHeroAuth) {
   window.RideHeroAuth.initialize().catch(function() {
     /* The Account page presents a safe retry state after callback failures. */
   }).then(function() {

@@ -23,7 +23,8 @@ function createSessionStorage() {
   };
 }
 
-function createFakeSupabase(initialSession) {
+function createFakeSupabase(initialSession, behavior) {
+  behavior = behavior || {};
   const calls = [];
   let observer = null;
   let session = initialSession || null;
@@ -34,6 +35,17 @@ function createFakeSupabase(initialSession) {
         return { data: { subscription: { unsubscribe() { observer = null; } } } };
       },
       getSession() { calls.push(['getSession']); return Promise.resolve({ data: { session }, error: null }); },
+      exchangeCodeForSession(code) {
+        calls.push(['exchangeCodeForSession', code]);
+        if (behavior.exchangeError) {
+          return Promise.resolve({ data: { session: null, user: null }, error: behavior.exchangeError });
+        }
+        session = behavior.exchangeSession || session;
+        return Promise.resolve({
+          data: { session, user: session && session.user || null },
+          error: null
+        });
+      },
       signInWithOtp(input) { calls.push(['email', input]); return Promise.resolve({ data: {}, error: null }); },
       signInWithOAuth(input) { calls.push(['oauth', input]); return Promise.resolve({ data: { url: 'https://provider.invalid' }, error: null }); },
       signOut(input) { calls.push(['signOut', input]); return Promise.resolve({ error: null }); }
@@ -93,18 +105,20 @@ function createFakeSupabase(initialSession) {
   assert.equal(created[1], 'https://ridehero-project.supabase.co');
   assert.equal(created[3].auth.flowType, 'pkce');
   assert.equal(created[3].auth.persistSession, true);
+  assert.equal(created[3].auth.detectSessionInUrl, false,
+    'RideHero must explicitly exchange PKCE codes so callback errors cannot be silently discarded');
 
   await client.signInWithEmail('person@example.com');
   const emailCall = fake.calls.find(call => call[0] === 'email')[1];
   assert.equal(emailCall.email, 'person@example.com');
-  assert.equal(emailCall.options.emailRedirectTo, 'https://ridehero-app.pages.dev/auth/callback');
+  assert.equal(emailCall.options.emailRedirectTo, 'https://ridehero-app.pages.dev/auth/callback/');
   assert.equal(emailCall.options.shouldCreateUser, true);
   assert.equal(sessionStorage.getItem(auth.RETURN_LOCATION_KEY), '/index.html?park=mk#route');
 
   await client.signInWithOAuth('google');
   const oauthCall = fake.calls.find(call => call[0] === 'oauth')[1];
   assert.equal(oauthCall.provider, 'google');
-  assert.equal(oauthCall.options.redirectTo, 'https://ridehero-app.pages.dev/auth/callback');
+  assert.equal(oauthCall.options.redirectTo, 'https://ridehero-app.pages.dev/auth/callback/');
   assert.throws(() => client.signInWithOAuth('github'), error => error.code === 'AUTH_UNAVAILABLE');
 
   fake.emit('SIGNED_IN', {
@@ -149,9 +163,9 @@ function createFakeSupabase(initialSession) {
   const unconfiguredCallback = auth.createAuthClient({
     root: {
       location: {
-        href: 'https://ridehero-app.pages.dev/auth/callback?code=unusable-code',
+        href: 'https://ridehero-app.pages.dev/auth/callback/?code=unusable-code',
         origin: 'https://ridehero-app.pages.dev',
-        pathname: '/auth/callback', search: '?code=unusable-code', hash: ''
+        pathname: '/auth/callback/', search: '?code=unusable-code', hash: ''
       },
       history: { state: null, replaceState(state, title, target) { unconfiguredCallbackHistory.push(target); } },
       sessionStorage: createSessionStorage()
@@ -162,36 +176,47 @@ function createFakeSupabase(initialSession) {
   await assert.rejects(() => unconfiguredCallback.initialize(), error => error.code === 'AUTH_NOT_CONFIGURED');
   assert.deepEqual(unconfiguredCallbackHistory, ['/#/account'], 'callback parameters must be removed even when auth is not configured');
 
-  const callbackHistory = [];
-  const callbackFake = createFakeSupabase();
-  const callback = auth.createAuthClient({
+  const cancelledHistory = [];
+  const cancelledFake = createFakeSupabase();
+  const cancelledCallback = auth.createAuthClient({
     root: {
       location: {
-        href: 'https://ridehero-app.pages.dev/auth/callback?error=access_denied&error_description=cancelled',
+        href: 'https://ridehero-app.pages.dev/auth/callback/?error=access_denied&error_description=cancelled',
         origin: 'https://ridehero-app.pages.dev',
-        pathname: '/auth/callback',
+        pathname: '/auth/callback/',
         search: '?error=access_denied&error_description=cancelled',
         hash: ''
       },
-      history: { state: null, replaceState(state, title, target) { callbackHistory.push(target); } },
+      history: { state: null, replaceState(state, title, target) { cancelledHistory.push(target); } },
       sessionStorage: createSessionStorage()
     },
     config: { supabaseUrl: 'https://ridehero-project.supabase.co', publishableKey: 'sb_publishable_public_test_key' },
-    loadLibrary: () => Promise.resolve(callbackFake.library)
+    loadLibrary: () => Promise.resolve(cancelledFake.library)
   });
-  await callback.initialize();
-  assert.deepEqual(callbackHistory, ['/#/account'], 'failed or cancelled callbacks must clean provider parameters after session processing');
+  const cancelledState = await cancelledCallback.initialize();
+  assert.equal(cancelledState.status, 'signed_out');
+  assert.equal(cancelledState.authenticated, false);
+  assert.equal(cancelledState.errorCode, 'AUTH_CANCELLED',
+    'provider cancellation must remain available to the Account UI after callback cleanup');
+  assert.deepEqual(cancelledHistory, ['/#/account'], 'cancelled callbacks must clean provider parameters');
+  assert.equal(cancelledFake.calls.some(call => call[0] === 'exchangeCodeForSession'), false,
+    'provider errors must not attempt a PKCE exchange');
 
   const signedInHistory = [];
-  const signedInFake = createFakeSupabase({
+  const exchangedSession = {
+    access_token: 'browser-session-token',
+    refresh_token: 'browser-refresh-token',
     user: { id: 'u2', email: 'signed@example.com', user_metadata: {} }
+  };
+  const signedInFake = createFakeSupabase(null, {
+    exchangeSession: exchangedSession
   });
   const signedInCallback = auth.createAuthClient({
     root: {
       location: {
-        href: 'https://ridehero-app.pages.dev/auth/callback?code=pkce-code',
+        href: 'https://ridehero-app.pages.dev/auth/callback/?code=pkce-code',
         origin: 'https://ridehero-app.pages.dev',
-        pathname: '/auth/callback', search: '?code=pkce-code', hash: ''
+        pathname: '/auth/callback/', search: '?code=pkce-code', hash: ''
       },
       history: { state: null, replaceState(state, title, target) { signedInHistory.push(target); } },
       sessionStorage: createSessionStorage()
@@ -199,10 +224,87 @@ function createFakeSupabase(initialSession) {
     config: { supabaseUrl: 'https://ridehero-project.supabase.co', publishableKey: 'sb_publishable_public_test_key' },
     loadLibrary: () => Promise.resolve(signedInFake.library)
   });
-  await signedInCallback.initialize();
+  const signedInState = await signedInCallback.initialize();
+  assert.deepEqual(
+    signedInFake.calls.filter(call => call[0] === 'exchangeCodeForSession'),
+    [['exchangeCodeForSession', 'pkce-code']],
+    'a callback code must be exchanged exactly once'
+  );
+  assert.equal(signedInState.status, 'signed_in');
+  assert.equal(signedInState.authenticated, true,
+    'a callback must become authenticated from the exchange result, without a preloaded session');
+  assert.equal(signedInState.user.id, 'u2');
+  assert.equal(signedInState.profileComplete, false);
   assert.deepEqual(signedInHistory, ['/#/account'], 'successful callbacks without a saved route must land on Account with callback data removed');
 
-  console.log('Supabase auth adapter configuration, redirect, session, profile, and safety contracts passed.');
+  const failedExchangeHistory = [];
+  const failedExchangeFake = createFakeSupabase(null, {
+    exchangeError: { status: 400, message: 'PKCE verifier was unavailable' }
+  });
+  const failedExchangeCallback = auth.createAuthClient({
+    root: {
+      location: {
+        href: 'https://ridehero-app.pages.dev/auth/callback/?code=bad-pkce-code',
+        origin: 'https://ridehero-app.pages.dev',
+        pathname: '/auth/callback/', search: '?code=bad-pkce-code', hash: ''
+      },
+      history: { state: null, replaceState(state, title, target) { failedExchangeHistory.push(target); } },
+      sessionStorage: createSessionStorage()
+    },
+    config: { supabaseUrl: 'https://ridehero-project.supabase.co', publishableKey: 'sb_publishable_public_test_key' },
+    loadLibrary: () => Promise.resolve(failedExchangeFake.library)
+  });
+  const failedExchangeState = await failedExchangeCallback.initialize();
+  assert.equal(failedExchangeState.status, 'signed_out');
+  assert.equal(failedExchangeState.authenticated, false);
+  assert.equal(failedExchangeState.errorCode, 'AUTH_UNAVAILABLE');
+  assert.deepEqual(failedExchangeHistory, ['/#/account'],
+    'failed exchanges must remove the unusable authorization code from history');
+
+  const legacyCodeHistory = [];
+  const legacyCodeFake = createFakeSupabase(null, { exchangeSession: exchangedSession });
+  const legacyCodeCallback = auth.createAuthClient({
+    root: {
+      location: {
+        href: 'https://ridehero-app.pages.dev/?code=legacy-hosting-code',
+        origin: 'https://ridehero-app.pages.dev',
+        pathname: '/', search: '?code=legacy-hosting-code', hash: ''
+      },
+      history: { state: null, replaceState(state, title, target) { legacyCodeHistory.push(target); } },
+      sessionStorage: createSessionStorage()
+    },
+    config: { supabaseUrl: 'https://ridehero-project.supabase.co', publishableKey: 'sb_publishable_public_test_key' },
+    loadLibrary: () => Promise.resolve(legacyCodeFake.library)
+  });
+  const legacyCodeState = await legacyCodeCallback.initialize();
+  assert.equal(legacyCodeState.authenticated, true);
+  assert.deepEqual(legacyCodeFake.calls.filter(call => call[0] === 'exchangeCodeForSession'),
+    [['exchangeCodeForSession', 'legacy-hosting-code']]);
+  assert.deepEqual(legacyCodeHistory, ['/#/account'],
+    'legacy root callbacks must exchange and clean authorization codes left by the former hosting redirect');
+
+  const legacyErrorHistory = [];
+  const legacyErrorFake = createFakeSupabase();
+  const legacyErrorCallback = auth.createAuthClient({
+    root: {
+      location: {
+        href: 'https://ridehero-app.pages.dev/?error=access_denied&error_description=cancelled',
+        origin: 'https://ridehero-app.pages.dev',
+        pathname: '/', search: '?error=access_denied&error_description=cancelled', hash: ''
+      },
+      history: { state: null, replaceState(state, title, target) { legacyErrorHistory.push(target); } },
+      sessionStorage: createSessionStorage()
+    },
+    config: { supabaseUrl: 'https://ridehero-project.supabase.co', publishableKey: 'sb_publishable_public_test_key' },
+    loadLibrary: () => Promise.resolve(legacyErrorFake.library)
+  });
+  const legacyErrorState = await legacyErrorCallback.initialize();
+  assert.equal(legacyErrorState.status, 'signed_out');
+  assert.equal(legacyErrorState.errorCode, 'AUTH_CANCELLED');
+  assert.deepEqual(legacyErrorHistory, ['/#/account'],
+    'legacy root provider errors must be surfaced and removed from history');
+
+  console.log('Supabase auth adapter configuration, explicit PKCE callbacks, session, profile, and safety contracts passed.');
 })().catch(error => {
   console.error(error);
   process.exitCode = 1;

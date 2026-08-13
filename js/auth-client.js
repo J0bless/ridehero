@@ -36,12 +36,13 @@
     switch (code) {
       case 'AUTH_NOT_CONFIGURED': return 'RideHero accounts are not available in this environment yet.';
       case 'AUTH_REQUIRED': return 'Sign in to continue.';
+      case 'AUTH_CANCELLED': return 'Sign-in was canceled. You can try again when you are ready.';
       case 'EMAIL_INVALID': return 'Enter a valid email address.';
       case 'HANDLE_INVALID': return 'Use 3–24 lowercase letters, numbers, or underscores.';
       case 'RATE_LIMITED': return 'Please wait a moment before trying again.';
       case 'PROFILE_UNAVAILABLE': return 'Your RideHero handle could not be saved right now.';
       case 'DELETE_UNAVAILABLE': return 'Account deletion is not available in this environment.';
-      default: return 'RideHero sign-in is temporarily unavailable. Please try again.';
+      default: return 'We could not complete sign-in. Try again in this browser, or use email.';
     }
   }
 
@@ -214,6 +215,7 @@
     var authSubscription = null;
     var activeSession = null;
     var activeProfile = null;
+    var callbackWasCleared = false;
     var state = {
       configured: false,
       status: 'unconfigured',
@@ -314,15 +316,32 @@
       return false;
     }
 
-    function isAuthCallback() {
+    function authCallbackDetails() {
       var location = environment.location;
-      return !!(location && /^\/auth\/callback\/?$/.test(String(location.pathname || '')));
+      if (!location) return Object.freeze({ active: false, code: '', errorCode: '' });
+      var pathname = String(location.pathname || '/');
+      var params = new URLSearchParams(String(location.search || ''));
+      var hasAuthQuery = AUTH_QUERY_KEYS.some(function(key) { return params.has(key); });
+      var active = /^\/auth\/callback\/?$/.test(pathname) || (pathname === '/' && hasAuthQuery);
+      if (!active) return Object.freeze({ active: false, code: '', errorCode: '' });
+      var providerError = cleanString(params.get('error') || params.get('error_code'), 80).toLocaleLowerCase();
+      var hasProviderError = !!providerError || params.has('error_description');
+      return Object.freeze({
+        active: true,
+        code: cleanString(params.get('code'), 2048),
+        errorCode: providerError === 'access_denied' ? 'AUTH_CANCELLED' : (hasProviderError ? 'AUTH_UNAVAILABLE' : '')
+      });
+    }
+
+    function isAuthCallback() {
+      return authCallbackDetails().active;
     }
 
     function clearAuthCallback() {
-      if (!isAuthCallback()) return false;
+      if (callbackWasCleared || !isAuthCallback()) return false;
       if (environment.history && typeof environment.history.replaceState === 'function') {
         environment.history.replaceState(environment.history.state || null, '', '/#/account');
+        callbackWasCleared = true;
         return true;
       }
       return false;
@@ -331,7 +350,7 @@
     function redirectUrl() {
       var current = safeUrl(environment.location && environment.location.href, environment);
       if (!current) return '';
-      return current.origin + '/auth/callback';
+      return current.origin + '/auth/callback/';
     }
 
     function loadClient() {
@@ -348,7 +367,7 @@
         client = library.createClient(config.supabaseUrl, config.publishableKey, {
           auth: {
             autoRefreshToken: true,
-            detectSessionInUrl: true,
+            detectSessionInUrl: false,
             flowType: 'pkce',
             persistSession: true
           },
@@ -391,19 +410,46 @@
 
     function initialize() {
       if (initializePromise) return initializePromise;
-      var callbackProcessingAttempted = false;
+      var callback = authCallbackDetails();
+      var callbackProcessingAttempted = callback.active;
       initializePromise = loadClient().then(function(loadedClient) {
         var observed = loadedClient.auth.onAuthStateChange(function(event, session) {
           applySession(session, event);
           if (session && session.user) Promise.resolve().then(refreshProfile);
         });
         authSubscription = observed && observed.data && observed.data.subscription || null;
-        callbackProcessingAttempted = true;
+        if (callback.errorCode) {
+          clearAuthCallback();
+          activeSession = null;
+          activeProfile = null;
+          return { data: { session: null }, errorCode: callback.errorCode, callbackHandled: true };
+        }
+        if (callback.code) {
+          if (typeof loadedClient.auth.exchangeCodeForSession !== 'function') {
+            return { data: { session: null }, errorCode: 'AUTH_UNAVAILABLE', callbackHandled: true };
+          }
+          return Promise.resolve(loadedClient.auth.exchangeCodeForSession(callback.code)).then(function(result) {
+            if (result && result.error) throw result.error;
+            return { data: { session: result && result.data && result.data.session || null }, callbackHandled: true };
+          }).catch(function() {
+            return { data: { session: null }, errorCode: 'AUTH_UNAVAILABLE', callbackHandled: true };
+          });
+        }
         return loadedClient.auth.getSession();
       }).then(function(result) {
+        if (result && result.callbackHandled && result.errorCode) {
+          clearAuthCallback();
+          return setState({
+            configured: configuration().configured,
+            status: 'signed_out',
+            user: null,
+            profileComplete: false,
+            errorCode: result.errorCode
+          });
+        }
         if (result && result.error) throw result.error;
         applySession(result && result.data && result.data.session || null, 'INITIAL_SESSION');
-        if (!(result && result.data && result.data.session)) clearAuthCallback();
+        if (callbackProcessingAttempted && !(result && result.data && result.data.session)) clearAuthCallback();
         return refreshProfile().then(publicState);
       }).catch(function(error) {
         initializePromise = null;
@@ -429,6 +475,7 @@
       var email = normalizeEmail(value);
       var config = configuration();
       if (!config.emailEnabled) return Promise.reject(authError('AUTH_UNAVAILABLE'));
+      if (state.errorCode) setState({ configured: config.configured, status: activeSession && activeSession.user ? 'signed_in' : 'signed_out', errorCode: null });
       rememberReturnLocation();
       return requireClient().then(function(loadedClient) {
         return loadedClient.auth.signInWithOtp({
@@ -450,6 +497,7 @@
       var provider = normalizeProvider(value);
       var config = configuration();
       if (config.enabledProviders.indexOf(provider) === -1) return Promise.reject(authError('AUTH_UNAVAILABLE'));
+      if (state.errorCode) setState({ configured: config.configured, status: activeSession && activeSession.user ? 'signed_in' : 'signed_out', errorCode: null });
       rememberReturnLocation();
       return requireClient().then(function(loadedClient) {
         return loadedClient.auth.signInWithOAuth({

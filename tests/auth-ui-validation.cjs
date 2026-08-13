@@ -15,7 +15,9 @@ assert.match(client, /'\/dist\/umd\/supabase\.min\.js'/);
 assert.match(client, /sha384-l8ah\+VgaWtk1mvOe9VC\+OirC6qHFF4yH7l7mKRidV9MSti3E9F463bMp6ZVN4kuC/);
 assert.match(client, /script\.crossOrigin = 'anonymous'/);
 assert.match(client, /script\.referrerPolicy = 'no-referrer'/);
-assert.match(client, /current\.origin \+ '\/auth\/callback'/);
+assert.match(client, /current\.origin \+ '\/auth\/callback\/'/);
+assert.match(client, /detectSessionInUrl:\s*false/);
+assert.match(client, /exchangeCodeForSession/);
 assert.match(client, /signInWithOtp/);
 assert.match(client, /signInWithOAuth/);
 assert.match(client, /provider: provider/);
@@ -47,6 +49,10 @@ assert.match(ui, /title\.tabIndex = -1/);
 assert.match(ui, /title\.focus/);
 assert.doesNotMatch(ui, /innerHTML|outerHTML|insertAdjacentHTML/, 'account and profile text must only render through textContent');
 assert.doesNotMatch(ui, /error\.message/, 'provider and session errors must not leak through the UI');
+assert.match(ui, /case ['"]AUTH_CANCELLED['"][\s\S]{0,180}cancel/i,
+  'a cancelled provider flow must have clear, non-technical Account-page copy');
+assert.match(ui, /state\.errorCode[\s\S]{0,240}(?:status\.textContent|announce)|(?:status\.textContent|announce)[\s\S]{0,240}state\.errorCode/,
+  'callback failures retained in auth state must be visible in the Account-page live region');
 assert.match(ui, /canRequestAccountDeletion\(\)/, 'deletion UI must be backend-gated');
 
 assert.match(css, /\.auth-trigger[\s\S]*min-width:\s*44px[\s\S]*height:\s*44px/);

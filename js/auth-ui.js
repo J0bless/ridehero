@@ -30,12 +30,13 @@
     switch (code) {
       case 'AUTH_NOT_CONFIGURED': return 'RideHero accounts are not available here yet.';
       case 'AUTH_REQUIRED': return 'Sign in to continue.';
+      case 'AUTH_CANCELLED': return 'Sign-in was canceled. You can try again when you are ready.';
       case 'EMAIL_INVALID': return 'Enter a valid email address.';
       case 'HANDLE_INVALID': return 'Use 3-24 lowercase letters, numbers, or underscores.';
       case 'RATE_LIMITED': return 'Please wait a moment before trying again.';
       case 'PROFILE_UNAVAILABLE': return 'That handle could not be saved. It may already be in use.';
       case 'DELETE_UNAVAILABLE': return 'Account deletion is temporarily unavailable.';
-      default: return 'We could not complete that sign-in request. Please try again.';
+      default: return 'We could not complete sign-in. Try again in this browser, or use email.';
     }
   }
 
@@ -345,6 +346,8 @@
       renderSignedOut(content, status, state);
     }
     if (notice) status.textContent = notice;
+    else if (state.errorCode) status.textContent = safeMessage({ code: state.errorCode });
+    else status.textContent = '';
   }
 
   function createSurface(kind) {

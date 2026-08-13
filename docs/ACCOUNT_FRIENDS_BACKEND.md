@@ -50,10 +50,10 @@ Deployment checklist:
 
 1. Apply `supabase/migrations/202608120001_account_friends.sql` to the production project.
 2. Set the Supabase Auth **Site URL** to RideHero's exact production origin.
-3. Add the exact RideHero return URL, `https://<ridehero-host>/auth/callback`, to **Additional Redirect URLs**. Avoid production wildcards.
+3. Add the exact RideHero return URL, `https://<ridehero-host>/auth/callback/`, to **Additional Redirect URLs**. Avoid production wildcards. During the trailing-slash rollout, retain the former `/auth/callback` URL temporarily for in-flight sign-ins.
 4. Configure Google and Facebook to use Supabase's project callback URL, `https://<project-ref>.supabase.co/auth/v1/callback`, then enter their provider secrets only in the Supabase dashboard.
 5. Confirm `js/supabase-config.js` contains only the production project URL and browser publishable key. Never place a service-role key, Google secret, Facebook secret, SMTP credential, or provider token in that file.
 6. Configure production SMTP for email links and review Supabase Auth rate limits, CAPTCHA, allowed origins, and abuse controls before enabling public sign-up.
-7. Verify the deployed `/auth/callback` response is `Cache-Control: no-store`, `X-Robots-Tag: noindex, nofollow`, and `Referrer-Policy: no-referrer`. Cloudflare applies redirects before `_headers`, so this response-header behavior must be checked after deployment; use a Pages Function for the callback if the static rewrite does not retain those headers.
+7. Verify the deployed `/auth/callback/` response is `Cache-Control: no-store`, `X-Robots-Tag: noindex, nofollow`, and `Referrer-Policy: no-referrer`. Cloudflare applies redirects before `_headers`, so this response-header behavior must be checked after deployment; use a Pages Function for the callback if the static rewrite does not retain those headers.
 
-RideHero is connected to the `wiryzupgdfxftrvjvdzh` project with email enabled. Google and Facebook remain disabled in the client configuration until their matching Supabase providers are enabled. The migration must be applied before profile setup and account-backed Friends can work.
+RideHero is connected to the `wiryzupgdfxftrvjvdzh` project with email, Google, and Facebook enabled in the browser configuration. The migration must be applied before profile setup and account-backed Friends can work.
