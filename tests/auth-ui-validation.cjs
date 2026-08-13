@@ -51,7 +51,10 @@ assert.match(ui, /canRequestAccountDeletion\(\)/, 'deletion UI must be backend-g
 
 assert.match(css, /\.auth-trigger[\s\S]*min-width:\s*44px[\s\S]*height:\s*44px/);
 assert.match(css, /\.auth-primary[\s\S]*min-height:\s*48px/);
-assert.match(css, /focus-visible/);
+assert.match(css, /\.auth-title\[tabindex="-1"\]:focus\s*\{[^{}]*outline:\s*(?:0|none)[^{}]*\}/s,
+  'programmatic focus on the Account page heading must not draw a grey browser boundary');
+assert.match(css, /\.auth-dialog :focus-visible[\s\S]*outline:\s*3px solid/,
+  'removing the heading boundary must preserve visible keyboard focus for interactive auth controls');
 assert.match(css, /@media\s*\(max-width:\s*350px\)/);
 assert.match(css, /@media\s*\(prefers-reduced-motion:\s*reduce\)/);
 
