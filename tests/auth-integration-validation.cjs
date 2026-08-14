@@ -48,7 +48,12 @@ assert.match(client, /origin\s*!==\s*resolved\.origin|resolved\.origin\s*!==\s*[
 assert.match(client, /indexOf\(['"]\/\/['"]\)\s*===\s*0|startsWith\(['"]\/\/['"]\)/, 'post-auth navigation must reject protocol-relative redirects');
 
 // The public surface is intentionally limited to the three approved options.
-assert.match(client + ui, /signInWithOtp/, 'email magic-link/OTP sign-in must be implemented');
+assert.match(client + ui, /signInWithOtp/, 'email OTP delivery must be implemented');
+assert.match(client + ui, /verifyEmailOtp/, 'email OTP verification must be implemented');
+assert.match(client, /verifyOtp\(\{[\s\S]{0,180}email:\s*email[\s\S]{0,180}token:\s*token[\s\S]{0,180}type:\s*['"]email['"]/,
+  'email codes must create a session through Supabase verifyOtp without a callback URL');
+assert.match(ui, /autocomplete\s*=\s*['"]one-time-code['"]/,
+  'the email-code input must expose one-time-code autofill semantics');
 assert.match(client + ui, /signInWithOAuth/, 'social sign-in must use the Supabase OAuth API');
 assert.match(client + ui, /['"]google['"]/, 'Google must be an approved provider');
 assert.match(client + ui, /['"]facebook['"]/, 'Facebook must be an approved provider');

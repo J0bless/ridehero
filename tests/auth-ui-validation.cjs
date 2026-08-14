@@ -19,6 +19,8 @@ assert.match(client, /current\.origin \+ '\/auth\/callback\/'/);
 assert.match(client, /detectSessionInUrl:\s*false/);
 assert.match(client, /exchangeCodeForSession/);
 assert.match(client, /signInWithOtp/);
+assert.match(client, /verifyOtp\(\{[\s\S]{0,180}email:\s*email[\s\S]{0,180}token:\s*token[\s\S]{0,180}type:\s*'email'/,
+  'email OTP verification must use the documented Supabase email contract');
 assert.match(client, /signInWithOAuth/);
 assert.match(client, /provider: provider/);
 assert.match(client, /onAuthStateChange/);
@@ -31,7 +33,14 @@ assert.doesNotMatch(client, /localStorage/, 'auth return routing must use sessio
 assert.match(ui, /function renderPage\(container\)/, 'auth UI must expose a full-page renderer');
 assert.match(ui, /render: renderPage/, 'navigation must be able to mount the Account page');
 assert.match(ui, /element\('dialog', 'auth-dialog'\)|createSurface\('dialog'\)/, 'an optional accessible modal launcher must remain available');
-assert.match(ui, /Email me a sign-in link/);
+assert.match(ui, /Email me a sign-in code/);
+assert.match(ui, /I already have a code/,
+  'a code received in another browser must be enterable without requesting it again');
+assert.match(ui, /autocomplete = 'one-time-code'/,
+  'mobile browsers must be able to offer the emailed one-time code');
+assert.match(ui, /pattern = '\[0-9\]\{6\}'/,
+  'the email code field must enforce the configured six-digit format');
+assert.match(ui, /verifyEmailOtp\(pendingEmail, codeInput\.value\)/);
 assert.match(ui, /Continue with Google/);
 assert.match(ui, /Continue with Facebook/);
 assert.match(ui, /Continue as guest/);
@@ -53,6 +62,8 @@ assert.match(ui, /case ['"]AUTH_CANCELLED['"][\s\S]{0,180}cancel/i,
   'a cancelled provider flow must have clear, non-technical Account-page copy');
 assert.match(ui, /case ['"]AUTH_BROWSER_CHANGED['"][\s\S]{0,220}(?:Chrome|Safari)/,
   'a missing PKCE verifier must give an actionable same-browser recovery message');
+assert.match(ui, /case ['"]EMAIL_CODE_INVALID['"][\s\S]{0,180}(?:invalid|expired)/,
+  'invalid or expired email codes must have safe actionable copy');
 assert.match(ui, /state\.errorCode[\s\S]{0,240}(?:status\.textContent|announce)|(?:status\.textContent|announce)[\s\S]{0,240}state\.errorCode/,
   'callback failures retained in auth state must be visible in the Account-page live region');
 assert.ok(ui.indexOf("append(panel, header, status, content)") >= 0,

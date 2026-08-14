@@ -113,6 +113,7 @@
 .auth-secondary,
 .auth-danger,
 .auth-delete-open,
+.auth-code-open,
 .auth-provider {
   min-height: 48px;
   border-radius: 15px;
@@ -166,6 +167,20 @@
   background: var(--auth-red);
   box-shadow: 0 10px 22px rgba(214, 40, 40, .2);
 }
+
+.auth-code-open {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 4px;
+  padding: 0 12px;
+  border: 0;
+  color: var(--auth-red);
+  background: transparent;
+}
+.auth-code-email { display: grid; gap: 2px; margin: 0 0 14px; color: var(--auth-muted); font-size: 13px; line-height: 1.4; }
+.auth-code-email strong { overflow-wrap: anywhere; color: var(--auth-navy); font-size: 14px; }
+.auth-code-input { text-align: center; font-size: 22px; font-weight: 850; letter-spacing: .18em; }
+.auth-code-switch { margin-top: 8px; }
 
 .auth-divider { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; margin: 17px 0; color: var(--auth-muted); font-size: 12px; }
 .auth-divider span { height: 1px; background: var(--auth-line); }

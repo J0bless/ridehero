@@ -9,9 +9,12 @@ assert.equal(auth.SUPABASE_VERSION, '2.112.3', 'Supabase must be pinned to an ex
 assert.equal(auth.SUPABASE_SCRIPT_URL, 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.3/dist/umd/supabase.min.js');
 assert.equal(auth.SUPABASE_SCRIPT_INTEGRITY, 'sha384-l8ah+VgaWtk1mvOe9VC+OirC6qHFF4yH7l7mKRidV9MSti3E9F463bMp6ZVN4kuC');
 assert.equal(auth.normalizeEmail(' Person@Example.COM '), 'person@example.com');
+assert.equal(auth.normalizeEmailOtp(' 123 456 '), '123456');
 assert.equal(auth.normalizeHandle('@Ride_Hero'), 'ride_hero');
 assert.equal(auth.normalizeDisplayName('  Eric   Rider  '), 'Eric Rider');
 assert.throws(() => auth.normalizeEmail('not-an-email'), error => error.code === 'EMAIL_INVALID');
+assert.throws(() => auth.normalizeEmailOtp('12345'), error => error.code === 'EMAIL_CODE_INVALID');
+assert.throws(() => auth.normalizeEmailOtp('12345x'), error => error.code === 'EMAIL_CODE_INVALID');
 assert.throws(() => auth.normalizeHandle('<script>'), error => error.code === 'HANDLE_INVALID');
 
 function createSessionStorage() {
@@ -47,6 +50,17 @@ function createFakeSupabase(initialSession, behavior) {
         });
       },
       signInWithOtp(input) { calls.push(['email', input]); return Promise.resolve({ data: {}, error: null }); },
+      verifyOtp(input) {
+        calls.push(['verifyOtp', input]);
+        if (behavior.verifyError) {
+          return Promise.resolve({ data: { session: null, user: null }, error: behavior.verifyError });
+        }
+        session = behavior.verifySession || session;
+        return Promise.resolve({
+          data: { session, user: session && session.user || null },
+          error: null
+        });
+      },
       signInWithOAuth(input) { calls.push(['oauth', input]); return Promise.resolve({ data: { url: 'https://provider.invalid' }, error: null }); },
       signOut(input) {
         calls.push(['signOut', input]);
@@ -111,12 +125,102 @@ function createFakeSupabase(initialSession, behavior) {
   assert.equal(created[3].auth.detectSessionInUrl, false,
     'RideHero must explicitly exchange PKCE codes so callback errors cannot be silently discarded');
 
-  await client.signInWithEmail('person@example.com');
+  const emailResult = await client.signInWithEmail('person@example.com');
+  assert.deepEqual(emailResult, { sent: true, email: 'person@example.com' });
   const emailCall = fake.calls.find(call => call[0] === 'email')[1];
   assert.equal(emailCall.email, 'person@example.com');
   assert.equal(emailCall.options.emailRedirectTo, 'https://ridehero-app.pages.dev/auth/callback/');
   assert.equal(emailCall.options.shouldCreateUser, true);
   assert.equal(sessionStorage.getItem(auth.RETURN_LOCATION_KEY), '/index.html?park=mk#route');
+
+  const otpRequestStorage = createSessionStorage();
+  const otpRequestFake = createFakeSupabase();
+  const otpRequestClient = auth.createAuthClient({
+    root: {
+      location: {
+        href: 'https://ridehero-app.pages.dev/index.html?park=mk#route',
+        origin: 'https://ridehero-app.pages.dev',
+        pathname: '/index.html', search: '?park=mk', hash: '#route'
+      },
+      history: { state: null, replaceState() {} },
+      sessionStorage: otpRequestStorage
+    },
+    config: {
+      supabaseUrl: 'https://ridehero-project.supabase.co',
+      publishableKey: 'sb_publishable_public_test_key',
+      emailEnabled: true
+    },
+    loadLibrary: () => Promise.resolve(otpRequestFake.library)
+  });
+  await otpRequestClient.initialize();
+  await otpRequestClient.signInWithEmail(' Person@Example.COM ');
+  assert.equal(otpRequestStorage.getItem(auth.RETURN_LOCATION_KEY), '/index.html?park=mk#route');
+
+  const otpHistory = [];
+  const freshBrowserStorage = createSessionStorage();
+  const otpSession = {
+    access_token: 'email-session-token',
+    refresh_token: 'email-refresh-token',
+    user: { id: 'email-user', email: 'person@example.com', email_confirmed_at: '2026-08-13T00:00:00Z', user_metadata: {} }
+  };
+  const otpFake = createFakeSupabase(null, { verifySession: otpSession });
+  const otpClient = auth.createAuthClient({
+    root: {
+      location: {
+        href: 'https://ridehero-app.pages.dev/#/account',
+        origin: 'https://ridehero-app.pages.dev',
+        pathname: '/', search: '', hash: '#/account'
+      },
+      history: { state: null, replaceState(state, title, target) { otpHistory.push(target); } },
+      sessionStorage: freshBrowserStorage
+    },
+    config: {
+      supabaseUrl: 'https://ridehero-project.supabase.co',
+      publishableKey: 'sb_publishable_public_test_key',
+      emailEnabled: true
+    },
+    loadLibrary: () => Promise.resolve(otpFake.library)
+  });
+  await otpClient.initialize();
+  const verifiedEmailState = await otpClient.verifyEmailOtp(' Person@Example.COM ', '123 456');
+  assert.deepEqual(
+    otpFake.calls.filter(call => call[0] === 'verifyOtp'),
+    [['verifyOtp', { email: 'person@example.com', token: '123456', type: 'email' }]],
+    'a fresh browser must exchange an email code without a PKCE verifier or prior send state'
+  );
+  assert.equal(verifiedEmailState.authenticated, true);
+  assert.equal(verifiedEmailState.user.id, 'email-user');
+  assert.deepEqual(otpHistory, [],
+    'a fresh browser must not invent a return route that existed only in the requesting browser');
+
+  const invalidOtpFake = createFakeSupabase(null, { verifyError: { status: 403, code: 'otp_expired' } });
+  const invalidOtpClient = auth.createAuthClient({
+    root: environment,
+    config: {
+      supabaseUrl: 'https://ridehero-project.supabase.co',
+      publishableKey: 'sb_publishable_public_test_key',
+      emailEnabled: true
+    },
+    loadLibrary: () => Promise.resolve(invalidOtpFake.library)
+  });
+  await invalidOtpClient.initialize();
+  await assert.rejects(() => invalidOtpClient.verifyEmailOtp('person@example.com', '123456'),
+    error => error.code === 'EMAIL_CODE_INVALID');
+  assert.equal(invalidOtpClient.getState().authenticated, false);
+
+  const limitedOtpFake = createFakeSupabase(null, { verifyError: { status: 429 } });
+  const limitedOtpClient = auth.createAuthClient({
+    root: environment,
+    config: {
+      supabaseUrl: 'https://ridehero-project.supabase.co',
+      publishableKey: 'sb_publishable_public_test_key',
+      emailEnabled: true
+    },
+    loadLibrary: () => Promise.resolve(limitedOtpFake.library)
+  });
+  await limitedOtpClient.initialize();
+  await assert.rejects(() => limitedOtpClient.verifyEmailOtp('person@example.com', '123456'),
+    error => error.code === 'RATE_LIMITED');
 
   await client.signInWithOAuth('google');
   const oauthCall = fake.calls.find(call => call[0] === 'oauth')[1];

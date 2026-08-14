@@ -39,6 +39,7 @@
       case 'AUTH_CANCELLED': return 'Sign-in was canceled. You can try again when you are ready.';
       case 'AUTH_BROWSER_CHANGED': return 'Sign-in could not return to the same browser. Open RideHero directly in Chrome or Safari and try again there.';
       case 'EMAIL_INVALID': return 'Enter a valid email address.';
+      case 'EMAIL_CODE_INVALID': return 'Enter the valid 6-digit code from your RideHero email.';
       case 'HANDLE_INVALID': return 'Use 3–24 lowercase letters, numbers, or underscores.';
       case 'RATE_LIMITED': return 'Please wait a moment before trying again.';
       case 'PROFILE_UNAVAILABLE': return 'Your RideHero handle could not be saved right now.';
@@ -66,6 +67,15 @@
     return 'AUTH_UNAVAILABLE';
   }
 
+  function classifyEmailOtpError(error) {
+    var status = Number(error && (error.status || error.statusCode));
+    if (status === 429) return authError('RATE_LIMITED');
+    if (status === 400 || status === 401 || status === 403 || status === 422) {
+      return authError('EMAIL_CODE_INVALID');
+    }
+    return authError('AUTH_UNAVAILABLE');
+  }
+
   function own(object, key) {
     return Object.prototype.hasOwnProperty.call(object || {}, key);
   }
@@ -81,6 +91,12 @@
     var email = cleanString(value, 254).toLocaleLowerCase();
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw authError('EMAIL_INVALID');
     return email;
+  }
+
+  function normalizeEmailOtp(value) {
+    var token = cleanString(value, 16).replace(/\s+/g, '');
+    if (!/^\d{6}$/.test(token)) throw authError('EMAIL_CODE_INVALID');
+    return token;
   }
 
   function normalizeHandle(value) {
@@ -511,9 +527,33 @@
         });
       }).then(function(result) {
         if (result && result.error) throw result.error;
-        return Object.freeze({ sent: true });
+        return Object.freeze({ sent: true, email: email });
       }).catch(function(error) {
         throw error instanceof AuthClientError ? error : classifyServiceError(error);
+      });
+    }
+
+    function verifyEmailOtp(emailValue, tokenValue) {
+      var email = normalizeEmail(emailValue);
+      var token = normalizeEmailOtp(tokenValue);
+      var config = configuration();
+      if (!config.emailEnabled) return Promise.reject(authError('AUTH_UNAVAILABLE'));
+      if (state.errorCode) setState({ configured: config.configured, status: activeSession && activeSession.user ? 'signed_in' : 'signed_out', errorCode: null });
+      return requireClient().then(function(loadedClient) {
+        if (typeof loadedClient.auth.verifyOtp !== 'function') throw authError('AUTH_UNAVAILABLE');
+        return loadedClient.auth.verifyOtp({
+          email: email,
+          token: token,
+          type: 'email'
+        });
+      }).then(function(result) {
+        if (result && result.error) throw result.error;
+        var session = result && result.data && result.data.session || null;
+        if (!session || !session.user) throw authError('AUTH_UNAVAILABLE');
+        applySession(session, 'SIGNED_IN');
+        return refreshProfile().then(publicState);
+      }).catch(function(error) {
+        throw error instanceof AuthClientError ? error : classifyEmailOtpError(error);
       });
     }
 
@@ -625,6 +665,7 @@
       getState: publicState,
       subscribe: subscribe,
       signInWithEmail: signInWithEmail,
+      verifyEmailOtp: verifyEmailOtp,
       signInWithOAuth: signInWithOAuth,
       completeProfile: completeProfile,
       signOut: signOut,
@@ -647,6 +688,7 @@
     ALLOWED_PROVIDERS: ALLOWED_PROVIDERS,
     AuthClientError: AuthClientError,
     normalizeEmail: normalizeEmail,
+    normalizeEmailOtp: normalizeEmailOtp,
     normalizeHandle: normalizeHandle,
     normalizeDisplayName: normalizeDisplayName,
     createAuthClient: createAuthClient,
@@ -654,6 +696,7 @@
     getState: defaultClient.getState,
     subscribe: defaultClient.subscribe,
     signInWithEmail: defaultClient.signInWithEmail,
+    verifyEmailOtp: defaultClient.verifyEmailOtp,
     signInWithOAuth: defaultClient.signInWithOAuth,
     completeProfile: defaultClient.completeProfile,
     signOut: defaultClient.signOut,

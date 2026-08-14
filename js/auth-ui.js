@@ -6,6 +6,7 @@
   var mountedPages = [];
   var previousFocus = null;
   var notice = '';
+  var pendingEmail = '';
 
   function element(tagName, className, text) {
     var node = global.document.createElement(tagName);
@@ -33,6 +34,7 @@
       case 'AUTH_CANCELLED': return 'Sign-in was canceled. You can try again when you are ready.';
       case 'AUTH_BROWSER_CHANGED': return 'Sign-in could not return to the same browser. Open RideHero directly in Chrome or Safari and try again there.';
       case 'EMAIL_INVALID': return 'Enter a valid email address.';
+      case 'EMAIL_CODE_INVALID': return 'That code is invalid or expired. Check the 6 digits and try again.';
       case 'HANDLE_INVALID': return 'Use 3-24 lowercase letters, numbers, or underscores.';
       case 'RATE_LIMITED': return 'Please wait a moment before trying again.';
       case 'PROFILE_UNAVAILABLE': return 'That handle could not be saved. It may already be in use.';
@@ -98,6 +100,9 @@
     if (dialog.open && typeof dialog.close === 'function') dialog.close();
     else dialog.removeAttribute('open');
     if (dialog.parentNode) dialog.parentNode.removeChild(dialog);
+    if (!mountedPages.some(function(page) { return page && page.surface && page.surface.parentNode; })) {
+      pendingEmail = '';
+    }
     if (previousFocus && typeof previousFocus.focus === 'function') {
       try { previousFocus.focus({ preventScroll: true }); } catch (error) { previousFocus.focus(); }
     }
@@ -129,37 +134,109 @@
   function renderSignedOut(content, status, state) {
     var config = global.RideHeroAuth.getConfiguration();
     var configured = !!state.configured;
-    var intro = element('p', 'auth-intro', 'Create an account to connect with friends and share RideHero routes across devices.');
-    var form = element('form', 'auth-email-form');
-    var label = element('label', 'auth-label', 'Email address');
-    label.htmlFor = 'ridehero-auth-email';
-    var input = element('input', 'auth-input');
-    input.id = 'ridehero-auth-email';
-    input.type = 'email';
-    input.inputMode = 'email';
-    input.autocomplete = 'email';
-    input.maxLength = 254;
-    input.required = true;
-    input.disabled = !configured || !config.emailEnabled;
-    input.placeholder = 'you@example.com';
-    var submit = element('button', 'auth-primary', 'Email me a sign-in link');
-    submit.type = 'submit';
-    submit.disabled = input.disabled;
-    append(form, label, input, submit);
-    form.addEventListener('submit', function(event) {
-      event.preventDefault();
-      setBusy(content, true);
-      status.textContent = 'Sending a secure sign-in link...';
-      global.RideHeroAuth.signInWithEmail(input.value).then(function() {
-        setBusy(content, false);
-        input.value = '';
-        status.textContent = 'Check your email for a secure RideHero sign-in link.';
-      }).catch(function(error) {
-        setBusy(content, false);
-        status.textContent = safeMessage(error);
-        input.focus({ preventScroll: true });
+    var intro = element('p', 'auth-intro', pendingEmail
+      ? 'Enter the 6-digit code from your email. You can open the email in any browser.'
+      : 'Create an account to connect with friends and share RideHero routes across devices.');
+    var form = element('form', pendingEmail ? 'auth-code-form' : 'auth-email-form');
+
+    if (pendingEmail) {
+      var emailSummary = element('p', 'auth-code-email');
+      append(emailSummary,
+        element('span', '', 'Code sent to'),
+        element('strong', '', pendingEmail)
+      );
+      var codeLabel = element('label', 'auth-label', '6-digit sign-in code');
+      codeLabel.htmlFor = 'ridehero-auth-code';
+      var codeInput = element('input', 'auth-input auth-code-input');
+      codeInput.id = 'ridehero-auth-code';
+      codeInput.type = 'text';
+      codeInput.inputMode = 'numeric';
+      codeInput.autocomplete = 'one-time-code';
+      codeInput.enterKeyHint = 'done';
+      codeInput.minLength = 6;
+      codeInput.maxLength = 6;
+      codeInput.pattern = '[0-9]{6}';
+      codeInput.required = true;
+      codeInput.disabled = !configured || !config.emailEnabled;
+      codeInput.placeholder = '123456';
+      codeInput.setAttribute('aria-describedby', 'ridehero-auth-code-help');
+      var codeHelp = element('p', 'auth-help', 'Codes expire and can only be used once.');
+      codeHelp.id = 'ridehero-auth-code-help';
+      var verify = element('button', 'auth-primary', 'Verify sign-in code');
+      verify.type = 'submit';
+      verify.disabled = codeInput.disabled;
+      var differentEmail = element('button', 'auth-secondary auth-code-switch', 'Use a different email');
+      differentEmail.type = 'button';
+      differentEmail.addEventListener('click', function() {
+        pendingEmail = '';
+        notice = '';
+        var surface = content.closest && content.closest('.auth-page, .auth-dialog');
+        if (surface) renderState(surface, global.RideHeroAuth.getState());
       });
-    });
+      append(form, emailSummary, codeLabel, codeInput, codeHelp, verify, differentEmail);
+      form.addEventListener('submit', function(event) {
+        event.preventDefault();
+        setBusy(content, true);
+        status.textContent = 'Verifying your sign-in code...';
+        global.RideHeroAuth.verifyEmailOtp(pendingEmail, codeInput.value).then(function() {
+          pendingEmail = '';
+          announce("Email verified. You're signed in.");
+        }).catch(function(error) {
+          setBusy(content, false);
+          status.textContent = safeMessage(error);
+          if (typeof codeInput.select === 'function') codeInput.select();
+          codeInput.focus({ preventScroll: true });
+        });
+      });
+    } else {
+      var label = element('label', 'auth-label', 'Email address');
+      label.htmlFor = 'ridehero-auth-email';
+      var input = element('input', 'auth-input');
+      input.id = 'ridehero-auth-email';
+      input.type = 'email';
+      input.inputMode = 'email';
+      input.autocomplete = 'email';
+      input.maxLength = 254;
+      input.required = true;
+      input.disabled = !configured || !config.emailEnabled;
+      input.placeholder = 'you@example.com';
+      var submit = element('button', 'auth-primary', 'Email me a sign-in code');
+      submit.type = 'submit';
+      submit.disabled = input.disabled;
+      var haveCode = element('button', 'auth-code-open', 'I already have a code');
+      haveCode.type = 'button';
+      haveCode.disabled = input.disabled;
+      haveCode.addEventListener('click', function() {
+        try {
+          pendingEmail = global.RideHeroAuth.normalizeEmail(input.value);
+          notice = '';
+          var surface = content.closest && content.closest('.auth-page, .auth-dialog');
+          if (surface) renderState(surface, global.RideHeroAuth.getState());
+        } catch (error) {
+          status.textContent = safeMessage(error);
+          input.focus({ preventScroll: true });
+        }
+      });
+      append(form, label, input, submit, haveCode);
+      form.addEventListener('submit', function(event) {
+        event.preventDefault();
+        setBusy(content, true);
+        status.textContent = 'Sending a secure sign-in code...';
+        global.RideHeroAuth.signInWithEmail(input.value).then(function(result) {
+          var surface = content.closest && content.closest('.auth-page, .auth-dialog');
+          if (!surface || !surface.parentNode) return;
+          pendingEmail = result && result.email || input.value;
+          notice = 'Check your email, then enter the 6-digit RideHero code.';
+          renderState(surface, global.RideHeroAuth.getState());
+          var nextInput = surface.querySelector('#ridehero-auth-code');
+          if (nextInput) nextInput.focus({ preventScroll: true });
+        }).catch(function(error) {
+          setBusy(content, false);
+          status.textContent = safeMessage(error);
+          input.focus({ preventScroll: true });
+        });
+      });
+    }
 
     var divider = element('div', 'auth-divider');
     divider.setAttribute('aria-hidden', 'true');
@@ -176,6 +253,7 @@
     var guest = element('button', 'auth-secondary auth-guest-continue', 'Continue as guest');
     guest.type = 'button';
     guest.addEventListener('click', function() {
+      pendingEmail = '';
       status.textContent = 'Continuing without an account...';
       if (global.RideHeroMultiResort && typeof global.RideHeroMultiResort.continueAsGuest === 'function') {
         global.RideHeroMultiResort.continueAsGuest();
@@ -340,8 +418,10 @@
         element('p', 'auth-loading-copy', 'Checking your RideHero account...')
       );
     } else if (state.authenticated && !state.profileComplete) {
+      pendingEmail = '';
       renderProfileForm(content, status, state);
     } else if (state.authenticated) {
+      pendingEmail = '';
       renderAccount(content, status, state);
     } else {
       renderSignedOut(content, status, state);
@@ -448,6 +528,10 @@
       pageRecord.unsubscribe = null;
       mountedPages = mountedPages.filter(function(saved) { return saved !== pageRecord; });
       if (built.surface.parentNode === container) container.removeChild(built.surface);
+      if (!activeDialog) {
+        pendingEmail = '';
+        notice = '';
+      }
       container.__rideHeroAuthCleanup = null;
     };
     auth.initialize().catch(function(error) {

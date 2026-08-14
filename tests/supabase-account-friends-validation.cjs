@@ -139,6 +139,12 @@ assert.match(docs, /never copies email addresses into the public schema/i);
 assert.match(docs, /must not be automatically matched to accounts or uploaded/i);
 assert.match(docs, /Additional Redirect URLs/i);
 assert.match(docs, /\/auth\/v1\/callback/i);
+assert.match(docs, /both \*\*Confirm signup\*\* and \*\*Magic Link\*\*/i,
+  'deployment instructions must configure both email templates for first-time and returning users');
+assert.match(docs, /\{\{ \.Token \}\}/,
+  'deployment instructions must use Supabase email OTPs rather than browser-bound magic links');
+assert.match(docs, /verifyOtp\(\{ email, token, type: 'email' \}\)/,
+  'deployment instructions must document the browser OTP exchange contract');
 assert.match(docs, /Cache-Control: no-store/i);
 assert.match(docs, /server-only secret/i);
 assert.match(docs, /delete cascade/i);
