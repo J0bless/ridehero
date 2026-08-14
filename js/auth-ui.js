@@ -31,6 +31,7 @@
       case 'AUTH_NOT_CONFIGURED': return 'RideHero accounts are not available here yet.';
       case 'AUTH_REQUIRED': return 'Sign in to continue.';
       case 'AUTH_CANCELLED': return 'Sign-in was canceled. You can try again when you are ready.';
+      case 'AUTH_BROWSER_CHANGED': return 'Sign-in could not return to the same browser. Open RideHero directly in Chrome or Safari and try again there.';
       case 'EMAIL_INVALID': return 'Enter a valid email address.';
       case 'HANDLE_INVALID': return 'Use 3-24 lowercase letters, numbers, or underscores.';
       case 'RATE_LIMITED': return 'Please wait a moment before trying again.';
@@ -345,8 +346,8 @@
     } else {
       renderSignedOut(content, status, state);
     }
-    if (notice) status.textContent = notice;
-    else if (state.errorCode) status.textContent = safeMessage({ code: state.errorCode });
+    if (state.errorCode) status.textContent = safeMessage({ code: state.errorCode });
+    else if (notice) status.textContent = notice;
     else status.textContent = '';
   }
 
@@ -387,7 +388,7 @@
     status.setAttribute('role', 'status');
     status.setAttribute('aria-live', 'polite');
     status.setAttribute('aria-atomic', 'true');
-    append(panel, header, content, status);
+    append(panel, header, status, content);
     surface.appendChild(panel);
     return { surface: surface, title: title, content: content, status: status, close: close };
   }

@@ -51,12 +51,20 @@ assert.doesNotMatch(ui, /innerHTML|outerHTML|insertAdjacentHTML/, 'account and p
 assert.doesNotMatch(ui, /error\.message/, 'provider and session errors must not leak through the UI');
 assert.match(ui, /case ['"]AUTH_CANCELLED['"][\s\S]{0,180}cancel/i,
   'a cancelled provider flow must have clear, non-technical Account-page copy');
+assert.match(ui, /case ['"]AUTH_BROWSER_CHANGED['"][\s\S]{0,220}(?:Chrome|Safari)/,
+  'a missing PKCE verifier must give an actionable same-browser recovery message');
 assert.match(ui, /state\.errorCode[\s\S]{0,240}(?:status\.textContent|announce)|(?:status\.textContent|announce)[\s\S]{0,240}state\.errorCode/,
   'callback failures retained in auth state must be visible in the Account-page live region');
+assert.ok(ui.indexOf("append(panel, header, status, content)") >= 0,
+  'callback status must appear before the long sign-in form so failures are immediately visible');
+assert.match(ui, /if \(state\.errorCode\)[\s\S]{0,180}else if \(notice\)/,
+  'callback failures must outrank stale action notices');
 assert.match(ui, /canRequestAccountDeletion\(\)/, 'deletion UI must be backend-gated');
 
 assert.match(css, /\.auth-trigger[\s\S]*min-width:\s*44px[\s\S]*height:\s*44px/);
 assert.match(css, /\.auth-primary[\s\S]*min-height:\s*48px/);
+assert.match(css, /\.auth-status\s*\{[^{}]*background:\s*#fff3f1[^{}]*\}/s,
+  'non-empty callback status must render as a visible Account-page banner');
 assert.match(css, /\.auth-title\[tabindex="-1"\]:focus\s*\{[^{}]*outline:\s*(?:0|none)[^{}]*\}/s,
   'programmatic focus on the Account page heading must not draw a grey browser boundary');
 assert.match(css, /\.auth-dialog :focus-visible[\s\S]*outline:\s*3px solid/,

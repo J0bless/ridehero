@@ -201,8 +201,8 @@
 .auth-delete-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .auth-danger { border: 0; color: #fff; background: #a52222; }
 
-.auth-status { min-height: 20px; margin-top: 14px; color: var(--auth-muted); font-size: 13px; font-weight: 700; line-height: 1.4; }
-.auth-status:empty { min-height: 0; margin-top: 0; }
+.auth-status { min-height: 20px; margin: 0 0 14px; padding: 11px 13px; border: 1px solid rgba(214,40,40,.18); border-radius: 14px; background: #fff3f1; color: var(--auth-navy); font-size: 13px; font-weight: 700; line-height: 1.4; }
+.auth-status:empty { min-height: 0; margin: 0; padding: 0; border: 0; }
 .auth-loading-mark { display: grid; width: 56px; height: 56px; margin: 26px auto 12px; place-items: center; border-radius: 18px; color: #fff; background: var(--auth-navy); font-weight: 900; }
 .auth-loading-copy { margin: 0 0 24px; color: var(--auth-muted); text-align: center; }
 

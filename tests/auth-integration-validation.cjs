@@ -73,6 +73,10 @@ assert.match(navigation, /else\s*\{\s*entryAccountActive\s*=\s*true;\s*go\(\['ac
   'the Account page must be the first fresh route beneath the coaster intro');
 assert.match(navigation, /initializeEntryAuth\(\)/,
   'fresh entry must check whether a returning user is already authenticated');
+assert.match(navigation, /if \(!state\.profileComplete\) return;/,
+  'a successful first OAuth sign-in must remain on Account so profile setup is visibly completed');
+assert.match(navigation, /previousAccountRoot[\s\S]{0,240}__rideHeroAuthCleanup/,
+  'Account rerenders must unsubscribe the previous auth surface before replacing it');
 assert.doesNotMatch(navigation, /localStorage[\s\S]{0,160}ridehero\.auth\.guest/,
   'guest continuation must never become a persistent authentication bypass');
 

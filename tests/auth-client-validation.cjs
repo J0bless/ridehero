@@ -201,6 +201,10 @@ function createFakeSupabase(initialSession, behavior) {
   assert.deepEqual(cancelledHistory, ['/#/account'], 'cancelled callbacks must clean provider parameters');
   assert.equal(cancelledFake.calls.some(call => call[0] === 'exchangeCodeForSession'), false,
     'provider errors must not attempt a PKCE exchange');
+  cancelledFake.emit('INITIAL_SESSION', null);
+  await Promise.resolve();
+  assert.equal(cancelledCallback.getState().errorCode, 'AUTH_CANCELLED',
+    'a delayed empty INITIAL_SESSION event must not erase a callback cancellation');
 
   const signedInHistory = [];
   const exchangedSession = {
@@ -239,7 +243,12 @@ function createFakeSupabase(initialSession, behavior) {
 
   const failedExchangeHistory = [];
   const failedExchangeFake = createFakeSupabase(null, {
-    exchangeError: { status: 400, message: 'PKCE verifier was unavailable' }
+    exchangeError: {
+      name: 'AuthPKCECodeVerifierMissingError',
+      code: 'pkce_code_verifier_not_found',
+      status: 400,
+      message: 'PKCE verifier was unavailable'
+    }
   });
   const failedExchangeCallback = auth.createAuthClient({
     root: {
@@ -257,9 +266,14 @@ function createFakeSupabase(initialSession, behavior) {
   const failedExchangeState = await failedExchangeCallback.initialize();
   assert.equal(failedExchangeState.status, 'signed_out');
   assert.equal(failedExchangeState.authenticated, false);
-  assert.equal(failedExchangeState.errorCode, 'AUTH_UNAVAILABLE');
+  assert.equal(failedExchangeState.errorCode, 'AUTH_BROWSER_CHANGED',
+    'a missing PKCE verifier must explain that sign-in changed browser contexts');
   assert.deepEqual(failedExchangeHistory, ['/#/account'],
     'failed exchanges must remove the unusable authorization code from history');
+  failedExchangeFake.emit('INITIAL_SESSION', null);
+  await Promise.resolve();
+  assert.equal(failedExchangeCallback.getState().errorCode, 'AUTH_BROWSER_CHANGED',
+    'a delayed empty INITIAL_SESSION event must not erase a failed exchange result');
 
   const legacyCodeHistory = [];
   const legacyCodeFake = createFakeSupabase(null, { exchangeSession: exchangedSession });

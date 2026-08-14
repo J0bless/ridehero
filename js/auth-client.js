@@ -37,6 +37,7 @@
       case 'AUTH_NOT_CONFIGURED': return 'RideHero accounts are not available in this environment yet.';
       case 'AUTH_REQUIRED': return 'Sign in to continue.';
       case 'AUTH_CANCELLED': return 'Sign-in was canceled. You can try again when you are ready.';
+      case 'AUTH_BROWSER_CHANGED': return 'Sign-in could not return to the same browser. Open RideHero directly in Chrome or Safari and try again there.';
       case 'EMAIL_INVALID': return 'Enter a valid email address.';
       case 'HANDLE_INVALID': return 'Use 3–24 lowercase letters, numbers, or underscores.';
       case 'RATE_LIMITED': return 'Please wait a moment before trying again.';
@@ -54,6 +55,15 @@
     var status = Number(error && (error.status || error.statusCode));
     if (status === 429) return authError('RATE_LIMITED');
     return authError(fallbackCode || 'AUTH_UNAVAILABLE');
+  }
+
+  function classifyCallbackError(error) {
+    var code = cleanString(error && error.code, 80).toLocaleLowerCase();
+    var name = cleanString(error && error.name, 80).toLocaleLowerCase();
+    if (code === 'pkce_code_verifier_not_found' || name === 'authpkcecodeverifiermissingerror') {
+      return 'AUTH_BROWSER_CHANGED';
+    }
+    return 'AUTH_UNAVAILABLE';
   }
 
   function own(object, key) {
@@ -414,6 +424,10 @@
       var callbackProcessingAttempted = callback.active;
       initializePromise = loadClient().then(function(loadedClient) {
         var observed = loadedClient.auth.onAuthStateChange(function(event, session) {
+          // Supabase may emit INITIAL_SESSION(null) after callback processing
+          // begins. It is stale for this page and must not erase the callback
+          // result or a session established by the explicit PKCE exchange.
+          if (callbackProcessingAttempted && event === 'INITIAL_SESSION' && !(session && session.user)) return;
           applySession(session, event);
           if (session && session.user) Promise.resolve().then(refreshProfile);
         });
@@ -431,8 +445,8 @@
           return Promise.resolve(loadedClient.auth.exchangeCodeForSession(callback.code)).then(function(result) {
             if (result && result.error) throw result.error;
             return { data: { session: result && result.data && result.data.session || null }, callbackHandled: true };
-          }).catch(function() {
-            return { data: { session: null }, errorCode: 'AUTH_UNAVAILABLE', callbackHandled: true };
+          }).catch(function(error) {
+            return { data: { session: null }, errorCode: classifyCallbackError(error), callbackHandled: true };
           });
         }
         return loadedClient.auth.getSession();

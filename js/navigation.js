@@ -54,6 +54,9 @@
   function finishAuthenticatedEntry(state) {
     if (!state || !state.authenticated) return;
     clearGuestSession();
+    // A first-time OAuth user must see the successful sign-in and finish the
+    // trusted RideHero profile before entering planning.
+    if (!state.profileComplete) return;
     if (!entryAccountActive) return;
     entryAccountActive = false;
     if (currentRoute()[0] === 'account') go(['mode'], true);
@@ -292,6 +295,10 @@
   }
 
   function renderAccount() {
+    var previousAccountRoot = root.querySelector('#ridehero-auth-page-root');
+    if (previousAccountRoot && typeof previousAccountRoot.__rideHeroAuthCleanup === 'function') {
+      previousAccountRoot.__rideHeroAuthCleanup();
+    }
     var fallback = appState.planningMode ? routeFor(['brands']) : routeFor(['mode']);
     var backControl = entryAccountActive
       ? '<span aria-hidden="true"></span>'
