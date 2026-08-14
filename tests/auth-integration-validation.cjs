@@ -73,6 +73,10 @@ assert.match(navigation, /else\s*\{\s*entryAccountActive\s*=\s*true;\s*go\(\['ac
   'the Account page must be the first fresh route beneath the coaster intro');
 assert.match(navigation, /initializeEntryAuth\(\)/,
   'fresh entry must check whether a returning user is already authenticated');
+const freshEntryBlock = navigation.slice(navigation.lastIndexOf("if (!location.hash"));
+assert.ok(freshEntryBlock.indexOf('initializeEntryAuth();') >= 0 &&
+  freshEntryBlock.indexOf('initializeEntryAuth();') < freshEntryBlock.indexOf("go(['account'], true)"),
+  'OAuth callback parameters must be captured before base-relative hash navigation can discard them');
 assert.match(navigation, /if \(!state\.profileComplete\) return;/,
   'a successful first OAuth sign-in must remain on Account so profile setup is visibly completed');
 assert.match(navigation, /previousAccountRoot[\s\S]{0,240}__rideHeroAuthCleanup/,

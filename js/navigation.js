@@ -632,8 +632,11 @@
   global.RideHeroMultiResort = { render: render, choosePark: activatePark, selectPlanningMode: selectPlanningMode, goHome: goHome, openAccount: openAccount, continueAsGuest: continueAsGuest, changePark: openParkSwitcher, changeMode: function(){ showScreen('setup'); go(['mode']); }, updateChangeParkAction: updateContextActions, getState: function(){ return Object.assign({}, appState); } };
   global.addEventListener('hashchange', render);
   if (!location.hash || location.hash === '#/' || location.hash === '#') {
+    // Capture OAuth query parameters before hash navigation. Because index.html
+    // has <base href="/">, replacing with a fragment first would resolve at the
+    // site root and discard /auth/callback/?code=... before PKCE exchange.
+    initializeEntryAuth();
     if (guestSessionSelected()) go(['mode'], true);
     else { entryAccountActive = true; go(['account'], true); }
-    initializeEntryAuth();
   } else render();
 })(window);
