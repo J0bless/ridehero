@@ -69,7 +69,7 @@ assert.doesNotMatch(css, /\.smart-entry-queue-preview\s*\{[^{}]*position\s*:\s*(
 
 assert.match(html, /css\/smart-entry\.css\?v=5/);
 assert.match(html, /js\/navigation\.js\?v=15/);
-assert.match(worker, /const CACHE_NAME = ['"]ridehero-shell-v37['"]/);
+assert.match(worker, /const CACHE_NAME = ['"]ridehero-shell-v38['"]/);
 assert.match(worker, /\.\/css\/smart-entry\.css\?v=5/);
 assert.match(worker, /\.\/js\/navigation\.js\?v=15/);
 

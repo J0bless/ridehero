@@ -38,9 +38,9 @@ const wordmark = fs.readFileSync(path.join(root, 'icons', 'ridehero-wordmark.png
 assert.equal(wordmark.readUInt32BE(16), 935, 'incorrect RideHero wordmark width');
 assert.equal(wordmark.readUInt32BE(20), 167, 'incorrect RideHero wordmark height');
 assert.equal(wordmark[25], 6, 'RideHero wordmark must retain transparent RGBA pixels');
-assert.match(worker, /const CACHE_NAME = 'ridehero-shell-v37'/);
-assert.match(html, /js\/auth-client\.js\?v=3/, 'the OAuth callback client must use the current cache-busting version');
-assert.match(worker, /\.\/js\/auth-client\.js\?v=3/, 'the service worker must precache the current OAuth callback client');
+assert.match(worker, /const CACHE_NAME = 'ridehero-shell-v38'/);
+assert.match(html, /js\/auth-client\.js\?v=4/, 'the OAuth callback client must use the current cache-busting version');
+assert.match(worker, /\.\/js\/auth-client\.js\?v=4/, 'the service worker must precache the current OAuth callback client');
 assert.match(html, /js\/auth-ui\.js\?v=4/, 'the OAuth callback UI must use the current cache-busting version');
 assert.match(worker, /\.\/js\/auth-ui\.js\?v=4/, 'the service worker must precache the current OAuth callback UI');
 assert.match(html, /css\/onboarding\.css\?v=9/, 'the onboarding stylesheet must use the current cache-busting version');
