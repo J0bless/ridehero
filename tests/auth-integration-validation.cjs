@@ -77,6 +77,8 @@ const freshEntryBlock = navigation.slice(navigation.lastIndexOf("if (!location.h
 assert.ok(freshEntryBlock.indexOf('initializeEntryAuth();') >= 0 &&
   freshEntryBlock.indexOf('initializeEntryAuth();') < freshEntryBlock.indexOf("go(['account'], true)"),
   'OAuth callback parameters must be captured before base-relative hash navigation can discard them');
+assert.match(navigation, /authQueryPending[\s\S]{0,260}location\.pathname[\s\S]{0,120}location\.search[\s\S]{0,120}next/,
+  'callback-to-Account routing must preserve the callback path and query instead of reloading the site root');
 assert.match(navigation, /if \(!state\.profileComplete\) return;/,
   'a successful first OAuth sign-in must remain on Account so profile setup is visibly completed');
 assert.match(navigation, /previousAccountRoot[\s\S]{0,240}__rideHeroAuthCleanup/,

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ridehero-shell-v40';
+const CACHE_NAME = 'ridehero-shell-v41';
 const APP_SHELL = [
   './',
   './index.html',
@@ -33,7 +33,7 @@ const APP_SHELL = [
   './js/friends-store.js?v=1',
   './js/friends-ui.js?v=2',
   './js/growth-analytics.js?v=2',
-  './js/navigation.js?v=16',
+  './js/navigation.js?v=17',
   './js/pwa-install.js?v=1',
   './js/growth-loader.js?v=3',
   './icons/ridehero-180.png',

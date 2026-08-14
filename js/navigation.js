@@ -22,8 +22,10 @@
   function routeFor(parts) { return '#/' + parts.filter(Boolean).map(encodeURIComponent).join('/'); }
   function go(parts, replace) {
     var next = routeFor(parts);
+    var authQueryPending = /(?:^|[?&])(?:code|error|error_code|error_description)=/.test(String(location.search || ''));
+    var target = authQueryPending ? String(location.pathname || '/') + String(location.search || '') + next : next;
     if (location.hash === next) render();
-    else if (replace) location.replace(next);
+    else if (replace) location.replace(target);
     else location.hash = next;
   }
   function currentRoute() { return (location.hash || '#/mode').replace(/^#\/?/, '').split('/').filter(Boolean).map(decodeURIComponent); }

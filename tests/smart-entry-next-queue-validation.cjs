@@ -68,10 +68,10 @@ assert.doesNotMatch(css, /\.smart-entry-queue-preview\s*\{[^{}]*position\s*:\s*(
   'the queue panel must remain in normal flow for zoom and long text');
 
 assert.match(html, /css\/smart-entry\.css\?v=5/);
-assert.match(html, /js\/navigation\.js\?v=16/);
-assert.match(worker, /const CACHE_NAME = ['"]ridehero-shell-v40['"]/);
+assert.match(html, /js\/navigation\.js\?v=17/);
+assert.match(worker, /const CACHE_NAME = ['"]ridehero-shell-v41['"]/);
 assert.match(worker, /\.\/css\/smart-entry\.css\?v=5/);
-assert.match(worker, /\.\/js\/navigation\.js\?v=16/);
+assert.match(worker, /\.\/js\/navigation\.js\?v=17/);
 
 function renderQueue(planningMode, active, remaining, resume) {
   return vm.runInNewContext('(' + queuePreview + ')(active, remaining, resume)', {
