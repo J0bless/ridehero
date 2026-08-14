@@ -514,9 +514,15 @@
       if (state.errorCode) setState({ configured: config.configured, status: activeSession && activeSession.user ? 'signed_in' : 'signed_out', errorCode: null });
       rememberReturnLocation();
       return requireClient().then(function(loadedClient) {
-        return loadedClient.auth.signInWithOAuth({
-          provider: provider,
-          options: { redirectTo: redirectUrl() }
+        var clearStaleLocalSession = activeSession && activeSession.user
+          ? Promise.resolve({ error: null })
+          : Promise.resolve(loadedClient.auth.signOut({ scope: 'local' }));
+        return clearStaleLocalSession.then(function(signOutResult) {
+          if (signOutResult && signOutResult.error) throw signOutResult.error;
+          return loadedClient.auth.signInWithOAuth({
+            provider: provider,
+            options: { redirectTo: redirectUrl() }
+          });
         });
       }).then(function(result) {
         if (result && result.error) throw result.error;

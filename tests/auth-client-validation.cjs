@@ -48,7 +48,10 @@ function createFakeSupabase(initialSession, behavior) {
       },
       signInWithOtp(input) { calls.push(['email', input]); return Promise.resolve({ data: {}, error: null }); },
       signInWithOAuth(input) { calls.push(['oauth', input]); return Promise.resolve({ data: { url: 'https://provider.invalid' }, error: null }); },
-      signOut(input) { calls.push(['signOut', input]); return Promise.resolve({ error: null }); }
+      signOut(input) {
+        calls.push(['signOut', input]);
+        return Promise.resolve({ error: behavior.signOutError || null });
+      }
     },
     rpc(name, parameters) {
       calls.push(['rpc', name, parameters]);
@@ -119,6 +122,10 @@ function createFakeSupabase(initialSession, behavior) {
   const oauthCall = fake.calls.find(call => call[0] === 'oauth')[1];
   assert.equal(oauthCall.provider, 'google');
   assert.equal(oauthCall.options.redirectTo, 'https://ridehero-app.pages.dev/auth/callback/');
+  const firstOAuthIndex = fake.calls.findIndex(call => call[0] === 'oauth');
+  const oauthPreflightIndex = fake.calls.findIndex(call => call[0] === 'signOut');
+  assert.ok(oauthPreflightIndex >= 0 && oauthPreflightIndex < firstOAuthIndex,
+    'signed-out OAuth must clear stale local sessions before writing a fresh PKCE verifier');
   assert.throws(() => client.signInWithOAuth('github'), error => error.code === 'AUTH_UNAVAILABLE');
 
   fake.emit('SIGNED_IN', {
@@ -147,9 +154,26 @@ function createFakeSupabase(initialSession, behavior) {
   assert.equal(fake.calls.some(call => call[0] === 'function'), false, 'no deletion request may be fabricated without a configured server function');
 
   await client.signOut();
-  const signOutCall = fake.calls.find(call => call[0] === 'signOut');
-  assert.deepEqual(signOutCall[1], { scope: 'local' });
+  const signOutCalls = fake.calls.filter(call => call[0] === 'signOut');
+  assert.equal(signOutCalls.length, 2, 'OAuth preflight and explicit sign-out must both remain local-only');
+  signOutCalls.forEach(call => assert.deepEqual(call[1], { scope: 'local' }));
   assert.equal(client.getState().authenticated, false);
+
+  const preflightFailureFake = createFakeSupabase(null, { signOutError: { status: 503 } });
+  const preflightFailureClient = auth.createAuthClient({
+    root: environment,
+    config: {
+      supabaseUrl: 'https://ridehero-project.supabase.co',
+      publishableKey: 'sb_publishable_public_test_key',
+      enabledProviders: ['google']
+    },
+    loadLibrary: () => Promise.resolve(preflightFailureFake.library)
+  });
+  await preflightFailureClient.initialize();
+  await assert.rejects(() => preflightFailureClient.signInWithOAuth('google'),
+    error => error.code === 'AUTH_UNAVAILABLE');
+  assert.equal(preflightFailureFake.calls.some(call => call[0] === 'oauth'), false,
+    'OAuth must not redirect when stale local auth state could not be cleared safely');
 
   const unavailable = auth.createAuthClient({
     root: environment,
