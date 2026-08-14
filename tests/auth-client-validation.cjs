@@ -234,6 +234,31 @@ function createFakeSupabase(initialSession, behavior) {
   assert.equal(cancelledCallback.getState().errorCode, 'AUTH_CANCELLED',
     'stale-session cleanup must not erase a callback cancellation');
 
+  const routedAwayHistory = [];
+  const routedAwayEnvironment = {
+    location: {
+      href: 'https://ridehero-app.pages.dev/auth/callback/?error=access_denied',
+      origin: 'https://ridehero-app.pages.dev',
+      pathname: '/auth/callback/', search: '?error=access_denied', hash: ''
+    },
+    history: { state: null, replaceState(state, title, target) { routedAwayHistory.push(target); } },
+    sessionStorage: createSessionStorage()
+  };
+  const routedAwayFake = createFakeSupabase();
+  const routedAwayCallback = auth.createAuthClient({
+    root: routedAwayEnvironment,
+    config: { supabaseUrl: 'https://ridehero-project.supabase.co', publishableKey: 'sb_publishable_public_test_key' },
+    loadLibrary: () => Promise.resolve(routedAwayFake.library)
+  });
+  routedAwayEnvironment.location.href = 'https://ridehero-app.pages.dev/#/account';
+  routedAwayEnvironment.location.pathname = '/';
+  routedAwayEnvironment.location.search = '';
+  routedAwayEnvironment.location.hash = '#/account';
+  const routedAwayState = await routedAwayCallback.initialize();
+  assert.equal(routedAwayState.errorCode, 'AUTH_CANCELLED',
+    'base-relative hash routing must not discard callback inputs captured at page load');
+  assert.deepEqual(routedAwayHistory, ['/#/account']);
+
   const signedInHistory = [];
   const exchangedSession = {
     access_token: 'browser-session-token',

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ridehero-shell-v39';
+const CACHE_NAME = 'ridehero-shell-v40';
 const APP_SHELL = [
   './',
   './index.html',
@@ -27,7 +27,7 @@ const APP_SHELL = [
   './js/walking-network.js?v=1',
   './js/data-health.js?v=1',
   './js/supabase-config.js?v=3',
-  './js/auth-client.js?v=4',
+  './js/auth-client.js?v=5',
   './js/auth-ui.js?v=4',
   './js/account-friends.js?v=1',
   './js/friends-store.js?v=1',

@@ -181,6 +181,14 @@
   function createAuthClient(options) {
     var settings = options || {};
     var environment = settings.root || root || {};
+    // Capture callback inputs at module/client construction. Hash navigation can
+    // resolve through <base href="/"> and replace the visible URL before the
+    // asynchronous auth client is ready, but it must not discard the one-time
+    // provider result that was present when this page loaded.
+    var initialAuthLocation = Object.freeze({
+      pathname: String(environment.location && environment.location.pathname || '/'),
+      search: String(environment.location && environment.location.search || '')
+    });
     var explicitConfig = own(settings, 'config') ? settings.config : null;
     var loadLibrary = settings.loadLibrary || function() {
       if (environment.supabase && typeof environment.supabase.createClient === 'function') {
@@ -329,8 +337,8 @@
     function authCallbackDetails() {
       var location = environment.location;
       if (!location) return Object.freeze({ active: false, code: '', errorCode: '' });
-      var pathname = String(location.pathname || '/');
-      var params = new URLSearchParams(String(location.search || ''));
+      var pathname = callbackWasCleared ? String(location.pathname || '/') : initialAuthLocation.pathname;
+      var params = new URLSearchParams(callbackWasCleared ? String(location.search || '') : initialAuthLocation.search);
       var hasAuthQuery = AUTH_QUERY_KEYS.some(function(key) { return params.has(key); });
       var active = /^\/auth\/callback\/?$/.test(pathname) || (pathname === '/' && hasAuthQuery);
       if (!active) return Object.freeze({ active: false, code: '', errorCode: '' });
