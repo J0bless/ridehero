@@ -32,16 +32,28 @@ assert.match(config, /(publishable|anon)/i, 'configuration must identify the bro
 // RideHero is a hash-routed SPA. PKCE prevents auth tokens from colliding with
 // application hashes, and the callback must be a fixed same-origin path.
 assert.match(client, /flowType\s*:\s*['"]pkce['"]/i, 'Supabase Auth must use PKCE');
-assert.match(client, /\/auth\/callback/, 'auth must return through the dedicated callback path');
+assert.match(client, /detectSessionInUrl\s*:\s*false/i,
+  'RideHero must own PKCE callback processing so provider errors remain visible');
+assert.match(client, /exchangeCodeForSession\s*\(/,
+  'RideHero must explicitly exchange callback authorization codes');
+assert.match(client, /\/auth\/callback\//, 'auth must return through the canonical trailing-slash callback path');
 assert.doesNotMatch(client, /[?&](?:next|redirect(?:_?to)?)=/i, 'auth code must not trust a query-controlled post-auth redirect');
 assert.match(client, /(?:history\.replaceState|replaceState\s*\()/, 'the one-time auth code must be removed from browser history after exchange');
+assert.match(client, /AUTH_CANCELLED/, 'provider cancellation must have a stable public error code');
+assert.match(ui, /state\.errorCode[\s\S]{0,240}(?:status\.textContent|announce)|(?:status\.textContent|announce)[\s\S]{0,240}state\.errorCode/,
+  'callback errors stored in auth state must be announced on the Account page');
 assert.match(client, /(?:sessionStorage|returnHash|returnRoute)/i, 'auth may retain a short-lived local return route');
 assert.match(client, /location\.origin|sameOrigin|URL\s*\(/i, 'callback construction must be anchored to the current origin');
 assert.match(client, /origin\s*!==\s*resolved\.origin|resolved\.origin\s*!==\s*[^\n]*origin/, 'post-auth navigation must reject a different origin');
 assert.match(client, /indexOf\(['"]\/\/['"]\)\s*===\s*0|startsWith\(['"]\/\/['"]\)/, 'post-auth navigation must reject protocol-relative redirects');
 
 // The public surface is intentionally limited to the three approved options.
-assert.match(client + ui, /signInWithOtp/, 'email magic-link/OTP sign-in must be implemented');
+assert.match(client + ui, /signInWithOtp/, 'email OTP delivery must be implemented');
+assert.match(client + ui, /verifyEmailOtp/, 'email OTP verification must be implemented');
+assert.match(client, /verifyOtp\(\{[\s\S]{0,180}email:\s*email[\s\S]{0,180}token:\s*token[\s\S]{0,180}type:\s*['"]email['"]/,
+  'email codes must create a session through Supabase verifyOtp without a callback URL');
+assert.match(ui, /autocomplete\s*=\s*['"]one-time-code['"]/,
+  'the email-code input must expose one-time-code autofill semantics');
 assert.match(client + ui, /signInWithOAuth/, 'social sign-in must use the Supabase OAuth API');
 assert.match(client + ui, /['"]google['"]/, 'Google must be an approved provider');
 assert.match(client + ui, /['"]facebook['"]/, 'Facebook must be an approved provider');
@@ -66,6 +78,16 @@ assert.match(navigation, /else\s*\{\s*entryAccountActive\s*=\s*true;\s*go\(\['ac
   'the Account page must be the first fresh route beneath the coaster intro');
 assert.match(navigation, /initializeEntryAuth\(\)/,
   'fresh entry must check whether a returning user is already authenticated');
+const freshEntryBlock = navigation.slice(navigation.lastIndexOf("if (!location.hash"));
+assert.ok(freshEntryBlock.indexOf('initializeEntryAuth();') >= 0 &&
+  freshEntryBlock.indexOf('initializeEntryAuth();') < freshEntryBlock.indexOf("go(['account'], true)"),
+  'OAuth callback parameters must be captured before base-relative hash navigation can discard them');
+assert.match(navigation, /authQueryPending[\s\S]{0,260}location\.pathname[\s\S]{0,120}location\.search[\s\S]{0,120}next/,
+  'callback-to-Account routing must preserve the callback path and query instead of reloading the site root');
+assert.match(navigation, /if \(!state\.profileComplete\) return;/,
+  'a successful first OAuth sign-in must remain on Account so profile setup is visibly completed');
+assert.match(navigation, /previousAccountRoot[\s\S]{0,240}__rideHeroAuthCleanup/,
+  'Account rerenders must unsubscribe the previous auth surface before replacing it');
 assert.doesNotMatch(navigation, /localStorage[\s\S]{0,160}ridehero\.auth\.guest/,
   'guest continuation must never become a persistent authentication bypass');
 
@@ -88,10 +110,17 @@ assert.match(html, /js\/auth-client\.js[^>]*[\s\S]*js\/auth-ui\.js/, 'auth clien
 assert.match(html, /css\/auth\.css/, 'the sign-in page stylesheet must be loaded');
 assert.match(html, /RideHeroAuth\.initialize\(\)[\s\S]{0,500}RideHeroMultiResort[\s\S]{0,200}render\(/,
   'after callback processing, navigation must render the restored hash because history.replaceState does not emit hashchange');
+assert.match(html, /rideHeroHasAuthQuery[\s\S]{0,300}location\.pathname[\s\S]{0,300}RideHeroAuth\.initialize/,
+  'the app bootstrap must recover legacy auth query parameters redirected to the production root');
 
 // OAuth callbacks contain a short-lived authorization code. Neither the
 // service worker nor edge caches may retain that request URL or response.
-assert.match(redirects, /^\/auth\/callback\s+\/index\.html\s+200/m, 'Cloudflare must serve the SPA for the exact auth callback path');
+assert.match(redirects, /^\/auth\/callback\/\s+\/index\.html\s+200/m,
+  'Cloudflare must serve the SPA directly for the canonical callback path without a normalization redirect');
+assert.match(redirects, /^\/auth\/callback\s+\/auth\/callback\/\s+302/m,
+  'the former callback path must temporarily redirect to the canonical trailing-slash path');
+assert.ok(redirects.indexOf('/auth/callback /auth/callback/ 302') < redirects.indexOf('/auth/callback/ /index.html 200'),
+  'the legacy callback redirect must be evaluated before the canonical SPA rewrite');
 assert.match(headers, /\/auth\/\*[\s\S]*Cache-Control:\s*[^\r\n]*no-store/i, 'auth paths must be no-store at the edge');
 assert.match(headers, /\/auth\/\*[\s\S]*X-Robots-Tag:\s*noindex[^\r\n]*/i, 'auth paths must never be indexed');
 assert.match(headers, /\/auth\/\*[\s\S]*Referrer-Policy:\s*no-referrer/i, 'auth codes must not leak through referrers');

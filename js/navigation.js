@@ -22,8 +22,10 @@
   function routeFor(parts) { return '#/' + parts.filter(Boolean).map(encodeURIComponent).join('/'); }
   function go(parts, replace) {
     var next = routeFor(parts);
+    var authQueryPending = /(?:^|[?&])(?:code|error|error_code|error_description)=/.test(String(location.search || ''));
+    var target = authQueryPending ? String(location.pathname || '/') + String(location.search || '') + next : next;
     if (location.hash === next) render();
-    else if (replace) location.replace(next);
+    else if (replace) location.replace(target);
     else location.hash = next;
   }
   function currentRoute() { return (location.hash || '#/mode').replace(/^#\/?/, '').split('/').filter(Boolean).map(decodeURIComponent); }
@@ -54,6 +56,9 @@
   function finishAuthenticatedEntry(state) {
     if (!state || !state.authenticated) return;
     clearGuestSession();
+    // A first-time OAuth user must see the successful sign-in and finish the
+    // trusted RideHero profile before entering planning.
+    if (!state.profileComplete) return;
     if (!entryAccountActive) return;
     entryAccountActive = false;
     if (currentRoute()[0] === 'account') go(['mode'], true);
@@ -292,6 +297,10 @@
   }
 
   function renderAccount() {
+    var previousAccountRoot = root.querySelector('#ridehero-auth-page-root');
+    if (previousAccountRoot && typeof previousAccountRoot.__rideHeroAuthCleanup === 'function') {
+      previousAccountRoot.__rideHeroAuthCleanup();
+    }
     var fallback = appState.planningMode ? routeFor(['brands']) : routeFor(['mode']);
     var backControl = entryAccountActive
       ? '<span aria-hidden="true"></span>'
@@ -625,8 +634,11 @@
   global.RideHeroMultiResort = { render: render, choosePark: activatePark, selectPlanningMode: selectPlanningMode, goHome: goHome, openAccount: openAccount, continueAsGuest: continueAsGuest, changePark: openParkSwitcher, changeMode: function(){ showScreen('setup'); go(['mode']); }, updateChangeParkAction: updateContextActions, getState: function(){ return Object.assign({}, appState); } };
   global.addEventListener('hashchange', render);
   if (!location.hash || location.hash === '#/' || location.hash === '#') {
+    // Capture OAuth query parameters before hash navigation. Because index.html
+    // has <base href="/">, replacing with a fragment first would resolve at the
+    // site root and discard /auth/callback/?code=... before PKCE exchange.
+    initializeEntryAuth();
     if (guestSessionSelected()) go(['mode'], true);
     else { entryAccountActive = true; go(['account'], true); }
-    initializeEntryAuth();
   } else render();
 })(window);
