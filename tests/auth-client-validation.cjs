@@ -229,6 +229,10 @@ function createFakeSupabase(initialSession, behavior) {
   await Promise.resolve();
   assert.equal(cancelledCallback.getState().errorCode, 'AUTH_CANCELLED',
     'a delayed empty INITIAL_SESSION event must not erase a callback cancellation');
+  cancelledFake.emit('SIGNED_OUT', null);
+  await Promise.resolve();
+  assert.equal(cancelledCallback.getState().errorCode, 'AUTH_CANCELLED',
+    'stale-session cleanup must not erase a callback cancellation');
 
   const signedInHistory = [];
   const exchangedSession = {
@@ -298,6 +302,10 @@ function createFakeSupabase(initialSession, behavior) {
   await Promise.resolve();
   assert.equal(failedExchangeCallback.getState().errorCode, 'AUTH_BROWSER_CHANGED',
     'a delayed empty INITIAL_SESSION event must not erase a failed exchange result');
+  failedExchangeFake.emit('SIGNED_OUT', null);
+  await Promise.resolve();
+  assert.equal(failedExchangeCallback.getState().errorCode, 'AUTH_BROWSER_CHANGED',
+    'stale-session cleanup must not erase a failed exchange result');
 
   const legacyCodeHistory = [];
   const legacyCodeFake = createFakeSupabase(null, { exchangeSession: exchangedSession });

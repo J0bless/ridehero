@@ -427,7 +427,9 @@
           // Supabase may emit INITIAL_SESSION(null) after callback processing
           // begins. It is stale for this page and must not erase the callback
           // result or a session established by the explicit PKCE exchange.
-          if (callbackProcessingAttempted && event === 'INITIAL_SESSION' && !(session && session.user)) return;
+          if (callbackProcessingAttempted && !(session && session.user) && (
+            event === 'INITIAL_SESSION' || (event === 'SIGNED_OUT' && state.errorCode)
+          )) return;
           applySession(session, event);
           if (session && session.user) Promise.resolve().then(refreshProfile);
         });
